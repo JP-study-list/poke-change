@@ -1,0 +1,327 @@
+# CLAUDE.md — 開發規範與專案脈絡（單一檔）
+
+> 本檔為通用規範 + 本專案技術背景的合併檔，放在專案根目錄，Claude Code 啟動時自動載入。
+> 新 repo 只需複製本檔（§0~§7 通用部分照抄），第一次對 Claude Code 說「初始化這個專案」，
+> 其餘檔案（project-index.md、progress.md）與 §8 專案背景會自動長出來（見 §1 自舉）。
+>
+> ⚠️ 本檔會 commit 上公開 repo。**嚴禁寫入任何 secret**（見 §4 規則 D 的可寫/不可寫清單）。
+
+---
+
+## 0. 語言與溝通
+- 一律使用**繁體中文**回覆。
+- 解釋精簡、切中要點，節省 token。
+
+---
+
+## 1. 啟動 SOP（每次新 session 開場）
+
+### 一般啟動
+1. 讀 `project-index.md`（全部）——掌握結構與各檔用途，**不重掃全部原始碼**。
+2. 讀 `progress.md` **最新 3~5 筆**——掌握上次進度與待辦。
+3. 需動到某檔時，才針對性讀該檔。
+
+### 首次進專案 / 使用者說「初始化這個專案」時（自舉）
+依序執行，**全程只新增、不刪除、不覆蓋**：
+1. **讀**現有全部檔案（唯讀，不動任何一個）。
+2. 若 `project-index.md` **不存在** → 自動生成；若已存在 → 更新，**絕不覆蓋既有內容**。
+3. 若 `progress.md` **不存在** → 建立空模板；若已存在 → 保留。
+4. 訪談使用者補齊 §8 專案技術背景，寫進本檔 §8 區塊。
+   - **只問非機密項**（Project ID、collection 結構、部署 branch 等）。
+   - 遇到金鑰類（`/exec` URL、API key）→ **不寫進本檔**，改提醒使用者放 `.env`，本檔只記指標。
+
+> **自舉硬規則**：初始化流程明文禁止任何 `rm`、覆寫、`git reset` 等破壞既有檔案的操作。只建立不存在的檔。
+
+---
+
+## 2. 開發流程規範（嚴格執行）
+
+收到任何工具／功能開發請求時，**不得立即寫程式碼**。依序：
+
+### Phase 1：需求確認（必做）
+1. 用自己的話覆述需求。
+2. 提釐清問題，涵蓋：使用情境（手機／桌機／網頁、頻率）、核心功能（MVP vs. 加分）、UI 偏好（語言預設繁中、深/淺色、版面）、資料處理（需持久化？存哪？）、技術限制（單一 HTML？React？GitHub Pages？）。
+3. 一次最多 3~5 個關鍵問題，不洗版。
+
+### Phase 2：提案（必做）
+- 功能清單（MVP vs. 未來擴充）
+- 技術方案 + 一句話理由
+- UI 結構文字描述（免圖）
+- 結尾問：「確認後才動工，有要調整的嗎？」
+
+### Phase 3：實作
+- 僅在明確說「start／確認／go ahead」後開始寫碼。
+- 驗證與 review 嚴謹徹底；交付前自我檢查功能完整性。
+
+### 例外
+- 瑣碎請求（一行 CSS、明顯 bug）可跳過，但先說「Simple request, proceeding directly」。
+
+### 中途變更
+- 需求中途更動且影響架構 → **先指出影響範圍**再動手。
+
+---
+
+## 3. 交付原則（本機環境）
+- 直接讀寫本機檔案，不再提供「完整檔案手動貼回／ZIP」。
+- 偏好乾淨美學：衝突時，簡潔 > 附加功能；果斷、直接。
+- 期望根因診斷，不要表面修復。
+
+---
+
+## 4. 本機環境安全與協作規則（ABCD）
+
+### A. Commit 規範
+- **允許直接 commit**，不需事前確認。
+- 訊息格式：`feat:` / `fix:` / `refactor:` / `docs:` / `chore:` 前綴 + 繁中摘要。
+  - 例：`fix: 修正背景卡 shiny 切換未同步 Firestore`
+
+### B. 破壞性操作前先確認（最高優先，不因 A 而放寬）
+- 以下操作**必須先說明影響範圍並等待明確同意**：
+  - 刪除檔案、`rm`
+  - `git reset --hard`、`git push -f`、`git rebase`
+  - 大範圍重構、跨多檔結構性變更
+- Commit 可逆，故 A 放行；上述不可逆，故一律先問。不確定是否具破壞性時，先問。
+
+### C. 本機測試優先於宣稱完成
+- 宣稱「完成」前，能本機驗證的先驗證：起 server、看 console、跑既有測試。
+- 不憑「讀過碼看起來對」就宣稱完成。
+
+### D. Secrets 不進 git（含本 CLAUDE.md）
+本檔會上公開 repo，界線如下：
+
+**可寫進本檔（非機密）：**
+- Firebase **Project ID**（本就出現在前端 config，非機密）
+- Firestore collection 結構、key 設計原則
+- 部署 branch、GitHub Pages 網域
+- 使用的 API、資料來源、cron 時間
+- 已知地雷
+
+**絕不寫進本檔（外置到 `.env` / `config.local.js`，並列入 `.gitignore`）：**
+- Apps Script `/exec` URL（等同後端入口，視為機密）
+- 任何 API key / token / 私鑰、service account 憑證
+
+本檔只記**指標**，例：`Apps Script /exec URL 存於 .env 的 APPS_SCRIPT_URL（不進 git）`。
+
+> 註：Firebase 前端 `apiKey` 並非密鑰，本就暴露於客戶端，靠 Firestore Security Rules 保護；重點是 Rules 有沒有寫好，而非藏 key。Apps Script `/exec` URL 則須當機密。
+
+---
+
+## 5. 檔案維護機制
+
+### progress.md — 開發歷史（每次改檔即更新）
+- 反向時間序（最新在上）。
+- 欄位：
+  ```
+  ## YYYY-MM-DD
+  - 類型：新增 / 修正 / 重構
+  - 影響檔案：xxx.html, yyy.js
+  - 摘要：做了什麼
+  - 原因：為什麼
+  - 待辦/已知問題：（可留空）
+  ```
+- 小改允許精簡：只填「日期 + 類型 + 摘要」。
+
+### project-index.md — 專案檔案索引（首次建立，每次改檔同步）
+- 每個檔案的用途、彼此關係、進入點。
+- 檔案新增／刪除／職責變動 → 同步更新。
+
+---
+
+## 6. 技術教訓（跨專案通用原則）
+
+> 以下為既往踩坑固化的原則。**若當下發現更優解，先提出與使用者討論，不擅自沿用舊規則、也不默默改掉。**
+
+- **Firestore key 設計**：用穩定 ID（`p###`、costume ID）當 key，seed 變動不破壞既有紀錄；只存狀態，不存顯示資料。
+- **Apps Script 部署**：一律**編輯現有 deployment**（鉛筆 → 新版本 → 部署）保留 `/exec` URL，絕不新建 deployment。
+- **Base64 圖片**：存 Firestore <700KB；iOS Shortcut Base64 encode 關閉換行。
+- **GitHub Actions cron**：避開 UTC 午夜，偏移如 `43 0 * * *`。
+- **日期／時區**：Taiwan UTC+8，日期邏輯用 local time 格式化，**不用 `toISOString()`**。
+- **Google Maps API**：tile 依 ToS 不可快取；離線資料由 Firestore `persistentLocalCache` 處理。
+- **靜態站資料源**：AniList GraphQL 支援 CORS 免金鑰；Nominatim 1 req/sec、免金鑰。
+- **iOS Shortcut 分享**：LINE Flex Message 擷取走「截圖 → OCR」最可靠。
+- **fast-flights**：用 `FlightQuery` / `create_query`（v3.x）；`FlightData` 為破壞性移除。
+- **圖片格式**：背景卡等圖片 jpg/png/webp 混雜，寫死檔名前**先確認格式**。
+
+---
+
+## 7. 環境差異備註（vs. Artifact）
+- 本機開發可用 localStorage／IndexedDB 除錯；線上部署 GitHub Pages 時，持久化仍走 Firestore。
+- 本機可實跑、可 git、可 build/test —— review 標準相應提高。
+
+---
+
+## 8. 專案技術背景【poke-change / 交換表】
+
+### 這個專案在做什麼
+Pokémon GO 交換清單製作工具。用圖鑑找出活動裝扮、地區型與背卡寶可夢，
+排出「想要」與「可以給」兩份清單，產生分享圖傳給對方。
+
+**差異化在資料庫深度**，不在介面。一般交換工具只收一般型態，
+這裡收 1478 個條目，其中 298 個裝扮橫跨一百多個物種，
+再加 17 張活動背卡、195 個收集格。
+
+### 技術棧（一行摘要）
+純靜態站：ES modules，無建置流程，無後台，資料存在使用者裝置的 localStorage。
+
+### 沒有 Firebase，也不會有
+刻意的決定。核心原則是**壓低營運成本到只剩網域年費**。
+沒有帳號、沒有雲端、沒有跨裝置同步。代價是使用者換裝置就沒了，
+所以匯出備份必須是一等公民，不能藏在設定裡。
+
+**iOS Safari 會清掉 localStorage**（長期沒互動的網站，大約兩週）。
+這擋不掉，只能靠匯出提醒。介面上的警語不要拿掉。
+
+### 儲存結構
+```
+localStorage["poke-change/v1"]     交換清單
+  { v:1, want:[...], have:[...], name:{want,have}, updated }
+  項目：{ id, shiny, xxl, xxs, bg, note }
+
+localStorage["poke-change/pref"]   偏好
+  { lang, dark }
+```
+
+兩個 key 分開存，「清空全部」只清前者，不會把語言也重設掉。
+
+**讀進來的資料一律不信任**，全部過 `store.normalize()`。
+localStorage 使用者可以手動改，也可能是舊版寫的。
+
+### 條目 id 設計（三個不可違反的原則）
+1. **只存使用者的選擇**，名稱、圖片、屬性一律以 `dex.js` 為準。
+   圖鑑更新、改譯名、補裝扮都不影響既有紀錄，不需要資料遷移。
+2. **id 一旦發布就不能改**。它是使用者紀錄的鍵。
+3. **id 的形狀**：
+   ```
+   d150                    一般
+   d150.fA                 型態變化
+   d25.cHALLOWEEN_2017     裝扮
+   d25.xREDS_HAT           裝扮，圖片來自外部個人專案
+   ```
+
+### 資料來源
+
+| 用途 | 來源 | 風險 |
+| --- | --- | --- |
+| 遊戲數值、型態清單 | PokeMiners/game_masters | 低 |
+| GO 圖示、官方三語名稱 | PokeMiners/pogo_assets | 低 |
+| 部分裝扮皮卡丘 | Choggor/Pikachu-costume-tracker | **中，個人專案** |
+| 立繪備援 | PokeAPI/sprites | 低 |
+| 背卡圖 | 自己的 `img/bg/` | 無 |
+
+`tools/build-dex.mjs` 離線解析前兩者產生 `js/godex.js`，
+網站執行時不會抓這些檔案。GO 更新後重跑腳本即可。
+
+**圖片不鏡像進 repo**。3426 張約 75 MB，而且是 Niantic 素材，
+進了 git 歷史要拿掉得改寫歷史。一律直接連外部 CDN。
+
+### 部署
+- 目前：**尚未部署**，repo 還沒推上 GitHub
+- 計畫：先用公開 repo + GitHub Pages（`main` 根目錄，無建置流程，push 即生效）
+- 之後：轉私人 repo + Cloudflare Pages + 自有網域
+- 因為沒有建置流程，兩邊都只是丟靜態檔，隨時可以搬
+
+### 已知地雷（本專案特有）
+
+- **`.g2` 是同一個條目的新版渲染**，不是不同條目。解析圖檔名時要去掉，
+  否則每個裝扮都會變成兩筆。
+
+- **裝扮在上游有兩套命名**：`.cCODE` 與 `.fCODE`。同一個活動有時歸型態、
+  有時歸裝扮，所以合併重複時不能只看其中一種。
+
+- **`_NOEVOLVE` 是遊戲機制不是外觀**（穿了不能進化）。同一個裝扮可能同時有
+  `X` 與 `X_NOEVOLVE` 兩個代碼，圖鑑要合併成一筆，否則會出現兩張一樣的卡。
+
+- **上游大小寫會不一致**（出現過 `fMay_2023` 與 `fMAY_2023`），
+  代碼一律轉大寫再比對。
+
+- **型態與裝扮可以並存**（例如南瓜精四種尺寸各有萬聖節版），
+  組名稱時兩個標籤都要留，否則四筆會變成一模一樣的「2022 萬聖節」。
+
+- **異色是否實裝，game master 沒有旗標**。靠「有沒有異色圖檔」判斷。
+  實測熊徒弟、武道熊師、眷戀雲確實沒有異色圖，與已知情況相符。
+
+- **超級進化與極巨化不是可交換條目**，是戰鬥中的暫時狀態，產生時整批排除。
+
+- **裝扮沒有官方名稱**。遊戲內只顯示物種名，語言檔查不到。
+  譯名全部在 `js/costumes.js` 自己維護。
+
+- **捷拉奧拉上游沒有 GO 圖示**（`pm807.icon.png` 404），
+  在 `js/extra.js` 手動補一筆，用官方立繪。
+
+- **背卡沒有任何資料源**，百分之百手工維護。這是護城河也是負擔。
+
+- **GO 圖示非正方形**且各不相同。畫面一律 `object-fit: contain`、
+  canvas 等比縮放，不可假設正方形。
+
+- **本機開發不能用 `file://`**：ES modules 會被 CORS 擋，
+  必須 `python3 -m http.server 8000`。
+
+- **headless Chrome 的視埠下限是 500px**。用 `--window-size=430` 截圖
+  看起來溢出其實是裁切，不是版面問題。要量真正的手機寬度得用 iframe。
+
+- **`process.exit()` 在 Windows 上會炸**：fetch 的 keep-alive socket 還開著時
+  強制結束會 assertion abort。腳本一律設 `process.exitCode`。
+
+### 測試方式
+
+```
+node tools/check.mjs        # 不連外網
+node tools/check.mjs --net  # 加驗圖片網址
+```
+
+涵蓋：三語 i18n key 一致性、條目欄位完整與 id 不重複、背卡引用、
+儲存往返、全部繪製函式（含 1478 筆詳情逐一繪製）、HTML 逸出。
+
+DOM stub 在 `tools/check.mjs` 裡面，需要新的元素 id 時加進去就好。
+
+改動介面後，除了 check 還要**實際起 server 用瀏覽器看**。
+headless 截圖指令：
+```
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  --headless --disable-gpu --window-size=1440,900 \
+  --virtual-time-budget=12000 --screenshot=out.png http://localhost:8000/
+```
+
+### 檔案結構
+
+```
+index.html            骨架（61 行）
+css/style.css         全部樣式，token 集中在 :root
+js/godex.js           自動產生的圖鑑資料（不要手改）
+js/extra.js           手動補的條目
+js/costumes.js        裝扮譯名
+js/dex.js             圖鑑單一入口
+js/store.js           localStorage 讀寫、匯出匯入
+js/backgrounds.js     活動背卡
+js/types.js           屬性顏色與名稱
+js/i18n.js            繁中／日／英字典
+js/ui.js              全部繪製函式
+js/main.js            進入點、狀態、事件
+js/share.js           雙欄分享圖（canvas）
+img/bg/               背卡圖片（17 張，進 git）
+tools/build-dex.mjs   產生圖鑑資料
+tools/check.mjs       自我檢查
+project-index.md      檔案索引與依賴關係
+progress.md           開發歷史
+```
+
+**三個檢視**（側欄切換）：圖鑑、交換表、背卡
+
+### 目前規模
+
+| 項目 | 數量 |
+| --- | --- |
+| 圖鑑條目 | 1478 |
+| 　一般 | 893 |
+| 　型態變化（含地區型 55） | 287 |
+| 　裝扮 | 298 |
+| 已實裝異色 | 1434 |
+| 活動 / 背卡 / 收集格 | 7 / 17 / 195 |
+| 介面文字 | 三語各 70 個 key |
+
+### 待辦
+
+- 推上 GitHub 並設定 Pages
+- 裝扮譯名有 4 個代碼是推測的（`js/costumes.js` 標 ※）
+- `S` 型態譯成「特別」是暫定
+- 之後轉私人 repo + Cloudflare Pages + 自有網域

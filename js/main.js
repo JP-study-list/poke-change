@@ -1,0 +1,387 @@
+/**
+ * main.js — 進入點
+ *
+ * 唯一保管 state、唯一綁事件的檔案。
+ * 資料流一律是：使用者操作 → 改 state → draw() → save()
+ *
+ * 事件全部用 document 委派，因為畫面是整塊重畫的，
+ * 個別綁定會在重畫後失效。
+ */
+
+import { LANGS, DEFAULT_LANG, makeT } from "./i18n.js";
+import { find, fullName } from "./dex.js";
+import * as store from "./store.js";
+import * as ui from "./ui.js";
+import { buildShareImage } from "./share.js";
+
+/* ─────────── state ─────────── */
+
+const state = {
+  data: store.emptyData(),
+  lang: DEFAULT_LANG,
+  view: "dex", // dex / trade / bg
+  filter: "all",
+  query: "",
+  openId: null, // 詳情面板顯示的條目
+  openCard: null, // 詳情面板顯示的背卡
+};
+
+let t = makeT(state.lang);
+
+/* ─────────── 偏好設定 ─────────── */
+
+/**
+ * 語言與深淺色存在另一個 key，跟交換清單分開。
+ * 這樣「清空全部」不會把語言也重設掉。
+ */
+const PREF_KEY = "poke-change/pref";
+
+function loadPref() {
+  try {
+    const p = JSON.parse(localStorage.getItem(PREF_KEY) || "{}");
+    if (LANGS.some((l) => l.code === p.lang)) state.lang = p.lang;
+    if (p.dark) document.body.classList.add("dark");
+  } catch {
+    /* 讀不到就用預設，不是錯誤 */
+  }
+}
+
+function savePref() {
+  try {
+    localStorage.setItem(
+      PREF_KEY,
+      JSON.stringify({
+        lang: state.lang,
+        dark: document.body.classList.contains("dark"),
+      })
+    );
+  } catch {
+    /* 存不了也不影響使用 */
+  }
+}
+
+/* ─────────── 繪製 ─────────── */
+
+function draw() {
+  ui.renderChrome(t, state.lang);
+  ui.renderViews(state.view, t);
+
+  const isDex = state.view === "dex";
+  document.querySelector("#filterBlock").hidden = !isDex;
+  document.querySelector("#searchbar").hidden = !isDex;
+
+  if (state.view === "dex") {
+    ui.renderFilters(state.filter, t);
+    const list = ui.visibleEntries(state.filter, state.query);
+    document.querySelector("#viewTitle").innerHTML = `${t(
+      "viewDex"
+    )}<span class="dim">${t("itemCount", list.length)}</span>`;
+    ui.renderGrid(list, state.data, state.lang, t);
+  } else if (state.view === "trade") {
+    document.querySelector("#viewTitle").textContent = t("viewTrade");
+    ui.renderTrade(state.data, state.lang, t);
+  } else {
+    document.querySelector("#viewTitle").textContent = t("viewBg");
+    ui.renderBg(state.lang, t);
+  }
+}
+
+function drawDetail() {
+  if (state.openId) ui.renderDetail(state.openId, state.data, state.lang, t);
+  else if (state.openCard) ui.renderCardDetail(state.openCard, state.lang, t);
+}
+
+function save() {
+  store.save(state.data, (ok) => {
+    if (!ok) ui.toast(t("saveFailed"));
+  });
+}
+
+/* ─────────── 操作 ─────────── */
+
+/** 把條目加進某一欄，已經在裡面就移除，讓同一顆按鈕可以來回切 */
+function toggleColumn(id, col) {
+  const list = state.data[col];
+  const i = list.findIndex((x) => x.id === id);
+  if (i >= 0) {
+    list.splice(i, 1);
+  } else {
+    if (list.length >= store.MAX_ITEMS) {
+      ui.toast(t("full", store.MAX_ITEMS));
+      return;
+    }
+    // 沒有異色可收的條目不預設勾異色，不然會出現收不到的需求
+    const e = find(id);
+    list.push(store.newItem(id, !!(e && e.shinyIcon)));
+  }
+  save();
+  draw();
+  drawDetail();
+}
+
+/** 改某一筆的標記 */
+function setField(col, idx, field, value) {
+  const item = state.data[col][idx];
+  if (!item) return;
+  item[field] = value;
+  save();
+}
+
+function removeItem(col, idx) {
+  state.data[col].splice(idx, 1);
+  save();
+  draw();
+}
+
+/* ─────────── 匯出與匯入 ─────────── */
+
+function download(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // 立刻釋放會讓部分瀏覽器來不及下載，延後一點
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+function doExport() {
+  const blob = new Blob([store.toJSON(state.data)], {
+    type: "application/json",
+  });
+  download(blob, store.exportName());
+  ui.toast(t("exported"));
+}
+
+function doImport(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const data = store.fromJSON(String(reader.result));
+    if (!data) {
+      ui.toast(t("importFailed"));
+      return;
+    }
+    state.data = data;
+    store.flush(state.data);
+    ui.toast(t("imported"));
+    draw();
+  };
+  reader.onerror = () => ui.toast(t("importFailed"));
+  reader.readAsText(file);
+}
+
+function doReset() {
+  if (!confirm(t("resetConfirm"))) return;
+  store.clear();
+  state.data = store.emptyData();
+  ui.toast(t("resetDone"));
+  draw();
+}
+
+/* ─────────── 分享圖 ─────────── */
+
+async function doShare(btn) {
+  const { want, have } = state.data;
+  if (!want.length && !have.length) {
+    ui.toast(t("shareEmpty"));
+    return;
+  }
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = t("sharing");
+  try {
+    const blob = await buildShareImage(state.data, {
+      title: state.data.name.want || t("shareTitle"),
+      dark: document.body.classList.contains("dark"),
+      lang: state.lang,
+      t,
+    });
+    if (!blob) throw new Error("empty blob");
+    download(blob, `poke-change-${Date.now()}.png`);
+    ui.toast(t("shareDone"));
+  } catch (err) {
+    console.error("[share] 失敗：", err);
+    ui.toast(t("shareFailed"));
+  }
+  btn.disabled = false;
+  btn.textContent = label;
+}
+
+/* ─────────── 事件 ─────────── */
+
+document.addEventListener("click", (ev) => {
+  const el = (sel) => ev.target.closest(sel);
+
+  // 語言
+  const lang = el("[data-lang]");
+  if (lang) {
+    state.lang = lang.dataset.lang;
+    t = makeT(state.lang);
+    savePref();
+    draw();
+    drawDetail();
+    return;
+  }
+
+  // 檢視切換
+  const view = el("[data-view]");
+  if (view) {
+    state.view = view.dataset.view;
+    state.openId = state.openCard = null;
+    ui.closeSheet();
+    ui.setSidebar(false);
+    draw();
+    return;
+  }
+
+  // 篩選
+  const filter = el("[data-filter]");
+  if (filter) {
+    state.filter = filter.dataset.filter;
+    draw();
+    return;
+  }
+
+  // 側欄與遮罩
+  if (el("#menuBtn")) {
+    ui.setSidebar(!document.body.classList.contains("side-open"));
+    return;
+  }
+  if (ev.target.id === "scrim") {
+    ui.setSidebar(false);
+    return;
+  }
+
+  // 深淺色
+  if (el("#themeBtn")) {
+    document.body.classList.toggle("dark");
+    savePref();
+    return;
+  }
+
+  // 資料按鈕
+  const act = el("[data-act]");
+  if (act) {
+    if (act.dataset.act === "export") doExport();
+    if (act.dataset.act === "import") document.querySelector("#importFile").click();
+    if (act.dataset.act === "reset") doReset();
+    return;
+  }
+
+  // 關閉面板
+  if (el("[data-close]") || ev.target.id === "sheet") {
+    state.openId = state.openCard = null;
+    ui.closeSheet();
+    return;
+  }
+
+  // 加入某一欄
+  const add = el("[data-add]");
+  if (add && state.openId) {
+    toggleColumn(state.openId, add.dataset.add);
+    return;
+  }
+
+  // 交換表的標記與刪除
+  const item = el(".item");
+  if (item) {
+    const col = item.dataset.col;
+    const idx = Number(item.dataset.idx);
+    if (el("[data-del]")) {
+      removeItem(col, idx);
+      return;
+    }
+    const mk = el(".mk[data-field]");
+    if (mk) {
+      const field = mk.dataset.field;
+      const next = mk.getAttribute("aria-pressed") !== "true";
+      setField(col, idx, field, next);
+      mk.setAttribute("aria-pressed", String(next));
+      // 異色會換圖，其他標記不影響外觀，不必整塊重畫
+      if (field === "shiny") draw();
+      return;
+    }
+  }
+
+  // 分享
+  if (el("#shareBtn")) {
+    doShare(el("#shareBtn"));
+    return;
+  }
+
+  // 背卡卡片
+  const card = el("[data-card]");
+  if (card) {
+    state.openCard = card.dataset.card;
+    state.openId = null;
+    drawDetail();
+    ui.openSheet();
+    return;
+  }
+
+  // 圖鑑格子
+  const cell = el("[data-id]");
+  if (cell) {
+    state.openId = cell.dataset.id;
+    state.openCard = null;
+    drawDetail();
+    ui.openSheet();
+  }
+});
+
+document.addEventListener("input", (ev) => {
+  const el = ev.target;
+
+  if (el.id === "q") {
+    state.query = el.value;
+    draw();
+    // 重畫會換掉輸入框，把游標放回去
+    const box = document.querySelector("#q");
+    if (box) {
+      box.value = state.query;
+      box.focus();
+      box.setSelectionRange(state.query.length, state.query.length);
+    }
+    return;
+  }
+
+  if (el.id === "listName") {
+    state.data.name.want = el.value;
+    save();
+    return;
+  }
+
+  const item = el.closest && el.closest(".item");
+  if (item && el.dataset.field) {
+    setField(item.dataset.col, Number(item.dataset.idx), el.dataset.field, el.value);
+  }
+});
+
+document.addEventListener("change", (ev) => {
+  if (ev.target.id === "importFile") {
+    const file = ev.target.files && ev.target.files[0];
+    if (file) doImport(file);
+    ev.target.value = ""; // 同一個檔案要能再選一次
+  }
+});
+
+document.addEventListener("keydown", (ev) => {
+  if (ev.key === "Escape") {
+    state.openId = state.openCard = null;
+    ui.closeSheet();
+    ui.setSidebar(false);
+  }
+});
+
+// 關閉分頁前把還沒送出的變更寫掉
+window.addEventListener("pagehide", () => store.flush(state.data));
+
+/* ─────────── 啟動 ─────────── */
+
+loadPref();
+t = makeT(state.lang);
+ui.setLangs(LANGS);
+state.data = store.load();
+draw();

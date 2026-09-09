@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>交換表 · Pokémon GO 交換清單製作</title>
+    <meta name="description" content="用圖鑑找出活動裝扮、地區型與背卡寶可夢，排出想要與可以給的交換清單，一鍵產生分享圖。" />
+    <link rel="stylesheet" href="./css/style.css" />
+  </head>
+  <body>
+    <!--
+      骨架而已。所有內容由 js/ui.js 在執行時填入，
+      這裡只保留容器與不會變的結構。
+    -->
+    <header class="topbar">
+      <button class="icon-btn" id="menuBtn" type="button" aria-label="選單">☰</button>
+      <div class="brand">
+        <strong id="appName">交換表</strong>
+        <span id="subtitle" class="dim"></span>
+      </div>
+      <div class="top-right">
+        <div class="langs" id="langs"></div>
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="深色模式">◐</button>
+      </div>
+    </header>
+
+    <div class="scrim" id="scrim" hidden></div>
+
+    <div class="layout">
+      <aside class="sidebar" id="sidebar">
+        <nav class="views" id="views"></nav>
+        <section class="side-block" id="filterBlock">
+          <p class="side-title" id="filterTitle"></p>
+          <div class="filters" id="filters"></div>
+        </section>
+        <section class="side-block">
+          <p class="side-title" id="dataTitle"></p>
+          <div class="data-actions" id="dataActions"></div>
+          <p class="notice" id="localNotice"></p>
+        </section>
+      </aside>
+
+      <main class="content">
+        <div class="searchbar" id="searchbar">
+          <input id="q" type="search" autocomplete="off" />
+        </div>
+        <h1 class="view-title" id="viewTitle"></h1>
+        <div id="app"></div>
+      </main>
+    </div>
+
+    <div class="sheet" id="sheet" aria-hidden="true">
+      <div class="sheet-inner" id="panel"></div>
+    </div>
+
+    <div class="toast" id="toast" hidden></div>
+    <input type="file" id="importFile" accept="application/json,.json" hidden />
+
+    <script type="module" src="./js/main.js"></script>
+  </body>
+</html>
