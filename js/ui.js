@@ -183,6 +183,47 @@ const CLS_LABEL = {
   ultra_beast: "clsUltraBeast",
 };
 
+/**
+ * 詳情面板裡的條件編輯區。
+ *
+ * 所有文字型的設定都集中在這裡，交換表本身只顯示圖與符號。
+ * 沒加進這一欄就不顯示，避免面板變成一長串沒用的選項。
+ */
+function editBlock(col, data, id, e, lang, t) {
+  const idx = data[col].findIndex((x) => x.id === id);
+  if (idx < 0) return "";
+  const item = data[col][idx];
+
+  const mk = (field, label, cls) =>
+    `<button type="button" class="mk ${cls}" data-field="${field}"
+             aria-pressed="${!!item[field]}">${esc(label)}</button>`;
+
+  const cards = cardsFor(id);
+  const bgSelect = cards.length
+    ? `<select data-field="bg">
+         <option value="">${esc(t("bgAny"))}</option>
+         ${cards
+           .map(
+             ({ card }) =>
+               `<option value="${esc(card.id)}"${
+                 card.id === item.bg ? " selected" : ""
+               }>${esc(card[lang] || card.en)}</option>`
+           )
+           .join("")}
+       </select>`
+    : "";
+
+  return `<div class="d-edit ${col}" data-col="${col}" data-idx="${idx}">
+    <p class="d-sect">${esc(col === "want" ? t("colWant") : t("colHave"))}</p>
+    <div class="marks">
+      ${hasShiny(e) ? mk("shiny", t("markShiny"), "shiny") : ""}
+      ${mk("xxl", t("markXxl"), "xxl")}
+      ${mk("xxs", t("markXxs"), "xxs")}
+    </div>
+    ${bgSelect}
+  </div>`;
+}
+
 export function renderDetail(id, data, lang, t) {
   const e = find(id);
   if (!e) return;
@@ -243,6 +284,9 @@ export function renderDetail(id, data, lang, t) {
   )}</button>
     </div>
 
+    ${editBlock("want", data, id, e, lang, t)}
+    ${editBlock("have", data, id, e, lang, t)}
+
     <p class="d-sect">${esc(t("bgSection"))}</p>
     ${bgBlock}
 
@@ -251,60 +295,62 @@ export function renderDetail(id, data, lang, t) {
 
 /* ─────────── 交換表 ─────────── */
 
-/** 這個條目可以指定哪些背卡，給下拉選單用 */
-function bgOptions(id, selected, lang, t) {
-  const cards = cardsFor(id);
-  if (!cards.length) return "";
-  const opts = [`<option value="">${esc(t("bgAny"))}</option>`].concat(
-    cards.map(
-      ({ card }) =>
-        `<option value="${esc(card.id)}"${
-          card.id === selected ? " selected" : ""
-        }>${esc(card[lang] || card.en)}</option>`
-    )
-  );
-  return `<select data-field="bg">${opts.join("")}</select>`;
-}
-
-function renderItem(item, col, idx, lang, t) {
+/**
+ * 一格交換項目。
+ *
+ * 版面刻意跟圖鑑的格子一致：背卡圖疊在圖示後方，
+ * 狀態用角落的小符號表示，不寫成整行文字。
+ * 要改條件請點格子，在詳情面板裡調整。
+ */
+function tradeCell(item, col, idx, lang, t) {
   const e = find(item.id);
   if (!e) return "";
-  const mk = (field, label, cls) =>
-    `<button type="button" class="mk ${cls}" data-field="${field}" aria-pressed="${!!item[
-      field
-    ]}">${esc(label)}</button>`;
 
-  return `<div class="item" data-col="${col}" data-idx="${idx}">
+  const hit = item.bg ? allCards().find((x) => x.card.id === item.bg) : null;
+  const bgLayer = hit
+    ? `<span class="want-bg" style="background-image:url('${esc(hit.card.img)}')"></span>`
+    : "";
+
+  const tags = [
+    item.xxl ? `<em class="wt" style="--wt:var(--xxl)">XXL</em>` : "",
+    item.xxs ? `<em class="wt" style="--wt:var(--xxs)">XXS</em>` : "",
+    item.shiny ? `<em class="wt" style="--wt:var(--shiny)">✦</em>` : "",
+  ].join("");
+
+  return `<div class="cell want-cell" data-id="${esc(item.id)}">
+    ${bgLayer}
     <img ${iconAttrs(e, item.shiny)} alt="" loading="lazy" />
-    <div class="body">
-      <div class="nm">${esc(fullName(e, lang))}</div>
-      <div class="marks">
-        ${hasShiny(e) ? mk("shiny", t("markShiny"), "shiny") : ""}
-        ${mk("xxl", t("markXxl"), "xxl")}
-        ${mk("xxs", t("markXxs"), "xxs")}
-      </div>
-      ${bgOptions(item.id, item.bg, lang, t)}
-      <input class="note" data-field="note" value="${esc(item.note)}"
-             placeholder="${esc(t("noteHint"))}" maxlength="60" />
-    </div>
-    <button type="button" class="del" data-del="1" aria-label="${esc(
-      t("remove")
-    )}">×</button>
+    <span class="nm">${esc(speciesName(e, lang))}${
+    formName(e, lang) ? `<span class="form">${esc(formName(e, lang))}</span>` : ""
+  }</span>
+    ${tags ? `<span class="want-tags">${tags}</span>` : ""}
+    <button class="want-del" type="button" data-del="${idx}" data-col="${col}"
+            title="${esc(t("remove"))}">×</button>
   </div>`;
 }
 
-function renderColumn(col, items, lang, t) {
+/**
+ * 一欄的內容。
+ *
+ * 先濾掉查不到條目的紀錄再算數量，否則圖鑑更新拿掉某個 id 之後，
+ * 標題會寫 4 項但只畫得出 3 個。索引保留原本的位置，刪除才會刪對。
+ */
+function tradeColumn(col, items, lang, t) {
   const title = col === "want" ? t("colWant") : t("colHave");
-  const body = items.length
-    ? `<div class="items">${items
-        .map((it, i) => renderItem(it, col, i, lang, t))
+  const rows = items
+    .map((it, idx) => ({ it, idx }))
+    .filter(({ it }) => find(it.id));
+
+  const body = rows.length
+    ? `<div class="grid">${rows
+        .map(({ it, idx }) => tradeCell(it, col, idx, lang, t))
         .join("")}</div>`
     : `<p class="empty">${esc(col === "want" ? t("emptyWant") : t("emptyHave"))}</p>`;
 
   return `<section class="col ${col}">
     <div class="col-head">
       <span class="t">${esc(title)}</span>
-      <span class="n">${esc(t("itemCount", items.length))}</span>
+      <span class="n">${esc(t("itemCount", rows.length))}</span>
     </div>
     ${body}
   </section>`;
@@ -321,8 +367,8 @@ export function renderTrade(data, lang, t) {
       }>${esc(t("share"))}</button>
     </div>
     <div class="cols">
-      ${renderColumn("want", data.want, lang, t)}
-      ${renderColumn("have", data.have, lang, t)}
+      ${tradeColumn("want", data.want, lang, t)}
+      ${tradeColumn("have", data.have, lang, t)}
     </div>`;
 }
 

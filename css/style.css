@@ -611,27 +611,29 @@ select {
 .cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 20px;
   align-items: start;
-}
-
-.col {
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--card);
-  overflow: hidden;
 }
 
 .col-head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  border-bottom: 2px solid var(--line);
 }
 
 .col-head .t {
   font-weight: 600;
+}
+
+.col.want .col-head {
+  border-bottom-color: var(--want);
+}
+
+.col.have .col-head {
+  border-bottom-color: var(--have);
 }
 
 .col.want .col-head .t {
@@ -647,52 +649,134 @@ select {
   color: var(--dim);
 }
 
-.items {
-  display: flex;
-  flex-direction: column;
-}
-
-.item {
-  display: flex;
-  gap: 10px;
-  padding: 9px 12px;
-  border-bottom: 1px solid var(--line);
-  align-items: center;
-}
-
-.item:last-child {
-  border-bottom: 0;
-}
-
-.item img {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-  flex: 0 0 44px;
-}
-
-.item .body {
-  flex: 1;
-  min-width: 0;
-}
-
-.item .nm {
+.col .empty {
+  padding: 28px 12px;
   font-size: 13px;
-  line-height: 1.35;
 }
 
-.item .marks {
+/* 交換表的格子。底層是背卡圖，上面是寶可夢，角落是狀態符號 */
+.want-cell {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.want-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.5;
+}
+
+body.dark .want-bg {
+  opacity: 0.42;
+}
+
+.want-cell img,
+.want-cell .nm {
+  position: relative;
+}
+
+/*
+ * 名稱壓在背卡圖上會看不清楚，而且背卡有亮有暗，
+ * 靠文字陰影不夠穩。直接給一塊實色底最保險。
+ */
+.want-cell .nm {
+  display: inline-block;
+  max-width: 100%;
+  padding: 1px 6px 2px;
+  border-radius: 6px;
+  background: var(--card);
+}
+
+.want-tags {
+  position: absolute;
+  top: 6px;
+  left: 6px;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 4px;
+  gap: 3px;
+  max-width: calc(100% - 30px);
+}
+
+.wt {
+  background: var(--wt);
+  color: #fff;
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 999px;
+}
+
+.want-del {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--dim);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.want-cell:hover .want-del,
+.want-del:focus {
+  opacity: 1;
+}
+
+.want-del:hover {
+  color: var(--shiny);
+}
+
+/* 觸控裝置沒有 hover，刪除鈕一直顯示 */
+@media (hover: none) {
+  .want-del {
+    opacity: 1;
+  }
+}
+
+/* ─────────── 詳情面板的條件編輯 ─────────── */
+
+.d-edit {
+  padding: 10px 12px 12px;
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.d-edit.want {
+  border-left-color: var(--want);
+}
+
+.d-edit.have {
+  border-left-color: var(--have);
+}
+
+.d-edit .d-sect {
+  margin: 0 0 8px;
+}
+
+.d-edit .marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .mk {
-  padding: 1px 7px;
+  padding: 4px 11px;
   border-radius: 999px;
   border: 1px solid var(--line);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--dim);
   background: transparent;
   cursor: pointer;
@@ -715,37 +799,13 @@ select {
   background: var(--xxs);
 }
 
-.mk.bg[aria-pressed="true"] {
-  background: var(--bgcard);
-}
-
-.item select,
-.item .note {
-  margin-top: 5px;
+.d-edit select {
+  margin-top: 9px;
   width: 100%;
-  padding: 4px 7px;
+  padding: 6px 8px;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--bg);
-  font-size: 12px;
-}
-
-.item .del {
-  border: 0;
-  background: transparent;
-  color: var(--dim);
-  cursor: pointer;
-  font-size: 17px;
-  line-height: 1;
-  padding: 4px;
-}
-
-.item .del:hover {
-  color: var(--shiny);
-}
-
-.col .empty {
-  padding: 28px 16px;
   font-size: 13px;
 }
 

@@ -1,8 +1,11 @@
 /**
  * share.js — 產生交換清單的分享圖
  *
- * 左右兩欄，左邊想要、右邊可以給，一張圖就講完整件事。
- * 這是主要的分享方式，所以要能直接丟進 LINE 或 Discord 看得懂。
+ * 版面刻意跟畫面上的交換表一致：方格牆，背卡圖疊在寶可夢後方，
+ * 狀態用角落的小符號表示。看圖的人不必讀字就知道你要什麼。
+ *
+ * 兩區上下排列，上面「想要」下面「可以給」。
+ * 左右並排會太寬，傳進 LINE 會被縮到看不清楚。
  *
  * ── 為什麼要 crossOrigin ──
  * 圖片來自別的網域，沒設 crossOrigin 的話 canvas 會被標記為「污染」，
@@ -12,17 +15,17 @@
  * 手機螢幕是高密度的，用 1 倍畫出來傳過去會糊。
  */
 
-import { find, fullName, goUrl, artUrl } from "./dex.js";
+import { find, speciesName, formName, goUrl, artUrl } from "./dex.js";
 import { allCards } from "./backgrounds.js";
 
 const SCALE = 2;
-const PAD = 24;
-const COL_W = 300;
-const GAP = 20;
-const ROW_H = 72;
-const HEAD_H = 78;
-const COL_HEAD_H = 34;
-const FOOT_H = 30;
+const PAD = 20;
+const COLS = 4;
+const CELL = 148;
+const NAME_H = 34;
+const TITLE_H = 60;
+const SECT_H = 34;
+const FOOT_H = 28;
 
 const LIGHT = {
   bg: "#f5f5f3",
@@ -30,12 +33,12 @@ const LIGHT = {
   line: "#e2e0da",
   ink: "#22201c",
   dim: "#7d7870",
+  gold: "#b8860b",
   want: "#c05621",
   have: "#2f6f4f",
   shiny: "#c94f7c",
   xxl: "#2f6f4f",
   xxs: "#8a5cc4",
-  bgcard: "#4a7fb5",
 };
 
 const DARK = {
@@ -44,13 +47,15 @@ const DARK = {
   line: "#34312a",
   ink: "#ece9e0",
   dim: "#96908a",
+  gold: "#d9a520",
   want: "#e08a52",
   have: "#5fae83",
   shiny: "#e87ba3",
   xxl: "#5fae83",
   xxs: "#b088e8",
-  bgcard: "#6fa8dc",
 };
+
+const FONT = "'Noto Sans TC', 'Hiragino Sans', system-ui, sans-serif";
 
 /** 載入圖片，失敗回 null 而不是中斷整張圖 */
 function loadImage(src) {
@@ -67,7 +72,9 @@ function loadImage(src) {
 /** 依條目取圖，順序跟畫面上的備援鏈一致 */
 async function loadSprite(entry, shiny) {
   if (!entry) return null;
-  if (entry.art) return (await loadImage(entry.art)) || (await loadImage(artUrl(entry.dex)));
+  if (entry.art) {
+    return (await loadImage(entry.art)) || (await loadImage(artUrl(entry.dex)));
+  }
   const main = shiny && entry.shinyIcon ? entry.shinyIcon : entry.icon;
   return (
     (await loadImage(goUrl(main))) ||
@@ -86,25 +93,28 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-/** 畫一顆小標籤，回傳畫完後的 x，方便接著畫下一顆 */
-function chip(ctx, text, x, y, color) {
-  ctx.font = "500 11px system-ui, sans-serif";
-  const w = ctx.measureText(text).width + 12;
-  ctx.fillStyle = color;
-  roundRect(ctx, x, y, w, 16, 8);
-  ctx.fill();
-  ctx.fillStyle = "#fff";
-  ctx.textBaseline = "middle";
-  ctx.fillText(text, x + 6, y + 8.5);
-  return x + w + 4;
-}
-
-/** 文字太長就截斷加省略號，避免溢出欄寬 */
+/** 文字太長就截斷加省略號 */
 function fit(ctx, text, max) {
   if (ctx.measureText(text).width <= max) return text;
   let s = text;
   while (s.length > 1 && ctx.measureText(s + "…").width > max) s = s.slice(0, -1);
   return s + "…";
+}
+
+/** 等比縮放置中。GO 圖示不是正方形，不能直接拉滿 */
+function drawContain(ctx, img, x, y, box, ratio) {
+  const k = Math.min((box * ratio) / img.width, (box * ratio) / img.height);
+  const w = img.width * k;
+  const h = img.height * k;
+  ctx.drawImage(img, x + (box - w) / 2, y + (box - h) / 2, w, h);
+}
+
+/** 填滿整格，用在背卡底圖 */
+function drawCover(ctx, img, x, y, box) {
+  const k = Math.max(box / img.width, box / img.height);
+  const w = img.width * k;
+  const h = img.height * k;
+  ctx.drawImage(img, x + (box - w) / 2, y + (box - h) / 2, w, h);
 }
 
 /**
@@ -117,14 +127,24 @@ export async function buildShareImage(data, opts) {
   const { title, dark, lang, t } = opts;
   const C = dark ? DARK : LIGHT;
 
-  const cols = [
-    { key: "want", label: t("colWant"), color: C.want, items: data.want },
-    { key: "have", label: t("colHave"), color: C.have, items: data.have },
-  ];
+  /*
+   * 查不到條目的紀錄先濾掉，否則標題的數量會跟畫出來的格子對不上。
+   * 圖鑑更新拿掉某個 id 之後就會發生。
+   * 空的那一區整段不畫，不留下一塊空白。
+   */
+  const known = (list) => list.filter((it) => find(it.id));
+  const sections = [
+    { label: t("colWant"), color: C.want, items: known(data.want) },
+    { label: t("colHave"), color: C.have, items: known(data.have) },
+  ].filter((s) => s.items.length);
 
-  const rows = Math.max(cols[0].items.length, cols[1].items.length, 1);
-  const W = PAD * 2 + COL_W * 2 + GAP;
-  const H = HEAD_H + COL_HEAD_H + rows * ROW_H + FOOT_H + PAD;
+  if (!sections.length) return null;
+
+  const sectionH = (s) =>
+    SECT_H + Math.ceil(s.items.length / COLS) * (CELL + NAME_H);
+
+  const W = PAD * 2 + COLS * CELL;
+  const H = TITLE_H + sections.reduce((n, s) => n + sectionH(s), 0) + FOOT_H + PAD;
 
   const canvas = document.createElement("canvas");
   canvas.width = W * SCALE;
@@ -132,122 +152,130 @@ export async function buildShareImage(data, opts) {
   const ctx = canvas.getContext("2d");
   ctx.scale(SCALE, SCALE);
 
-  // 底
   ctx.fillStyle = C.bg;
   ctx.fillRect(0, 0, W, H);
 
-  // 標題
-  ctx.fillStyle = C.ink;
-  ctx.textBaseline = "alphabetic";
-  ctx.font = "600 22px system-ui, sans-serif";
-  ctx.fillText(fit(ctx, title, W - PAD * 2), PAD, PAD + 22);
+  ctx.fillStyle = C.gold;
+  ctx.font = `600 24px ${FONT}`;
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "left";
+  ctx.fillText(fit(ctx, title, W - PAD * 2), PAD, TITLE_H / 2 + 4);
 
-  // 背卡名稱查詢表，項目上要標「指定哪張背卡」
-  const cardName = {};
-  for (const { card } of allCards()) cardName[card.id] = card[lang] || card.en;
+  const cardById = Object.create(null);
+  for (const { card } of allCards()) cardById[card.id] = card;
 
-  // 先把所有圖抓回來，一次畫完
-  const sprites = new Map();
-  await Promise.all(
-    cols.flatMap((col) =>
-      col.items.map(async (it) => {
-        const key = `${it.id}|${it.shiny ? 1 : 0}`;
-        if (sprites.has(key)) return;
-        sprites.set(key, await loadSprite(find(it.id), it.shiny));
-      })
-    )
-  );
+  // 先把要用的圖全部載入，避免逐格等待
+  const jobs = [];
+  for (const s of sections) {
+    for (const it of s.items) {
+      jobs.push(
+        (async () => ({
+          it,
+          sprite: await loadSprite(find(it.id), it.shiny),
+          bgImg:
+            it.bg && cardById[it.bg] ? await loadImage(cardById[it.bg].img) : null,
+        }))()
+      );
+    }
+  }
+  const loaded = new Map();
+  for (const r of await Promise.all(jobs)) loaded.set(r.it, r);
 
-  cols.forEach((col, ci) => {
-    const x = PAD + ci * (COL_W + GAP);
-    let y = HEAD_H;
+  let y = TITLE_H;
 
-    // 欄標題
-    ctx.fillStyle = col.color;
-    ctx.font = "600 15px system-ui, sans-serif";
-    ctx.textBaseline = "alphabetic";
-    ctx.fillText(`${col.label}  ${col.items.length}`, x + 4, y + 18);
-    y += COL_HEAD_H;
+  for (const sect of sections) {
+    ctx.fillStyle = sect.color;
+    ctx.font = `600 15px ${FONT}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(`${sect.label}  ${sect.items.length}`, PAD, y + SECT_H / 2);
 
-    // 底板
-    ctx.fillStyle = C.card;
-    roundRect(ctx, x, y, COL_W, Math.max(rows, 1) * ROW_H, 10);
-    ctx.fill();
-    ctx.strokeStyle = C.line;
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = sect.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(PAD, y + SECT_H - 5);
+    ctx.lineTo(W - PAD, y + SECT_H - 5);
     ctx.stroke();
 
-    col.items.forEach((it, i) => {
-      const ry = y + i * ROW_H;
+    const top = y + SECT_H;
+
+    sect.items.forEach((it, i) => {
       const e = find(it.id);
-      if (!e) return;
+      const { sprite, bgImg } = loaded.get(it) || {};
 
-      if (i) {
-        ctx.strokeStyle = C.line;
-        ctx.beginPath();
-        ctx.moveTo(x + 10, ry);
-        ctx.lineTo(x + COL_W - 10, ry);
-        ctx.stroke();
+      const cx = PAD + (i % COLS) * CELL;
+      const cy = top + Math.floor(i / COLS) * (CELL + NAME_H);
+      const box = CELL - 10;
+      const bx = cx + 5;
+
+      ctx.save();
+      roundRect(ctx, bx, cy, box, box, 12);
+      ctx.fillStyle = C.card;
+      ctx.fill();
+      ctx.clip();
+
+      // 指定了背卡才畫底圖，疊在寶可夢後方
+      if (bgImg) {
+        ctx.globalAlpha = dark ? 0.42 : 0.5;
+        drawCover(ctx, bgImg, bx, cy, box);
+        ctx.globalAlpha = 1;
+      }
+      if (sprite) drawContain(ctx, sprite, bx, cy, box, 0.78);
+      ctx.restore();
+
+      ctx.strokeStyle = C.line;
+      ctx.lineWidth = 1;
+      roundRect(ctx, bx + 0.5, cy + 0.5, box - 1, box - 1, 12);
+      ctx.stroke();
+
+      // 狀態符號，跟畫面上的格子一致
+      const tags = [];
+      if (it.xxl) tags.push(["XXL", C.xxl]);
+      if (it.xxs) tags.push(["XXS", C.xxs]);
+      if (it.shiny) tags.push(["✦", C.shiny]);
+
+      let tx = bx + 6;
+      ctx.font = `600 11px ${FONT}`;
+      ctx.textBaseline = "middle";
+      for (const [label, color] of tags) {
+        const w = ctx.measureText(label).width + 12;
+        ctx.fillStyle = color;
+        roundRect(ctx, tx, cy + 6, w, 17, 8);
+        ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.fillText(label, tx + 6, cy + 15);
+        tx += w + 4;
       }
 
-      // 圖示，一律等比縮放置中，GO 圖示不是正方形
-      const img = sprites.get(`${it.id}|${it.shiny ? 1 : 0}`);
-      if (img) {
-        const box = 48;
-        const k = Math.min(box / img.width, box / img.height);
-        const w = img.width * k;
-        const h = img.height * k;
-        ctx.drawImage(
-          img,
-          x + 8 + (box - w) / 2,
-          ry + (ROW_H - box) / 2 + (box - h) / 2,
-          w,
-          h
-        );
-      }
-
-      const tx = x + 60;
-      const maxW = COL_W - 68;
-
-      /*
-       * 一列可能有一到三段：名稱、標籤、備註。
-       * 先算出實際高度再整塊垂直置中，否則只有名稱的那幾列
-       * 會文字靠上、圖示置中，看起來像沒對齊。
-       */
-      const chips = [
-        it.shiny && [t("markShiny"), C.shiny],
-        it.xxl && [t("markXxl"), C.xxl],
-        it.xxs && [t("markXxs"), C.xxs],
-        it.bg && cardName[it.bg] && [cardName[it.bg], C.bgcard],
-      ].filter(Boolean);
-
-      const blockH = 18 + (chips.length ? 22 : 0) + (it.note ? 18 : 0);
-      const top = ry + (ROW_H - blockH) / 2;
+      // 名稱在格子下方，型態或裝扮另起一行小字
+      const form = formName(e, lang);
+      ctx.textAlign = "center";
+      const mid = bx + box / 2;
 
       ctx.fillStyle = C.ink;
-      ctx.font = "500 13px system-ui, sans-serif";
-      ctx.textBaseline = "alphabetic";
-      ctx.fillText(fit(ctx, fullName(e, lang), maxW), tx, top + 13);
+      ctx.font = `500 13px ${FONT}`;
+      ctx.fillText(
+        fit(ctx, speciesName(e, lang), box),
+        mid,
+        cy + box + (form ? 11 : 17)
+      );
 
-      let cx = tx;
-      if (chips.length) {
-        for (const [label, color] of chips) cx = chip(ctx, label, cx, top + 20, color);
-      }
-
-      if (it.note) {
+      if (form) {
         ctx.fillStyle = C.dim;
-        ctx.font = "12px system-ui, sans-serif";
-        ctx.textBaseline = "alphabetic";
-        ctx.fillText(fit(ctx, it.note, maxW), tx, top + blockH - 4);
+        ctx.font = `11px ${FONT}`;
+        ctx.fillText(fit(ctx, form, box), mid, cy + box + 25);
       }
+      ctx.textAlign = "left";
     });
-  });
 
-  // 頁尾
+    y += sectionH(sect);
+  }
+
   ctx.fillStyle = C.dim;
-  ctx.font = "11px system-ui, sans-serif";
-  ctx.textBaseline = "alphabetic";
-  ctx.fillText(t("subtitle"), PAD, H - PAD + 6);
+  ctx.font = `11px ${FONT}`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText(t("subtitle"), PAD, H - PAD - 2);
 
   return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
 }

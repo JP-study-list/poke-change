@@ -85,7 +85,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 檔案 | 用途 |
 | --- | --- |
 | `js/ui.js` | 全部繪製函式。三個檢視共用 |
-| `js/share.js` | 雙欄分享圖。canvas 畫 PNG，2 倍解析度，深色模式輸出深色版 |
+| `js/share.js` | 分享圖。方格牆版面，兩區上下排列，canvas 畫 PNG，2 倍解析度，深色模式輸出深色版 |
 
 `ui.js` 依檢視分區：
 
@@ -93,7 +93,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | --- | --- |
 | 版面共用 | `renderChrome` `renderViews` `setSidebar` `toast` `openSheet` `closeSheet` `esc` |
 | 圖鑑 | `renderFilters` `visibleEntries` `renderGrid` `renderDetail` |
-| 交換表 | `renderTrade` |
+| 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` |
 | 背卡 | `renderBg` `renderCardDetail` |
 
 ### 協調層
@@ -134,7 +134,8 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改配色、字級、間距 | `css/style.css` 的 `:root` |
 | 改介面文字、加語言 | `js/i18n.js`（三語 key 必須一致） |
 | 改屬性配色 | `js/types.js` |
-| 改分享圖版面 | `js/share.js` 上方的尺寸常數 |
+| 改分享圖版面 | `js/share.js` 上方的尺寸常數（`CELL` `COLS` `NAME_H`） |
+| 改交換表格子長相 | `js/ui.js` 的 `tradeCell` + `css/style.css` 的 `.want-cell` |
 | 改一欄的上限 | `js/store.js` 的 `MAX_ITEMS` |
 
 ---

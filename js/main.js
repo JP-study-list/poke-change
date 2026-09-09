@@ -284,23 +284,23 @@ document.addEventListener("click", (ev) => {
     return;
   }
 
-  // 交換表的標記與刪除
-  const item = el(".item");
-  if (item) {
-    const col = item.dataset.col;
-    const idx = Number(item.dataset.idx);
-    if (el("[data-del]")) {
-      removeItem(col, idx);
-      return;
-    }
+  // 交換表格子上的刪除鈕。要擋掉冒泡，否則會順便打開詳情面板
+  const del = el("[data-del]");
+  if (del && del.dataset.col) {
+    ev.stopPropagation();
+    removeItem(del.dataset.col, Number(del.dataset.del));
+    return;
+  }
+
+  // 詳情面板裡的條件標記
+  const edit = el(".d-edit[data-col]");
+  if (edit) {
     const mk = el(".mk[data-field]");
     if (mk) {
-      const field = mk.dataset.field;
       const next = mk.getAttribute("aria-pressed") !== "true";
-      setField(col, idx, field, next);
-      mk.setAttribute("aria-pressed", String(next));
-      // 異色會換圖，其他標記不影響外觀，不必整塊重畫
-      if (field === "shiny") draw();
+      setField(edit.dataset.col, Number(edit.dataset.idx), mk.dataset.field, next);
+      drawDetail();
+      draw();
       return;
     }
   }
@@ -353,13 +353,21 @@ document.addEventListener("input", (ev) => {
     return;
   }
 
-  const item = el.closest && el.closest(".item");
-  if (item && el.dataset.field) {
-    setField(item.dataset.col, Number(item.dataset.idx), el.dataset.field, el.value);
+  const edit = el.closest && el.closest(".d-edit[data-col]");
+  if (edit && el.dataset.field) {
+    setField(edit.dataset.col, Number(edit.dataset.idx), el.dataset.field, el.value);
+    draw(); // 指定背卡會換掉格子的底圖
   }
 });
 
 document.addEventListener("change", (ev) => {
+  const edit = ev.target.closest && ev.target.closest(".d-edit[data-col]");
+  if (edit && ev.target.dataset.field) {
+    setField(edit.dataset.col, Number(edit.dataset.idx), ev.target.dataset.field, ev.target.value);
+    draw();
+    return;
+  }
+
   if (ev.target.id === "importFile") {
     const file = ev.target.files && ev.target.files[0];
     if (file) doImport(file);
