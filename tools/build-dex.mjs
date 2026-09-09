@@ -185,6 +185,37 @@ async function main() {
   // 只有異色圖沒有一般圖的條目不收，那是上游的殘留
   for (const [id, e] of entries) if (!e.hasBase) entries.delete(id);
 
+  /*
+   * 同一個裝扮有時會同時出現 X 與 X_NOEVOLVE 兩個代碼，
+   * 差別只是「穿了能不能進化」，外觀完全一樣。
+   * 兩筆都留的話圖鑑會出現兩張長得一模一樣的卡，所以合併成一筆，
+   * 保留 id 較短的那個，異色只要有一邊有就算有。
+   */
+  const merged = new Map();
+  let mergedCount = 0;
+  for (const [id, e] of entries) {
+    // 型態與裝扮都算進 key，否則南瓜精四種尺寸的萬聖節版會被併成一筆。
+    // 不分 .c 與 .f，因為同一個活動在上游有時歸型態、有時歸裝扮。
+    const codes = [e.form, e.costume]
+      .filter(Boolean)
+      .map((c) => c.replace("_NOEVOLVE", ""))
+      .sort();
+    const key = `${e.dex}|${codes.join("+")}`;
+    const kept = merged.get(key);
+    if (!kept) {
+      merged.set(key, [id, e]);
+      continue;
+    }
+    mergedCount++;
+    if (e.shiny) kept[1].shiny = true;
+    if (id.length < kept[0].length) merged.set(key, [id, { ...e, shiny: kept[1].shiny }]);
+  }
+  if (mergedCount) {
+    entries.clear();
+    for (const [id, e] of merged.values()) entries.set(id, e);
+    console.log(`  合併 NOEVOLVE 重複裝扮 ${mergedCount} 筆`);
+  }
+
   /* 2. game master：以 dex + form 建索引，補屬性與稀有度 */
   const settings = new Map();
   for (const tpl of gm) {
@@ -336,14 +367,16 @@ async function main() {
     // kind 決定畫面怎麼分類：一般 / 型態 / 裝扮
     row.kind = e.costume || (e.form && !labelled) ? "costume" : e.form ? "form" : "base";
     if (row.kind === "costume") {
+      // 南瓜精這種「尺寸型態 + 裝扮」的條目，兩個標籤都要留，
+      // 否則四種尺寸會變成四筆一模一樣的「2022 萬聖節」
       const code = e.costume || e.form;
       let named = false;
       for (const lang of ["zh", "ja", "en"]) {
         const l = costumeName(code, lang);
-        if (l && row[lang]) {
-          row[`${lang}Form`] = l;
-          named = true;
-        }
+        if (!l || !row[lang]) continue;
+        const size = e.costume && labelled ? row[`${lang}Form`] : null;
+        row[`${lang}Form`] = size ? `${size}・${l}` : l;
+        named = true;
       }
       if (!named) missing.costume.add(code);
     }

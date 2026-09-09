@@ -6,18 +6,18 @@
  *
  * ── 資料結構 ──
  * EVENTS 是活動清單，每個活動底下有一或多張背卡（cards）。
- * 每張背卡記錄哪些寶可夢可能帶有它（pokemon: 圖鑑 id 陣列）。
+ * 每張背卡記錄哪些寶可夢可能帶有它（pokemon: 條目 id 陣列）。
  *
  * ── 如何新增一個活動 ──
  * 1. 在 EVENTS 陣列加一筆，id 不要跟既有的重複
  * 2. 背卡圖片放進 img/bg/，檔名對應 card.img
  * 3. pokemon 陣列有兩種寫法：
  *
- *    "p003"                    圖鑑（data.js）裡的傳說，直接用 id
- *    { dex: 131 }              一般寶可夢，用全國圖鑑編號，名稱查 pokedex.js
- *    { dex: 131, note_zh:"布蘭琪風", note_ja:"ブランシェ", note_en:"Blanche" }
+ *    "d150"                    圖鑑（data.js）裡的傳說，直接用 id
+ *    { id: "d131" }              一般寶可夢，用全國圖鑑編號，名稱查 pokedex.js
+ *    { id: "d131", note_zh:"布蘭琪風", note_ja:"ブランシェ", note_en:"Blanche" }
  *                              特殊造型，合併成本體但加註說明
- *    { dex: 25, costume: "gotour-2026-calems-hat" }
+ *    { id: "d25.xGOTOUR_2026_CALEMS_HAT" }
  *                              裝扮皮卡丘，圖片與名稱查 pikachu.js
  *
  * 造型一律合併成本體（例如帕底亞肯泰羅三種都算「肯泰羅」一格），
@@ -47,16 +47,16 @@ export const EVENTS = [
         note_ja: "7/6〜7/12 の五つ星・原始・メガレイドで捕獲したポケモンに付く可能性",
         note_en: "From five-star, Primal, and Mega Raids between July 6 and 12",
         pokemon: [
-          "p000", "p001", "p002", "p004", "p005", "p006", "p007", "p008",
-          "p017", "p018", "p019", "p020", "p022", "p026", "p027", "p041",
-          "p042", "p047", "p048", "p014", "p015", "p016", "p036", "p037",
-          "p040", "p009", "p010", "p011", "p021", "p023", "p024", "p025",
-          "p032", "p033", "p034", "p035", "p038", "p039", "p065", "p066",
-          "p067", "p068", "p069", "p070", "p071", "p072", "p074", "p075",
-          "p076", "p077", "p078", "p043", "p044", "p045", "p046", "p049",
-          "p050", "p051", "p052", "p053", "p054", "p055", "p056", "p059",
-          "p060", "p012", "p013", "p028", "p073", "p029", "p030", "p031",
-          "p061", "p062",
+          "d144", "d145", "d146", "d243", "d244", "d245", "d249", "d250",
+          "d480", "d481", "d482", "d483", "d484", "d487.fALTERED", "d487.fORIGIN", "d716",
+          "d717", "d791", "d792", "d382", "d383", "d384", "d643", "d644",
+          "d646.fNORMAL", "d377", "d378", "d379", "d483.fORIGIN", "d484.fORIGIN", "d485", "d486",
+          "d641.fINCARNATE", "d641.fTHERIAN", "d642.fINCARNATE", "d642.fTHERIAN", "d645.fINCARNATE", "d645.fTHERIAN", "d894", "d895",
+          "d905.fINCARNATE", "d905.fTHERIAN", "d386", "d386.fATTACK", "d386.fDEFENSE", "d386.fSPEED", "d649.fNORMAL", "d649.fBURN",
+          "d649.fCHILL", "d649.fDOUSE", "d649.fSHOCK", "d785", "d786", "d787", "d788", "d793",
+          "d794", "d795", "d796", "d797", "d798", "d799", "d800", "d805",
+          "d806", "d380", "d381", "d488", "d491", "d638", "d639", "d640",
+          "d888.fHERO", "d889.fHERO",
         ],
       },
       {
@@ -69,7 +69,7 @@ export const EVENTS = [
         note_zh: "GO Fest 期間從超級究極團戰捕捉的超夢限定",
         note_ja: "GO Fest 期間のスーパーメガレイドのミュウツー限定",
         note_en: "Only from Super Mega Raid Mewtwo during GO Fest",
-        pokemon: ["p003"],
+        pokemon: ["d150"],
       },
     ],
   },
@@ -92,10 +92,10 @@ export const EVENTS = [
         note_ja: "5/25〜6/1 お台場、チケット所持者限定。フリーザーとスイクンが登場",
         note_en: "May 25 – Jun 1, Tokyo Waterfront City. Ticket holders only.",
         pokemon: [
-          "p000", "p006", "p003", "p014", "p015",
-          { dex: 128, note_zh: "帕底亞的樣子・水", note_ja: "パルデアのすがた・水", note_en: "Paldean Aqua" },
-          { dex: 131, note_zh: "布蘭琪風", note_ja: "ブランシェ風", note_en: "Blanche-themed" },
-          { dex: 807 },
+          "d144", "d245", "d150", "d382", "d383",
+          { id: "d128", note_zh: "帕底亞的樣子・水", note_ja: "パルデアのすがた・水", note_en: "Paldean Aqua" },
+          { id: "d131", note_zh: "布蘭琪風", note_ja: "ブランシェ風", note_en: "Blanche-themed" },
+          { id: "d807" },
         ],
       },
       {
@@ -109,10 +109,10 @@ export const EVENTS = [
         note_ja: "6/4〜6/8 グラントパーク、チケット所持者限定。サンダーとライコウが登場",
         note_en: "Jun 4 – 8, Grant Park. Ticket holders only.",
         pokemon: [
-          "p001", "p004", "p003", "p014", "p015",
-          { dex: 128, note_zh: "帕底亞的樣子・火", note_ja: "パルデアのすがた・炎", note_en: "Paldean Blaze" },
-          { dex: 239, note_zh: "斯帕克風", note_ja: "スパーク風", note_en: "Spark-themed" },
-          { dex: 807 },
+          "d145", "d243", "d150", "d382", "d383",
+          { id: "d128", note_zh: "帕底亞的樣子・火", note_ja: "パルデアのすがた・炎", note_en: "Paldean Blaze" },
+          { id: "d239", note_zh: "斯帕克風", note_ja: "スパーク風", note_en: "Spark-themed" },
+          { id: "d807" },
         ],
       },
       {
@@ -126,10 +126,10 @@ export const EVENTS = [
         note_ja: "6/11〜6/15 フェレズパーケン、チケット所持者限定。ファイヤーとエンテイが登場",
         note_en: "Jun 11 – 15, Fælledparken. Ticket holders only.",
         pokemon: [
-          "p002", "p005", "p003", "p014", "p015",
-          { dex: 77, note_zh: "坎黛拉風", note_ja: "キャンデラ風", note_en: "Candela-themed" },
-          { dex: 128, note_zh: "帕底亞的樣子・鬥", note_ja: "パルデアのすがた・格闘", note_en: "Paldean Combat" },
-          { dex: 807 },
+          "d146", "d244", "d150", "d382", "d383",
+          { id: "d77", note_zh: "坎黛拉風", note_ja: "キャンデラ風", note_en: "Candela-themed" },
+          { id: "d128", note_zh: "帕底亞的樣子・鬥", note_ja: "パルデアのすがた・格闘", note_en: "Paldean Combat" },
+          { id: "d807" },
         ],
       },
     ],
@@ -153,12 +153,12 @@ export const EVENTS = [
         note_ja: "2/28〜3/2 にメガシンカできるポケモンを捕獲すると付く可能性",
         note_en: "From Mega-capable Pokémon caught between Feb 28 and Mar 2",
         pokemon: [
-          { dex: 3 }, { dex: 6 }, { dex: 9 }, { dex: 18 }, { dex: 71 },
-          { dex: 115 }, { dex: 149 }, { dex: 212 }, { dex: 214 }, { dex: 248 },
-          { dex: 254 }, { dex: 257 }, { dex: 260 }, { dex: 282 }, { dex: 359 },
-          { dex: 373 }, { dex: 376 },
-          "p012", "p013",
-          { dex: 445 }, { dex: 448 }, { dex: 475 }, { dex: 687 },
+          { id: "d3" }, { id: "d6" }, { id: "d9" }, { id: "d18" }, { id: "d71" },
+          { id: "d115" }, { id: "d149" }, { id: "d212" }, { id: "d214" }, { id: "d248" },
+          { id: "d254" }, { id: "d257" }, { id: "d260" }, { id: "d282" }, { id: "d359" },
+          { id: "d373" }, { id: "d376" },
+          "d380", "d381",
+          { id: "d445" }, { id: "d448" }, { id: "d475" }, { id: "d687" },
         ],
       },
       {
@@ -172,10 +172,10 @@ export const EVENTS = [
         note_ja: "2/27〜3/9 カロス御三家コードと GO Tour 期間に入手",
         note_en: "From the Kalos Starters promo code and GO Tour, Feb 27 – Mar 9",
         pokemon: [
-          { dex: 25, costume: "gotour-2026-calems-hat", note_zh: "卡爾姆帽", note_ja: "カルムの帽子", note_en: "Calem's Hat" },
-          { dex: 25, costume: "gotour-2026-serenas-hat", note_zh: "莎莉娜帽", note_ja: "セレナの帽子", note_en: "Serena's Hat" },
-          { dex: 650 }, { dex: 653 }, { dex: 656 }, { dex: 679 },
-          "p041",
+          { id: "d25.xGOTOUR_2026_CALEMS_HAT", note_zh: "卡爾姆帽", note_ja: "カルムの帽子", note_en: "Calem's Hat" },
+          { id: "d25.xGOTOUR_2026_SERENAS_HAT", note_zh: "莎莉娜帽", note_ja: "セレナの帽子", note_en: "Serena's Hat" },
+          { id: "d650" }, { id: "d653" }, { id: "d656" }, { id: "d679" },
+          "d716",
         ],
       },
       {
@@ -189,10 +189,10 @@ export const EVENTS = [
         note_ja: "2/27〜3/9 カロス御三家コードと GO Tour 期間に入手",
         note_en: "From the Kalos Starters promo code and GO Tour, Feb 27 – Mar 9",
         pokemon: [
-          { dex: 25, costume: "gotour-2026-calems-hat", note_zh: "卡爾姆帽", note_ja: "カルムの帽子", note_en: "Calem's Hat" },
-          { dex: 25, costume: "gotour-2026-serenas-hat", note_zh: "莎莉娜帽", note_ja: "セレナの帽子", note_en: "Serena's Hat" },
-          { dex: 650 }, { dex: 653 }, { dex: 656 }, { dex: 679 },
-          "p042",
+          { id: "d25.xGOTOUR_2026_CALEMS_HAT", note_zh: "卡爾姆帽", note_ja: "カルムの帽子", note_en: "Calem's Hat" },
+          { id: "d25.xGOTOUR_2026_SERENAS_HAT", note_zh: "莎莉娜帽", note_ja: "セレナの帽子", note_en: "Serena's Hat" },
+          { id: "d650" }, { id: "d653" }, { id: "d656" }, { id: "d679" },
+          "d717",
         ],
       },
     ],
@@ -216,11 +216,11 @@ export const EVENTS = [
         note_ja: "2/26〜2/27 カロスへの道の期間に入手",
         note_en: "From the Road to Kalos event, Feb 26 – 27",
         pokemon: [
-          { dex: 25, costume: "gotour-2024-a", note_zh: "光輝帽", note_ja: "コウキの帽子", note_en: "Lucas's Hat" },
-          { dex: 25, costume: "gotour-2024-a-02", note_zh: "小光帽", note_ja: "ヒカリの帽子", note_en: "Dawn's Hat" },
-          { dex: 25, costume: "gotour-2024-b", note_zh: "零帽", note_ja: "テルの帽子", note_en: "Rei's Cap" },
-          { dex: 25, costume: "gotour-2024-b-02", note_zh: "小明頭巾", note_ja: "ショウのスカーフ", note_en: "Akari's Kerchief" },
-          "p020", "p021",
+          { id: "d25.fGOTOUR_2024_A", note_zh: "光輝帽", note_ja: "コウキの帽子", note_en: "Lucas's Hat" },
+          { id: "d25.fGOTOUR_2024_A_02", note_zh: "小光帽", note_ja: "ヒカリの帽子", note_en: "Dawn's Hat" },
+          { id: "d25.fGOTOUR_2024_B", note_zh: "零帽", note_ja: "テルの帽子", note_en: "Rei's Cap" },
+          { id: "d25.fGOTOUR_2024_B_02", note_zh: "小明頭巾", note_ja: "ショウのスカーフ", note_en: "Akari's Kerchief" },
+          "d483", "d483.fORIGIN",
         ],
       },
       {
@@ -234,11 +234,11 @@ export const EVENTS = [
         note_ja: "2/26〜2/27 カロスへの道の期間に入手",
         note_en: "From the Road to Kalos event, Feb 26 – 27",
         pokemon: [
-          { dex: 25, costume: "gotour-2024-a", note_zh: "光輝帽", note_ja: "コウキの帽子", note_en: "Lucas's Hat" },
-          { dex: 25, costume: "gotour-2024-a-02", note_zh: "小光帽", note_ja: "ヒカリの帽子", note_en: "Dawn's Hat" },
-          { dex: 25, costume: "gotour-2024-b", note_zh: "零帽", note_ja: "テルの帽子", note_en: "Rei's Cap" },
-          { dex: 25, costume: "gotour-2024-b-02", note_zh: "小明頭巾", note_ja: "ショウのスカーフ", note_en: "Akari's Kerchief" },
-          "p022", "p023",
+          { id: "d25.fGOTOUR_2024_A", note_zh: "光輝帽", note_ja: "コウキの帽子", note_en: "Lucas's Hat" },
+          { id: "d25.fGOTOUR_2024_A_02", note_zh: "小光帽", note_ja: "ヒカリの帽子", note_en: "Dawn's Hat" },
+          { id: "d25.fGOTOUR_2024_B", note_zh: "零帽", note_ja: "テルの帽子", note_en: "Rei's Cap" },
+          { id: "d25.fGOTOUR_2024_B_02", note_zh: "小明頭巾", note_ja: "ショウのスカーフ", note_en: "Akari's Kerchief" },
+          "d484", "d484.fORIGIN",
         ],
       },
       {
@@ -252,9 +252,9 @@ export const EVENTS = [
         note_ja: "2/25〜2/26 カロスへの道の期間に入手",
         note_en: "From the Road to Kalos event, Feb 25 – 26",
         pokemon: [
-          { dex: 25, costume: "gotour-2023-hat", note_zh: "小悠帽", note_ja: "ユウキの帽子", note_en: "Brendan's Hat" },
-          { dex: 25, costume: "gotour-2023-bandana", note_zh: "小遙頭巾", note_ja: "ハルカのバンダナ", note_en: "May's Bow" },
-          "p015",
+          { id: "d25.cGOTOUR_2023_HAT", note_zh: "小悠帽", note_ja: "ユウキの帽子", note_en: "Brendan's Hat" },
+          { id: "d25.cGOTOUR_2023_BANDANA", note_zh: "小遙頭巾", note_ja: "ハルカのバンダナ", note_en: "May's Bow" },
+          "d383",
         ],
       },
       {
@@ -268,9 +268,9 @@ export const EVENTS = [
         note_ja: "2/25〜2/26 カロスへの道の期間に入手",
         note_en: "From the Road to Kalos event, Feb 25 – 26",
         pokemon: [
-          { dex: 25, costume: "gotour-2023-hat", note_zh: "小悠帽", note_ja: "ユウキの帽子", note_en: "Brendan's Hat" },
-          { dex: 25, costume: "gotour-2023-bandana", note_zh: "小遙頭巾", note_ja: "ハルカのバンダナ", note_en: "May's Bow" },
-          "p014",
+          { id: "d25.cGOTOUR_2023_HAT", note_zh: "小悠帽", note_ja: "ユウキの帽子", note_en: "Brendan's Hat" },
+          { id: "d25.cGOTOUR_2023_BANDANA", note_zh: "小遙頭巾", note_ja: "ハルカのバンダナ", note_en: "May's Bow" },
+          "d382",
         ],
       },
       {
@@ -284,9 +284,9 @@ export const EVENTS = [
         note_ja: "2/24〜2/25 カロスへの道の期間に入手",
         note_en: "From the Road to Kalos event, Feb 24 – 25",
         pokemon: [
-          { dex: 25, costume: "lyras-hat", note_zh: "琴音帽", note_ja: "コトネの帽子", note_en: "Lyra's Hat" },
-          { dex: 25, costume: "ethans-hat", note_zh: "小金帽", note_ja: "ヒビキの帽子", note_en: "Ethan's Hat" },
-          "p008",
+          { id: "d25.xLYRAS_HAT", note_zh: "琴音帽", note_ja: "コトネの帽子", note_en: "Lyra's Hat" },
+          { id: "d25.xETHANS_HAT", note_zh: "小金帽", note_ja: "ヒビキの帽子", note_en: "Ethan's Hat" },
+          "d250",
         ],
       },
       {
@@ -300,9 +300,9 @@ export const EVENTS = [
         note_ja: "2/24〜2/25 カロスへの道の期間に入手",
         note_en: "From the Road to Kalos event, Feb 24 – 25",
         pokemon: [
-          { dex: 25, costume: "lyras-hat", note_zh: "琴音帽", note_ja: "コトネの帽子", note_en: "Lyra's Hat" },
-          { dex: 25, costume: "ethans-hat", note_zh: "小金帽", note_ja: "ヒビキの帽子", note_en: "Ethan's Hat" },
-          "p007",
+          { id: "d25.xLYRAS_HAT", note_zh: "琴音帽", note_ja: "コトネの帽子", note_en: "Lyra's Hat" },
+          { id: "d25.xETHANS_HAT", note_zh: "小金帽", note_ja: "ヒビキの帽子", note_en: "Ethan's Hat" },
+          "d249",
         ],
       },
     ],
@@ -326,10 +326,10 @@ export const EVENTS = [
         note_ja: "2/20〜2/23 ロサンゼルスのリアルイベント、チケット所持者限定",
         note_en: "Feb 20 – 23, Los Angeles in-person event. Ticket holders only.",
         pokemon: [
-          { dex: 6 }, { dex: 71 }, { dex: 130 }, { dex: 149 }, { dex: 181 },
-          { dex: 254 }, { dex: 282 }, { dex: 334 }, { dex: 359 }, { dex: 373 },
-          { dex: 445 }, { dex: 448 }, { dex: 679 }, { dex: 687 },
-          "p041", "p042",
+          { id: "d6" }, { id: "d71" }, { id: "d130" }, { id: "d149" }, { id: "d181" },
+          { id: "d254" }, { id: "d282" }, { id: "d334" }, { id: "d359" }, { id: "d373" },
+          { id: "d445" }, { id: "d448" }, { id: "d679" }, { id: "d687" },
+          "d716", "d717",
         ],
       },
     ],
@@ -353,10 +353,10 @@ export const EVENTS = [
         note_ja: "2/20〜2/23 台南のリアルイベント、チケット所持者限定",
         note_en: "Feb 20 – 23, Tainan in-person event. Ticket holders only.",
         pokemon: [
-          { dex: 6 }, { dex: 71 }, { dex: 130 }, { dex: 149 }, { dex: 181 },
-          { dex: 254 }, { dex: 282 }, { dex: 334 }, { dex: 359 }, { dex: 373 },
-          { dex: 445 }, { dex: 448 }, { dex: 679 }, { dex: 687 },
-          "p041", "p042",
+          { id: "d6" }, { id: "d71" }, { id: "d130" }, { id: "d149" }, { id: "d181" },
+          { id: "d254" }, { id: "d282" }, { id: "d334" }, { id: "d359" }, { id: "d373" },
+          { id: "d445" }, { id: "d448" }, { id: "d679" }, { id: "d687" },
+          "d716", "d717",
         ],
       },
     ],
@@ -379,7 +379,7 @@ export const EVENTS = [
         note_zh: "2/5 PokéPark KANTO 開幕，園區內限定",
         note_ja: "2/5 ポケパーク カントー開園、園内限定",
         note_en: "Feb 5, PokéPark KANTO opening. On-site only.",
-        pokemon: ["p000", "p001", "p002"],
+        pokemon: ["d144", "d145", "d146"],
       },
     ],
   },
@@ -394,20 +394,13 @@ export function allCards() {
 
 /**
  * 把 pokemon 陣列裡的一筆轉成統一格式。
- * 兩種輸入：字串 id（圖鑑內的傳說）或 { dex, note_* }（一般寶可夢）。
- * @returns {{key: string, pid: string|null, dex: number|null, note: object}}
+ * 兩種寫法：字串條目 id，或 { id, note_* } 加註說明。
+ * @returns {{id: string, note: object|null}}
  */
 export function normalizeEntry(entry) {
-  if (typeof entry === "string") {
-    return { key: entry, pid: entry, dex: null, costume: null, note: null };
-  }
-  // 裝扮皮卡丘的鍵要帶上裝扮 id，否則同編號的不同裝扮會互相覆蓋
-  const key = entry.costume ? `d${entry.dex}-${entry.costume}` : `d${entry.dex}`;
+  if (typeof entry === "string") return { id: entry, note: null };
   return {
-    key,
-    pid: null,
-    dex: entry.dex,
-    costume: entry.costume || null,
+    id: entry.id,
     note: {
       zh: entry.note_zh || "",
       ja: entry.note_ja || "",
@@ -421,24 +414,24 @@ export function entriesOf(card) {
   return card.pokemon.map(normalizeEntry);
 }
 
-/** 某隻寶可夢可能擁有的所有背卡（只查圖鑑內的傳說） */
-export function cardsFor(pokemonId) {
-  return allCards().filter(({ card }) =>
-    card.pokemon.some((e) => typeof e === "string" && e === pokemonId)
-  );
-}
-
 /**
- * 某個裝扮皮卡丘可能擁有的所有背卡
- * @returns {Array<{event, card, key}>} key 是該背卡上的項目鍵
+ * 某個條目可能擁有的所有背卡。
+ * @returns {Array<{event, card, note}>}
  */
-export function cardsForCostume(costumeId) {
+export function cardsFor(entryId) {
   const out = [];
   for (const { event, card } of allCards()) {
     for (const e of entriesOf(card)) {
-      if (e.costume === costumeId) out.push({ event, card, key: e.key });
+      if (e.id === entryId) out.push({ event, card, note: e.note });
     }
   }
+  return out;
+}
+
+/** 所有出現在背卡裡的條目 id */
+export function allBgEntryIds() {
+  const out = new Set();
+  for (const { card } of allCards()) for (const e of entriesOf(card)) out.add(e.id);
   return out;
 }
 
