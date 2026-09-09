@@ -215,10 +215,13 @@ localStorage 使用者可以手動改，也可能是舊版寫的。
 進了 git 歷史要拿掉得改寫歷史。一律直接連外部 CDN。
 
 ### 部署
-- 目前：**尚未部署**，repo 還沒推上 GitHub
-- 計畫：先用公開 repo + GitHub Pages（`main` 根目錄，無建置流程，push 即生效）
-- 之後：轉私人 repo + Cloudflare Pages + 自有網域
-- 因為沒有建置流程，兩邊都只是丟靜態檔，隨時可以搬
+- 線上網址：`https://jp-study-list.github.io/poke-change/`
+- repo：`JP-study-list/poke-change`，公開
+- GitHub Pages **Source：`main` 根目錄**（不是 GitHub Actions）
+  - 這個專案的圖片不鏡像，沒有建置流程，所以不需要 Actions
+  - push 即生效，不用等
+- 之後：轉私人 repo + Cloudflare Pages + 自有網域。
+  轉私人後免費方案的 Pages 會停掉，所以兩件事要一起做
 
 ### 已知地雷（本專案特有）
 
@@ -243,7 +246,9 @@ localStorage 使用者可以手動改，也可能是舊版寫的。
 - **超級進化與極巨化不是可交換條目**，是戰鬥中的暫時狀態，產生時整批排除。
 
 - **裝扮沒有官方名稱**。遊戲內只顯示物種名，語言檔查不到。
-  譯名全部在 `js/costumes.js` 自己維護。
+  譯名全部在 `js/costumes.js` 自己維護，原則是看圖命名、看得出是哪一個，
+  不必去猜代碼原本的含意。`fS` 那類沒有譯名的型態同理，
+  改 `tools/build-dex.mjs` 的 `FORM_OVERRIDE`。
 
 - **捷拉奧拉上游沒有 GO 圖示**（`pm807.icon.png` 404），
   在 `js/extra.js` 手動補一筆，用官方立繪。
@@ -321,7 +326,6 @@ progress.md           開發歷史
 
 ### 待辦
 
-- 推上 GitHub 並設定 Pages
-- 裝扮譯名有 4 個代碼是推測的（`js/costumes.js` 標 ※）
-- `S` 型態譯成「特別」是暫定
 - 之後轉私人 repo + Cloudflare Pages + 自有網域
+  （轉私人後免費方案的 GitHub Pages 會停掉，兩件事要一起做）
+- `note` 欄位還在儲存結構裡但介面不顯示，要留要拿掉未定案

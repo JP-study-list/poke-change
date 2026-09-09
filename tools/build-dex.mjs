@@ -293,7 +293,9 @@ async function main() {
    */
   const FORM_OVERRIDE = {
     A: ["盔甲", "アーマード", "Armored"],
-    S: ["特別", "スペシャル", "Special"],
+    // 比對過原本的圖，差別在姿勢：洛奇亞與鳳王展翅、拉帝斯兄妹前傾，
+    // 不是換色也不是裝扮，所以叫姿勢而不是型態
+    S: ["特別姿勢", "スペシャルポーズ", "Special Pose"],
     GALARIAN_STANDARD: ["伽勒爾的樣子 普通模式", "ガラルのすがた ノーマルモード", "Galarian Standard Mode"],
     GALARIAN_ZEN: ["伽勒爾的樣子 達摩模式", "ガラルのすがた ダルマモード", "Galarian Zen Mode"],
     WORMADAM_PLANT: ["草木蓑衣", "くさきのミノ", "Plant Cloak"],
