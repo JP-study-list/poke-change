@@ -80,9 +80,8 @@
 Dittobase 會收進化取得的，手工那批多半沒收。
 
 - **gf26-global** Dittobase 多：d888, d889, d376, d445, d531, d15, d127, d254, d248, d282, d448, d181, d257, d460, d65, d94, d260, d18, d142, d373 ／ 手工多：d649.fSHOCK, d888.fHERO, d889.fHERO
-- **gf26-tokyo** Dittobase 多：d128.fPALDEA_AQUA, d131.cSPRING_2023_MYSTIC ／ 手工多：d128, d131
-- **gf26-chicago** Dittobase 多：d128.fPALDEA_BLAZE, d239.cSPRING_2023_INSTINCT, d125.cSPRING_2023_INSTINCT, d466.cSPRING_2023_INSTINCT ／ 手工多：d128, d239
-- **gf26-copenhagen** Dittobase 多：d128.fPALDEA_COMBAT, d77.cSPRING_2023_VALOR, d78.cSPRING_2023_VALOR ／ 手工多：d77, d128
+- **gf26-chicago** Dittobase 多：d125.cSPRING_2023_INSTINCT, d466.cSPRING_2023_INSTINCT
+- **gf26-copenhagen** Dittobase 多：d78.cSPRING_2023_VALOR
 - **gt26-mega** Dittobase 多：d653, d654, d655, d656, d657, d658, d650, d651, d652, d15, d127, d460, d150, d65, d80, d121, d308, d94, d229, d354, d26, d181, d310, d208, d227, d306, d362, d319, d323, d428, d870, d130, d142, d334, d302, d303, d531
 - **gt26-x** Dittobase 多：d651, d652, d654, d655, d657, d658, d680, d681.fBLADE
 - **gt26-y** Dittobase 多：d651, d652, d654, d655, d657, d658, d680, d681.fBLADE

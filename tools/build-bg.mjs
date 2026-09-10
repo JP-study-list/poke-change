@@ -238,15 +238,24 @@ function matchByKey(file, list) {
 
 /**
  * 條目 id。發布後就是使用者紀錄的鍵，不能再改。
- * 規則：去掉前綴，駝峰與底線轉連字號，全部小寫。
+ *
+ * 規則：去掉前綴，駝峰轉連字號，年份前面也斷開，底線轉連字號，全部小寫。
+ *   lc_CitySafari2024_tainan  →  city-safari-2024-tainan
+ *
+ * 年份要斷開是因為上游把它黏在活動名後面，不斷開會變成 citysafari2024
+ * 那種讀不出來的東西。少數檔名年份寫了兩次（CitySafari2023_barcelona_2023），
+ * 重複的那個去掉。
+ *
  * 兩個不同前綴的檔名可能撞名（GOWA_fukuoka 有 lc 與 sb 兩份），撞到就保留前綴。
  */
 function makeId(file) {
-  const body = file.replace(/^(lc|sb)_/, "");
-  return body
+  const body = file
+    .replace(/^(lc|sb)_/, "")
     .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+    .replace(/([A-Za-z])(\d{4})/g, "$1-$2")
     .replace(/[_\s]+/g, "-")
     .toLowerCase();
+  return body.replace(/-(\d{4})-(.*)-\1$/, "-$1-$2");
 }
 
 /** 檔名推出來的暫用名稱，Serebii 對不到時才用 */

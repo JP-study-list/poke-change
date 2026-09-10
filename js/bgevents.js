@@ -17,12 +17,12 @@
  *
  * ── pokemon 陣列的兩種寫法 ──
  *
- *    "d150"                    直接用條目 id
- *    { id: "d128", note_zh:"帕底亞的樣子・鬥", ... }
- *                              造型合併成本體，用 note 註記
+ *    "d128.fPALDEA_COMBAT"     直接用條目 id，型態與裝扮寫到底
+ *    { id: "d150", note_zh:"…", ... }
+ *                              需要補一句說明時才用物件形式
  *
- * 造型一律合併成本體（帕底亞肯泰羅三種都算「肯泰羅」一格），
- * 需要區分時用 note。
+ * 型態與裝扮一律寫到條目層級，跟 bgdata.js 那批一致。
+ * 這樣格子會顯示正確的裝扮圖，名稱也直接取自圖鑑，不必自己維護註記。
  */
 
 export const HAND_EVENTS = [
@@ -96,8 +96,8 @@ export const HAND_EVENTS = [
         note_en: "May 25 – Jun 1, Tokyo Waterfront City. Ticket holders only.",
         pokemon: [
           "d144", "d245", "d150", "d382", "d383",
-          { id: "d128", note_zh: "帕底亞的樣子・水", note_ja: "パルデアのすがた・水", note_en: "Paldean Aqua" },
-          { id: "d131", note_zh: "布蘭琪風", note_ja: "ブランシェ風", note_en: "Blanche-themed" },
+          "d128.fPALDEA_AQUA",
+          "d131.cSPRING_2023_MYSTIC",
           { id: "d807" },
         ],
       },
@@ -115,8 +115,8 @@ export const HAND_EVENTS = [
         note_en: "Jun 4 – 8, Grant Park. Ticket holders only.",
         pokemon: [
           "d145", "d243", "d150", "d382", "d383",
-          { id: "d128", note_zh: "帕底亞的樣子・火", note_ja: "パルデアのすがた・炎", note_en: "Paldean Blaze" },
-          { id: "d239", note_zh: "斯帕克風", note_ja: "スパーク風", note_en: "Spark-themed" },
+          "d128.fPALDEA_BLAZE",
+          "d239.cSPRING_2023_INSTINCT",
           { id: "d807" },
         ],
       },
@@ -134,8 +134,8 @@ export const HAND_EVENTS = [
         note_en: "Jun 11 – 15, Fælledparken. Ticket holders only.",
         pokemon: [
           "d146", "d244", "d150", "d382", "d383",
-          { id: "d77", note_zh: "坎黛拉風", note_ja: "キャンデラ風", note_en: "Candela-themed" },
-          { id: "d128", note_zh: "帕底亞的樣子・鬥", note_ja: "パルデアのすがた・格闘", note_en: "Paldean Combat" },
+          "d77.cSPRING_2023_VALOR",
+          "d128.fPALDEA_COMBAT",
           { id: "d807" },
         ],
       },
