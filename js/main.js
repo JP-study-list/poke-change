@@ -9,7 +9,7 @@
  */
 
 import { LANGS, DEFAULT_LANG, makeT } from "./i18n.js";
-import { find, fullName } from "./dex.js";
+import { find, fullName, emptyFilter } from "./dex.js";
 import * as store from "./store.js";
 import * as ui from "./ui.js";
 import { buildShareImage } from "./share.js";
@@ -20,10 +20,11 @@ const state = {
   data: store.emptyData(),
   lang: DEFAULT_LANG,
   view: "dex", // dex / trade / bg
-  filter: "all",
+  filter: emptyFilter(), // 五個群組，組間 AND、組內 OR
   query: "",
   openId: null, // 詳情面板顯示的條目
   openCard: null, // 詳情面板顯示的背卡
+  openFilter: false, // 詳情面板顯示篩選
   big: false, // 大圖示。預設小圖示，手機一排五隻
   names: true, // 格子下方顯示名稱
   code: "", // 訓練家代碼，只印在分享圖上
@@ -90,11 +91,10 @@ function draw() {
   ui.renderViews(state.view, t);
 
   const isDex = state.view === "dex";
-  document.querySelector("#filterBlock").hidden = !isDex;
   document.querySelector("#searchbar").hidden = !isDex;
 
   if (state.view === "dex") {
-    ui.renderFilters(state.filter, t);
+    ui.renderFilterBtn(state.filter, t);
     const list = ui.visibleEntries(state.filter, state.query);
     document.querySelector("#viewTitle").innerHTML = `${t(
       "viewDex"
@@ -109,9 +109,20 @@ function draw() {
   }
 }
 
+/*
+ * 三種東西共用同一個 sheet：條目詳情、背卡詳情、篩選。
+ * 一次只會有一種，所以打開任一種之前要把另外兩種清掉。
+ */
 function drawDetail() {
-  if (state.openId) ui.renderDetail(state.openId, state.data, state.lang, t);
+  if (state.openFilter) ui.renderFilterPanel(state.filter, state.lang, t);
+  else if (state.openId) ui.renderDetail(state.openId, state.data, state.lang, t);
   else if (state.openCard) ui.renderCardDetail(state.openCard, state.lang, t);
+}
+
+function closePanels() {
+  state.openId = state.openCard = null;
+  state.openFilter = false;
+  ui.closeSheet();
 }
 
 function save() {
@@ -254,8 +265,7 @@ document.addEventListener("click", (ev) => {
   const view = el("[data-view]");
   if (view) {
     state.view = view.dataset.view;
-    state.openId = state.openCard = null;
-    ui.closeSheet();
+    closePanels();
     ui.setSidebar(false);
     draw();
     return;
@@ -276,6 +286,36 @@ document.addEventListener("click", (ev) => {
   }
   if (ev.target.id === "scrim") {
     ui.setSidebar(false);
+    return;
+  }
+
+  // 開篩選面板
+  if (el("#filterBtn")) {
+    state.openId = state.openCard = null;
+    state.openFilter = true;
+    drawDetail();
+    ui.openSheet();
+    return;
+  }
+
+  // 篩選面板裡的選項。同一組可以複選，再點一次取消
+  const fopt = el(".fopt[data-group]");
+  if (fopt) {
+    const { group, opt } = fopt.dataset;
+    const picked = state.filter[group] || [];
+    const i = picked.indexOf(opt);
+    if (i >= 0) picked.splice(i, 1);
+    else picked.push(opt);
+    state.filter[group] = picked;
+    draw();
+    drawDetail(); // 計數會跟著變，面板要重畫
+    return;
+  }
+
+  if (el("[data-fclear]")) {
+    state.filter = emptyFilter();
+    draw();
+    drawDetail();
     return;
   }
 
@@ -308,8 +348,7 @@ document.addEventListener("click", (ev) => {
 
   // 關閉面板
   if (el("[data-close]") || ev.target.id === "sheet") {
-    state.openId = state.openCard = null;
-    ui.closeSheet();
+    closePanels();
     return;
   }
 
@@ -428,8 +467,7 @@ document.addEventListener("change", (ev) => {
 
 document.addEventListener("keydown", (ev) => {
   if (ev.key === "Escape") {
-    state.openId = state.openCard = null;
-    ui.closeSheet();
+    closePanels();
     ui.setSidebar(false);
   }
 });

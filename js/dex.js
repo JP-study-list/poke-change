@@ -22,6 +22,11 @@
 
 import { GODEX } from "./godex.js";
 import { extraEntries } from "./extra.js";
+import { allBgEntryIds } from "./backgrounds.js";
+import { TYPES } from "./types.js";
+
+/** 屬性的 key，順序就是篩選面板上的順序 */
+const TYPE_KEYS = Object.keys(TYPES);
 
 /* ─────────── 圖片來源 ─────────── */
 
@@ -141,18 +146,126 @@ export function search(list, q) {
   });
 }
 
-/** 篩選條件。key 對應 i18n 的字典鍵 */
-export const FILTERS = {
-  all: () => true,
-  base: (e) => e.kind === "base",
-  form: (e) => e.kind === "form",
-  costume: (e) => e.kind === "costume",
-  regional: isRegional,
-  shiny: hasShiny,
-  legendary: (e) => e.cls === "legendary",
-  mythic: (e) => e.cls === "mythic",
-  ultra: (e) => e.cls === "ultra_beast",
+/* ─────────── 篩選 ─────────── */
+
+/*
+ * 世代用圖鑑編號的區間判斷，game master 沒有這個欄位。
+ * 標籤走地區名而不是世代編號，因為「第四代」不如「神奧」好認。
+ * 注意這跟種類裡的「地區型」是兩回事：那個指的是阿羅拉的樣子那種型態。
+ */
+const GEN_RANGES = [
+  ["gen1", 1, 151],
+  ["gen2", 152, 251],
+  ["gen3", 252, 386],
+  ["gen4", 387, 493],
+  ["gen5", 494, 649],
+  ["gen6", 650, 721],
+  ["gen7", 722, 809],
+  ["gen8", 810, 905],
+  ["gen9", 906, 1025],
+];
+
+/** 背卡拿得到的條目。只算一次，背卡資料在執行期不會變 */
+let bgIds = null;
+const hasBgCard = (e) => {
+  if (!bgIds) bgIds = new Set(allBgEntryIds());
+  return bgIds.has(e.id);
 };
 
-/** 套用篩選 */
-export const applyFilter = (list, key) => list.filter(FILTERS[key] || FILTERS.all);
+/**
+ * 篩選群組。
+ *
+ * 組間 AND、組內 OR：選了「火」與「水」是兩者皆可，
+ * 但再選「神奧」就必須同時符合。組內全不選等於這一組不設限。
+ *
+ * key 對應 i18n 的字典鍵，屬性那組例外，它的名稱在 types.js。
+ */
+export const FILTER_GROUPS = {
+  kind: {
+    label: "grpKind",
+    options: [
+      ["base", (e) => e.kind === "base"],
+      ["form", (e) => e.kind === "form"],
+      ["costume", (e) => e.kind === "costume"],
+      ["regional", isRegional],
+    ],
+    labelOf: (k) =>
+      ({ base: "filterBase", form: "filterForm", costume: "filterCostume", regional: "filterRegional" })[k],
+  },
+  type: {
+    label: "grpType",
+    options: TYPE_KEYS.map((k) => [k, (e) => e.types && e.types.includes(k)]),
+    labelOf: null, // 名稱來自 types.js
+  },
+  gen: {
+    label: "grpGen",
+    options: GEN_RANGES.map(([k, a, b]) => [k, (e) => e.dex >= a && e.dex <= b]),
+    labelOf: (k) => k,
+  },
+  rarity: {
+    label: "grpRarity",
+    options: [
+      ["legendary", (e) => e.cls === "legendary"],
+      ["mythic", (e) => e.cls === "mythic"],
+      ["ultra", (e) => e.cls === "ultra_beast"],
+    ],
+    labelOf: (k) =>
+      ({ legendary: "filterLegendary", mythic: "filterMythic", ultra: "filterUltra" })[k],
+  },
+  other: {
+    label: "grpOther",
+    options: [
+      ["shiny", hasShiny],
+      ["bg", hasBgCard],
+    ],
+    labelOf: (k) => ({ shiny: "filterShiny", bg: "filterBg" })[k],
+  },
+};
+
+export const GROUP_KEYS = Object.keys(FILTER_GROUPS);
+
+/** 每一組一個陣列，空陣列代表這一組不設限 */
+export function emptyFilter() {
+  const f = {};
+  for (const g of GROUP_KEYS) f[g] = [];
+  return f;
+}
+
+/** 讀進來的篩選不信任，只留認得的選項 */
+export function normalizeFilter(raw) {
+  const f = emptyFilter();
+  if (!raw || typeof raw !== "object") return f;
+  for (const g of GROUP_KEYS) {
+    const valid = new Set(FILTER_GROUPS[g].options.map(([k]) => k));
+    const got = Array.isArray(raw[g]) ? raw[g] : [];
+    f[g] = got.filter((k) => valid.has(k));
+  }
+  return f;
+}
+
+/** 某一組的判斷式。這一組沒選就一律通過 */
+function groupPass(g, picked) {
+  if (!picked.length) return () => true;
+  const preds = FILTER_GROUPS[g].options
+    .filter(([k]) => picked.includes(k))
+    .map(([, fn]) => fn);
+  return (e) => preds.some((fn) => fn(e));
+}
+
+/**
+ * 套用篩選。
+ * @param {Array} list 條目
+ * @param {object} filter emptyFilter() 的形狀
+ * @param {string} [skip] 略過這一組，用來算「點下去會剩幾筆」
+ */
+export function applyFilter(list, filter, skip) {
+  const f = filter && typeof filter === "object" ? filter : emptyFilter();
+  const tests = GROUP_KEYS.filter((g) => g !== skip).map((g) =>
+    groupPass(g, f[g] || [])
+  );
+  return list.filter((e) => tests.every((fn) => fn(e)));
+}
+
+/** 目前選了幾個條件 */
+export const filterCount = (filter) =>
+  GROUP_KEYS.reduce((n, g) => n + ((filter && filter[g]) || []).length, 0);

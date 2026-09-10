@@ -314,6 +314,125 @@ select {
   font-weight: 600;
 }
 
+/* ─────────── 篩選 ─────────── */
+
+.filter-btn {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* 有條件時整顆變色。面板關起來後這是唯一的提示 */
+.filter-btn[aria-pressed="true"] {
+  border-color: var(--gold);
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.filter-btn .count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.f-head {
+  margin-bottom: 14px;
+}
+
+.fgroup {
+  margin-bottom: 16px;
+}
+
+.fgroup-title {
+  margin: 0 0 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dim);
+}
+
+.fopts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fopt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.fopt[aria-pressed="true"] {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: #fff;
+}
+
+/* 選了會變成零筆的條件直接停用，點了只會得到空畫面 */
+.fopt:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.fopt .count {
+  font-size: 11px;
+  color: var(--dim);
+}
+
+.fopt[aria-pressed="true"] .count {
+  color: #fff;
+}
+
+/* 屬性的代表色。18 個裡面認顏色比認字快 */
+.fopt .swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.btn-clear {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: none;
+  color: var(--dim);
+  font: inherit;
+  cursor: pointer;
+}
+
+.btn-clear:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .data-actions {
   display: flex;
   flex-direction: column;
@@ -358,11 +477,15 @@ select {
 /* ─────────── 搜尋與標題 ─────────── */
 
 .searchbar {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
   margin-bottom: 14px;
 }
 
 .searchbar input {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   max-width: 420px;
   padding: 9px 12px;
   border: 1px solid var(--line);

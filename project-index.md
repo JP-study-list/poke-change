@@ -32,8 +32,10 @@ main.js ──┬─► i18n.js      語言字典 + makeT()
                          ├─► backgrounds.js  背卡查詢
                          └─► store.js        MAX_ITEMS
 
-dex.js ──┬─► godex.js   自動產生的圖鑑資料
-         └─► extra.js   手動補的條目
+dex.js ──┬─► godex.js       自動產生的圖鑑資料
+         ├─► extra.js       手動補的條目
+         ├─► backgrounds.js 「有背卡可拿」這個篩選條件要用
+         └─► types.js       屬性篩選的選項清單
 
 tools/build-dex.mjs ──► costumes.js（裝扮譯名）
 tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑）
@@ -59,7 +61,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 檔案 | 用途 | 備註 |
 | --- | --- | --- |
-| `index.html` | 頁面骨架，65 行 | 側欄要加區塊 → 在 `.sidebar` 內加 `<section class="side-block">` |
+| `index.html` | 頁面骨架，62 行 | 側欄要加區塊 → 在 `.sidebar` 內加 `<section class="side-block">` |
 | `css/style.css` | 全部樣式 | 設計 token 全在 `:root`；深色模式用 `body.dark` 覆寫同一組變數。斷點只有 900px |
 
 ### 資料層
@@ -71,13 +73,13 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `js/costumes.js` | `COSTUME_NAMES` `costumeName()` | 裝扮的三語譯名。**遊戲內裝扮沒有官方名稱**，只能自己取，這是唯一來源 |
 | `js/backgrounds.js` | `EVENTS` `allCards` `entriesOf` `cardsFor` `allBgEntryIds` `totalCardSlots` | 7 個活動 / 17 張背卡 / 195 個收集格。`pokemon` 陣列填 dex.js 的條目 id |
 | `js/types.js` | `TYPES` `typeInfo` | 18 種屬性的代表色與三語名 |
-| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 73 個 key，必須完全一致 |
+| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 91 個 key，必須完全一致 |
 
 ### 存取層
 
 | 檔案 | 匯出 | 用途 |
 | --- | --- | --- |
-| `js/dex.js` | `ENTRIES` `find` `fullName` `speciesName` `formName` `iconAttrs` `hasShiny` `search` `FILTERS` `applyFilter` `goUrl` `artUrl` | 合併 godex 與 extra，1478 個條目。負責名稱組合、搜尋、篩選、圖片備援鏈 |
+| `js/dex.js` | `ENTRIES` `find` `fullName` `speciesName` `formName` `iconAttrs` `hasShiny` `search` `FILTER_GROUPS` `GROUP_KEYS` `emptyFilter` `normalizeFilter` `applyFilter` `filterCount` `goUrl` `artUrl` | 合併 godex 與 extra，1478 個條目。負責名稱組合、搜尋、篩選、圖片備援鏈 |
 | `js/store.js` | `emptyData` `newItem` `normalize` `load` `save` `flush` `clear` `toJSON` `fromJSON` `exportName` `cleanCode` `formatCode` `MAX_ITEMS` `COLUMNS` | localStorage 讀寫。**任何讀進來的資料都不信任**，一律過 `normalize` |
 
 ### 繪製層
@@ -92,7 +94,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 區塊 | 主要函式 |
 | --- | --- |
 | 版面共用 | `renderChrome` `renderViews` `setSidebar` `toast` `openSheet` `closeSheet` `esc` |
-| 圖鑑 | `renderFilters` `visibleEntries` `renderGrid` `renderDetail` |
+| 圖鑑 | `renderFilterBtn` `renderFilterPanel` `visibleEntries` `renderGrid` `renderDetail` |
 | 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` |
 | 背卡 | `renderBg` `renderCardDetail` |
 
@@ -137,6 +139,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改分享圖版面 | `js/share.js` 上方的尺寸常數（`CELL` `COLS` `NAME_H`） |
 | 改交換表格子長相 | `js/ui.js` 的 `tradeCell` + `css/style.css` 的 `.want-cell` |
 | 改一欄的上限 | `js/store.js` 的 `MAX_ITEMS` |
+| 加篩選條件 | `js/dex.js` 的 `FILTER_GROUPS`，標籤補 `js/i18n.js` |
 | 改手機的欄數 | `css/style.css` 的 `--cell-cols`，900px 以下講死不推算 |
 | 改格子大小的兩段值 | `css/style.css` 的 `--cell-*`，桌機在 `:root`，手機在斷點內 |
 

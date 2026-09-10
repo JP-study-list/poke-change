@@ -58,9 +58,9 @@ function installDom() {
   for (const id of [
     "app", "panel", "sheet", "toast", "filters", "views", "langs", "q",
     "appName", "subtitle", "filterTitle", "dataTitle", "dataActions",
-    "localNotice", "viewTitle", "scrim", "sidebar", "filterBlock",
+    "localNotice", "viewTitle", "scrim", "sidebar",
     "searchbar", "importFile", "listName", "shareBtn",
-    "displayTitle", "displayOpts", "trainerCode",
+    "displayTitle", "displayOpts", "trainerCode", "filterBtn",
   ]) {
     els[id] = mk(id);
   }
@@ -142,6 +142,64 @@ console.log("\n2. 圖鑑條目");
   ok("沒有同名重複條目", !clash.length, clash.slice(0, 3).join(" / "));
 }
 
+console.log("\n2b. 篩選");
+{
+  const f = dex.emptyFilter();
+  ok("空條件等於全部", dex.applyFilter(dex.ENTRIES, f).length === dex.ENTRY_COUNT);
+  ok("空條件的計數是 0", dex.filterCount(f) === 0);
+
+  // 組內 OR
+  const fire = dex.emptyFilter();
+  fire.type = ["fire"];
+  const water = dex.emptyFilter();
+  water.type = ["water"];
+  const both = dex.emptyFilter();
+  both.type = ["fire", "water"];
+  const nF = dex.applyFilter(dex.ENTRIES, fire).length;
+  const nW = dex.applyFilter(dex.ENTRIES, water).length;
+  const nB = dex.applyFilter(dex.ENTRIES, both).length;
+  ok("組內是 OR 不是 AND", nB > nF && nB > nW);
+  ok("兩種屬性沒有重複計算", nB <= nF + nW);
+
+  // 組間 AND
+  const andF = dex.emptyFilter();
+  andF.type = ["fire"];
+  andF.gen = ["gen4"];
+  const nAnd = dex.applyFilter(dex.ENTRIES, andF).length;
+  ok("組間是 AND", nAnd < nF && nAnd > 0);
+
+  // 每一組的選項加起來要蓋住整組不設限的結果
+  let genSum = 0;
+  for (const [k] of dex.FILTER_GROUPS.gen.options) {
+    const g = dex.emptyFilter();
+    g.gen = [k];
+    genSum += dex.applyFilter(dex.ENTRIES, g).length;
+  }
+  ok("九個世代加起來等於全部", genSum === dex.ENTRY_COUNT, String(genSum));
+
+  // skip 參數：算某一組的計數時要放掉自己
+  const skipped = dex.applyFilter(dex.ENTRIES, andF, "gen").length;
+  ok("skip 會放掉指定的那一組", skipped === nF);
+
+  ok("計數會累加", dex.filterCount(andF) === 2);
+
+  // 髒資料
+  const dirty = dex.normalizeFilter({ type: ["fire", "nope", 7], bogus: ["x"] });
+  ok("認不得的選項會被丟掉", dirty.type.length === 1 && dirty.type[0] === "fire");
+  ok("認不得的群組不會混進來", !("bogus" in dirty));
+  ok("不是物件也不會炸", dex.filterCount(dex.normalizeFilter(null)) === 0);
+
+  // 有背卡可拿
+  const bgF = dex.emptyFilter();
+  bgF.other = ["bg"];
+  const bgHits = dex.applyFilter(dex.ENTRIES, bgF);
+  const bgSet = new Set(bg.allBgEntryIds());
+  ok(
+    "有背卡的條目對得上背卡資料",
+    bgHits.length > 0 && bgHits.every((e) => bgSet.has(e.id))
+  );
+}
+
 console.log("\n3. 背卡");
 {
   const missing = [];
@@ -209,7 +267,17 @@ console.log("\n5. 繪製函式");
     ui.renderChrome(t, "zh", { big: true, names: false })
   );
   run("renderViews", () => ui.renderViews("dex", t));
-  run("renderFilters", () => ui.renderFilters("all", t));
+  run("renderFilterBtn", () => ui.renderFilterBtn(dex.emptyFilter(), t));
+  run("renderFilterPanel", () =>
+    ui.renderFilterPanel(dex.emptyFilter(), "zh", t)
+  );
+  run("renderFilterPanel 有選條件", () => {
+    const f = dex.emptyFilter();
+    f.type = ["fire", "water"];
+    f.gen = ["gen4"];
+    f.other = ["bg"];
+    ui.renderFilterPanel(f, "zh", t);
+  });
   run("renderGrid", () =>
     ui.renderGrid(dex.ENTRIES.slice(0, 60), data, "zh", t)
   );

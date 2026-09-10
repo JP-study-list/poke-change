@@ -15,8 +15,10 @@ import {
   formName,
   iconAttrs,
   hasShiny,
-  FILTERS,
+  FILTER_GROUPS,
+  GROUP_KEYS,
   applyFilter,
+  filterCount,
   search,
 } from "./dex.js";
 import { typeInfo } from "./types.js";
@@ -40,7 +42,6 @@ export function renderChrome(t, lang, disp = {}) {
   $("#appName").textContent = t("appName");
   $("#subtitle").textContent = t("subtitle");
   $("#q").placeholder = t("search");
-  $("#filterTitle").textContent = t("viewDex");
   $("#displayTitle").textContent = t("display");
   $("#dataTitle").textContent = t("data");
 
@@ -122,30 +123,71 @@ export function closeSheet() {
 
 export const isSheetOpen = () => $("#sheet").classList.contains("is-open");
 
-/* ─────────── 篩選列 ─────────── */
+/* ─────────── 篩選 ─────────── */
 
-/** 篩選鍵 → i18n 鍵 */
-const FILTER_LABEL = {
-  all: "filterAll",
-  base: "filterBase",
-  form: "filterForm",
-  costume: "filterCostume",
-  regional: "filterRegional",
-  shiny: "filterShiny",
-  legendary: "filterLegendary",
-  mythic: "filterMythic",
-  ultra: "filterUltra",
-};
+/**
+ * 搜尋列旁邊那顆鈕。有選條件時顯示個數，讓人知道畫面被篩過。
+ *
+ * 這很重要：篩選面板關起來之後，唯一還看得到「現在有條件」的地方
+ * 就是這顆鈕。沒有這個提示就會出現「我的寶可夢怎麼不見了」。
+ */
+export function renderFilterBtn(filter, t) {
+  const n = filterCount(filter);
+  const btn = $("#filterBtn");
+  btn.innerHTML = `${esc(t("filterBtn"))}${
+    n ? `<span class="count">${n}</span>` : ""
+  }`;
+  btn.setAttribute("aria-pressed", n > 0);
+}
 
-export function renderFilters(active, t) {
-  $("#filters").innerHTML = Object.keys(FILTER_LABEL)
-    .map((k) => {
-      const n = applyFilter(ENTRIES, k).length;
-      return `<button type="button" data-filter="${k}" aria-pressed="${
-        k === active
-      }">${esc(t(FILTER_LABEL[k]))}<span class="count">${n}</span></button>`;
-    })
-    .join("");
+/**
+ * 篩選面板。跟條目詳情共用同一個 sheet。
+ *
+ * 每個選項後面的數字是「扣掉自己這一組之後還剩幾筆」，
+ * 不是「這個條件本身有幾筆」。這樣才看得出點下去會剩多少，
+ * 而且同一組裡的選項加起來才會等於這一組全不選的結果。
+ */
+export function renderFilterPanel(filter, lang, t) {
+  const total = applyFilter(ENTRIES, filter).length;
+
+  const groups = GROUP_KEYS.map((g) => {
+    const grp = FILTER_GROUPS[g];
+    const picked = filter[g] || [];
+    // 這一組的計數基準：其他組都套用，這一組放掉
+    const pool = applyFilter(ENTRIES, filter, g);
+
+    const opts = grp.options
+      .map(([key, pred]) => {
+        const n = pool.filter(pred).length;
+        const info = grp.labelOf ? null : typeInfo(key, lang);
+        const label = info ? info.name : t(grp.labelOf(key));
+        const dot = info
+          ? `<i class="swatch" style="background:${esc(info.color)}"></i>`
+          : "";
+        return `<button type="button" class="fopt" data-group="${g}" data-opt="${esc(
+          key
+        )}" aria-pressed="${picked.includes(key)}"${n ? "" : " disabled"}>
+          ${dot}${esc(label)}<span class="count">${n}</span>
+        </button>`;
+      })
+      .join("");
+
+    return `<section class="fgroup">
+      <p class="fgroup-title">${esc(t(grp.label))}</p>
+      <div class="fopts">${opts}</div>
+    </section>`;
+  }).join("");
+
+  $("#panel").innerHTML = `
+    <div class="f-head">
+      <div class="d-name">${esc(t("filterBtn"))}</div>
+      <div class="d-meta">${esc(t("filterHits", total))}</div>
+    </div>
+    ${groups}
+    <button type="button" class="btn-clear" data-fclear${
+      filterCount(filter) ? "" : " disabled"
+    }>${esc(t("filterClear"))}</button>
+    <button class="btn-close" type="button" data-close="1">${esc(t("close"))}</button>`;
 }
 
 /* ─────────── 圖鑑 ─────────── */
