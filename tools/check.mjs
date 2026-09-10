@@ -157,7 +157,7 @@ console.log("\n3. 背卡");
 console.log("\n4. 儲存往返");
 {
   const data = store.emptyData();
-  data.want.push({ ...store.newItem("d150"), xxl: true, note: "測試" });
+  data.want.push({ ...store.newItem("d150"), xxl: true });
   data.have.push(store.newItem("d25.cHALLOWEEN_2017", false));
   data.name.want = "測試清單";
   store.flush(data);
@@ -171,11 +171,12 @@ console.log("\n4. 儲存往返");
   ok("空清單的匯入視為失敗", store.fromJSON('{"want":[],"have":[]}') === null);
 
   const dirty = store.normalize({
-    want: [{ id: "d1", shiny: "yes", note: "x".repeat(200) }, null, { nope: 1 }],
+    want: [{ id: "d1", shiny: "yes", bg: "x".repeat(200) }, null, { nope: 1 }],
     name: { want: 123 },
   });
   ok("髒資料會被洗乾淨", dirty.want.length === 1 && dirty.want[0].shiny === true);
-  ok("過長備註會截斷", dirty.want[0].note.length === 60);
+  ok("過長字串會截斷", dirty.want[0].bg.length === 40);
+  ok("舊版的備註欄位會被洗掉", !("note" in dirty.want[0]));
   ok("非字串清單名變空字串", dirty.name.want === "");
 }
 
@@ -248,9 +249,10 @@ console.log("\n6. 逸出");
   const evil = '<img src=x onerror=alert(1)>';
   ok("esc 會擋掉標籤", !ui.esc(evil).includes("<img"));
   const data = store.emptyData();
-  data.want.push({ ...store.newItem("d150"), note: evil });
+  data.want.push(store.newItem("d150"));
+  data.name.want = evil;
   ui.renderTrade(data, "zh", makeT("zh"));
-  ok("備註不會直接插進 HTML", !els.app.innerHTML.includes("<img src=x"));
+  ok("清單名稱不會直接插進 HTML", !els.app.innerHTML.includes("<img src=x"));
 }
 
 if (NET) {

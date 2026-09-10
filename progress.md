@@ -4,6 +4,35 @@
 
 ---
 
+## 2026-09-10
+- 類型：重構
+- 影響檔案：js/store.js, js/i18n.js, tools/check.mjs,
+  CLAUDE.md, project-index.md
+- 摘要：把 `note` 欄位從儲存結構移除，這個懸而未決的待辦收掉。
+  - `js/store.js`：`newItem` 不再產生 `note`，`cleanItem` 也不再保留。
+    舊資料帶著 `note` 進來會被 `normalize` 直接洗掉。
+  - `js/i18n.js`：三語的 `noteHint` 一併刪除，本來就沒有任何地方引用。
+    每語 70 個 key 變 69 個。
+  - `tools/check.mjs`：儲存往返測試改測 `bg` 的長度截斷，
+    另外加一條「舊版的備註欄位會被洗掉」確認向後相容行為。
+    逸出測試的對象從備註改成清單名稱，那是現在唯一的使用者自由輸入。
+  - `js/backgrounds.js` 的 `note_zh` / `note_ja` / `note_en` 是背卡註記，
+    跟這件事無關，沒有動。
+- 原因：備註只有自己看得到。對方收到的是分享圖，讀不到任何文字欄位，
+  所以寫了也傳達不出去。要讓對方知道的條件必須畫得出來，
+  也就是異色、XXL、XXS、背卡這四個維度。
+- 資料風險：無。線上版從來沒有出現過備註輸入框，
+  它在 09-09 的方格牆重構就已從介面拿掉，而站台是同一天才上線。
+- 驗證：`node tools/check.mjs` 全部通過（i18n 三語各 69 key 一致、
+  1478 筆詳情逐一繪製）。本機 server 起來，主要檔案全部 200。
+  headless Chrome 用注入的測試清單實際看過交換表與詳情面板，
+  五個格子、XXL / XXS / ✦ 符號、背卡下拉都正常，沒有殘留空白區塊，
+  也沒有出現裸露的 i18n key 名。
+- 待辦/已知問題：
+  - 之後轉私人 repo 時要同時搬到 Cloudflare Pages。
+
+---
+
 ## 2026-09-09（四）
 - 類型：修正
 - 影響檔案：js/costumes.js, tools/build-dex.mjs, js/godex.js,

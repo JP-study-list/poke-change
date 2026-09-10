@@ -73,7 +73,6 @@ export const STRINGS = {
     markXxs: "XXS",
     markBg: "背卡",
     markNote: "備註",
-    noteHint: "想補充的條件",
     bgAny: "不指定",
 
     share: "產生分享圖",
@@ -156,7 +155,6 @@ export const STRINGS = {
     markXxs: "XXS",
     markBg: "背景カード",
     markNote: "メモ",
-    noteHint: "追加したい条件",
     bgAny: "指定なし",
 
     share: "画像を作成",
@@ -239,7 +237,6 @@ export const STRINGS = {
     markXxs: "XXS",
     markBg: "Background",
     markNote: "Note",
-    noteHint: "Any extra condition",
     bgAny: "Any",
 
     share: "Make share image",

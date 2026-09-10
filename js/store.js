@@ -15,8 +15,8 @@
  *
  *   {
  *     v: 1,
- *     want: [ {id, shiny, xxl, xxs, bg, note}, ... ],   想要的
- *     have: [ {id, shiny, xxl, xxs, bg, note}, ... ],   可以給的
+ *     want: [ {id, shiny, xxl, xxs, bg}, ... ],   想要的
+ *     have: [ {id, shiny, xxl, xxs, bg}, ... ],   可以給的
  *     name: { want: "", have: "" },                     兩欄的標題
  *     updated: 時間戳
  *   }
@@ -47,7 +47,7 @@ export function emptyData() {
 
 /** 一筆新的交換項目。預設想要異色，因為交換的價值就在重骰個體值 */
 export function newItem(id, shiny = true) {
-  return { id, shiny: !!shiny, xxl: false, xxs: false, bg: "", note: "" };
+  return { id, shiny: !!shiny, xxl: false, xxs: false, bg: "" };
 }
 
 /* ─────────── 正規化 ─────────── */
@@ -64,7 +64,6 @@ function cleanItem(v) {
     xxl: !!v.xxl,
     xxs: !!v.xxs,
     bg: typeof v.bg === "string" ? v.bg.slice(0, 40) : "",
-    note: typeof v.note === "string" ? v.note.slice(0, 60) : "",
   };
 }
 

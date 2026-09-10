@@ -175,7 +175,7 @@ Pokémon GO 交換清單製作工具。用圖鑑找出活動裝扮、地區型�
 ```
 localStorage["poke-change/v1"]     交換清單
   { v:1, want:[...], have:[...], name:{want,have}, updated }
-  項目：{ id, shiny, xxl, xxs, bg, note }
+  項目：{ id, shiny, xxl, xxs, bg }
 
 localStorage["poke-change/pref"]   偏好
   { lang, dark }
@@ -253,6 +253,11 @@ localStorage 使用者可以手動改，也可能是舊版寫的。
 - **捷拉奧拉上游沒有 GO 圖示**（`pm807.icon.png` 404），
   在 `js/extra.js` 手動補一筆，用官方立繪。
 
+- **不做自由備註欄**。備註只有自己看得到，對方收到的是分享圖，
+  讀不到任何文字欄位。要讓對方知道的條件必須畫進圖裡，
+  也就是異色、XXL、XXS、背卡這四個有視覺表示的維度。
+  2026-09-10 已把 `note` 從儲存結構移除。
+
 - **背卡沒有任何資料源**，百分之百手工維護。這是護城河也是負擔。
 
 - **GO 圖示非正方形**且各不相同。畫面一律 `object-fit: contain`、
@@ -322,10 +327,9 @@ progress.md           開發歷史
 | 　裝扮 | 298 |
 | 已實裝異色 | 1434 |
 | 活動 / 背卡 / 收集格 | 7 / 17 / 195 |
-| 介面文字 | 三語各 70 個 key |
+| 介面文字 | 三語各 69 個 key |
 
 ### 待辦
 
 - 之後轉私人 repo + Cloudflare Pages + 自有網域
   （轉私人後免費方案的 GitHub Pages 會停掉，兩件事要一起做）
-- `note` 欄位還在儲存結構裡但介面不顯示，要留要拿掉未定案
