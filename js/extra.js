@@ -8,7 +8,7 @@
  * 皮卡丘裝扮有兩個來源，兩邊都不完整，而且是互補的：
  *   PokeMiners 圖檔   有 2025 年的 GO Fest 與 GO Tour 裝扮，Choggor 沒有
  *   Choggor 追蹤表     有訓練家帽系列與 2026 年活動，PokeMiners 還沒放
- *   Dittobase          前兩個都沒有的少數幾種，例如 2026 世界賽皮卡丘
+ *   img/extra/         前兩個都沒有的少數幾種，例如 2026 世界賽皮卡丘
  * 所以主線走 godex，這裡只補 godex 缺的那幾種，三邊都不漏。
  *
  * 對照規則是「代碼轉小寫、底線換連字號、去掉 _NOEVOLVE」，
@@ -26,8 +26,15 @@ import { GODEX } from "./godex.js";
 const REMOTE_BASE =
   "https://raw.githubusercontent.com/Choggor/Pikachu-costume-tracker/main/sprites/";
 
-/** 第三個來源。前兩個都還沒有的裝扮只剩這裡拿得到圖 */
-const DB_BASE = "https://assets.dittobase.com/go/pokemon/";
+/**
+ * 第三批裝扮的圖，收在 repo 裡。
+ *
+ * ── 為什麼這幾張要鏡像 ──
+ * 圖片一律不進 repo 是原則，但這幾張的來源沒有給 CORS 標頭，
+ * 分享圖是 canvas 畫的，載不到就會退回官方立繪，等於看不出穿了什麼。
+ * 五張合計 116 KB，比多一個相依划算。
+ */
+const LOCAL_EXTRA = "./img/extra/";
 
 /** 官方立繪，給沒有 GO 圖示的條目用 */
 const ART_BASE =
@@ -87,10 +94,10 @@ export const PIKA_EXTRA = [
 ];
 
 /**
- * Dittobase 有圖、另外兩個鏡像都還沒有的裝扮。
+ * 另外兩個鏡像都還沒有的裝扮，圖收在 img/extra/。
  *
  * PokeMiners 的即時清單裡沒有任何 2026 的裝扮，Choggor 的世界賽系列
- * 只到 2025，所以這幾種只剩 Dittobase 拿得到圖。
+ * 只到 2025，所以這幾種原本只剩 Dittobase 拿得到圖，抓下來收進 repo。
  *
  * 譯名是自己取的。世界賽與曠野地帶照 godex 既有的年份加活動名，
  * 看不出活動的就看圖命名，跟裝扮譯名同一套原則。
@@ -136,7 +143,7 @@ export function dbExtraEntries() {
         types: base.types,
         cls: base.cls,
         icon: null,
-        art: DB_BASE + c.file,
+        art: LOCAL_EXTRA + c.file,
       },
     ];
   });
@@ -163,8 +170,55 @@ export function pikaExtraEntries() {
 }
 
 /** 全部手動補的條目 */
+/* ─────────── 與 godex 去重 ─────────── */
+
+/**
+ * 裝扮代碼的比對形式：轉小寫、底線換連字號、去掉 _NOEVOLVE。
+ * 「穿了不能進化」是遊戲機制不是外觀，同一個裝扮兩種代碼都指同一件衣服。
+ */
+const costumeKey = (dex, code) =>
+  `${dex}:${String(code).toLowerCase().replace(/_/g, "-").replace(/-noevolve$/, "")}`;
+
+/** godex 已經有的裝扮，以及已經有的條目 id */
+function godexHas() {
+  const costumes = new Set();
+  const ids = new Set();
+  for (const e of GODEX) {
+    ids.add(e.id);
+    const code = e.costume || e.form;
+    if (code) costumes.add(costumeKey(e.dex, code));
+  }
+  return { costumes, ids };
+}
+
+/**
+ * 全部補充條目，扣掉 godex 已經有的。
+ *
+ * 上游補上某個裝扮之後，這裡對應的那筆就該讓位，否則圖鑑會出現
+ * 兩張一模一樣的卡，而且是兩個不同的 id，使用者會兩個都收。
+ * 讓位的是這裡，不是 godex，因為 godex 有異色圖、有官方名稱。
+ *
+ * 代碼命名不同的先過 ALIAS 再比，例如 Choggor 的 monacle-blue
+ * 其實就是 godex 的 GOFEST_2025_MONOCLE_BLUE。
+ */
 export function extraEntries() {
-  return [...pikaExtraEntries(), ...dbExtraEntries(), ...MISSING_ICON];
+  const { costumes, ids } = godexHas();
+  const keep = (e) => {
+    if (ids.has(e.id)) return false;
+    const code = ALIAS[String(e.costume).toLowerCase().replace(/_/g, "-")] || e.costume;
+    return !(code && costumes.has(costumeKey(e.dex, code)));
+  };
+  return [...pikaExtraEntries(), ...dbExtraEntries(), ...MISSING_ICON].filter(keep);
+}
+
+/** 目前被 godex 蓋掉、可以從這個檔刪掉的補充條目 */
+export function supersededEntries() {
+  const { costumes, ids } = godexHas();
+  return [...pikaExtraEntries(), ...dbExtraEntries(), ...MISSING_ICON].filter((e) => {
+    if (ids.has(e.id)) return true;
+    const code = ALIAS[String(e.costume).toLowerCase().replace(/_/g, "-")] || e.costume;
+    return !!(code && costumes.has(costumeKey(e.dex, code)));
+  });
 }
 
 export const EXTRA_COUNT = PIKA_EXTRA.length + MISSING_ICON.length;

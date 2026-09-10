@@ -95,6 +95,7 @@ const { STRINGS, LANGS, makeT } = await import("../js/i18n.js");
 const dex = await import("../js/dex.js");
 const store = await import("../js/store.js");
 const bg = await import("../js/backgrounds.js");
+const extra = await import("../js/extra.js");
 
 /** 背卡檢視的狀態，畫面測試用。收合狀態不影響資料正確性，給預設值就好 */
 const BG_STATE = { query: "", scope: "all", open: new Set() };
@@ -143,6 +144,35 @@ console.log("\n2. 圖鑑條目");
     names.set(k, e.id);
   }
   ok("沒有同名重複條目", !clash.length, clash.slice(0, 3).join(" / "));
+
+  /*
+   * extra.js 補的條目，上游哪天補上了就該讓位。
+   * 沒讓位的話圖鑑會出現兩張一模一樣的卡，而且是兩個不同的 id。
+   */
+  const superseded = extra.supersededEntries();
+  ok(
+    "補充條目沒有跟圖鑑重複",
+    !superseded.length,
+    superseded.length
+      ? `${superseded.map((e) => e.id).join(", ")} 已被 godex 收錄，可以從 js/extra.js 刪掉`
+      : ""
+  );
+
+  /*
+   * ALIAS 是給命名不同的裝扮對起來用的。
+   * 它指到的代碼要真的存在，否則這條對照早就失效了，去重會漏掉。
+   */
+  const codes = new Set(
+    dex.ENTRIES.filter((e) => e.costume || e.form).map((e) =>
+      String(e.costume || e.form).toLowerCase().replace(/_/g, "-")
+    )
+  );
+  const staleAlias = Object.entries(extra.ALIAS).filter(([, v]) => !codes.has(v));
+  ok(
+    "ALIAS 指到的代碼都還在",
+    !staleAlias.length,
+    staleAlias.map(([k, v]) => `${k} → ${v}`).join(", ")
+  );
 }
 
 console.log("\n2b. 篩選");

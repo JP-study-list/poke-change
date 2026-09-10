@@ -4,6 +4,32 @@
 
 ---
 
+## 2026-09-11（一）
+- 類型：修正
+- 影響檔案：img/extra/（新增 5 張）, js/extra.js, tools/check.mjs,
+  CLAUDE.md, project-index.md, README.md, AGENTS.md
+- 摘要：那五張裝扮圖收進 repo，並把 extra.js 的去重真的接起來。
+  - **圖鏡像進 `img/extra/`**，合計 116 KB。原因是來源沒有 CORS 標頭，
+    畫面上的 `<img>` 沒事，但分享圖是 canvas，載不到就退回官方立繪，
+    等於看不出穿了什麼。收進來之後同源，兩邊都正常，也不再欠第三方。
+  - **`ALIAS` 從此有人用**。它本來只是 export 出去，註解寫的去重沒有實作。
+    現在 `extraEntries()` 會擋掉 godex 已經有的裝扮，比對規則是
+    代碼轉小寫、底線換連字號、去掉 `_NOEVOLVE`，命名不同的走 `ALIAS`。
+  - 另外加了 `supersededEntries()`，列出哪幾筆已經被 godex 收錄可以刪。
+- 原因：上游哪天補上已經在 extra 裡的裝扮，圖鑑會出現兩張一樣的卡，
+  而且是兩個不同的 id，使用者會兩個都收。
+- 驗證：
+  - `node tools/check.mjs` 全部通過，新增兩條測試：補充條目沒有跟圖鑑重複、
+    `ALIAS` 指到的代碼都還在。
+  - 去重不是空跑。在暫存複本塞了四筆一定重複的（c 前綴、f 前綴、
+    走 ALIAS 的、走 NOEVOLVE 的），四筆全部被擋掉，輸出仍是 28 筆。
+- 待辦/已知問題：
+  - 自動與手工兩批的背卡 id 慣例仍不一致，待決定。
+  - 新背卡的 id 形狀有點怪（`city-safari2023-barcelona-2023`），
+    還沒 push，現在改不影響任何人。
+
+---
+
 ## 2026-09-10（日）
 - 類型：新增
 - 影響檔案：js/extra.js, js/bgdata.js, CLAUDE.md, project-index.md

@@ -74,5 +74,6 @@ node tools/build-bg.mjs --force
 | 背卡日期與英文名 | Serebii（一次性離線抽取） |
 | 背卡清單交叉比對 | Bulbapedia |
 | 背卡本地備援圖 | 本 repo 的 `img/bg/` |
+| 上游沒有的裝扮圖 | 本 repo 的 `img/extra/` |
 
 圖片一律直接連外部 CDN，不鏡像進 repo。

@@ -211,7 +211,7 @@ localStorage 使用者可以手動改，也可能是舊版寫的。
 | 遊戲數值、型態清單 | PokeMiners/game_masters | 低 |
 | GO 圖示、官方三語名稱 | PokeMiners/pogo_assets | 低 |
 | 部分裝扮皮卡丘 | Choggor/Pikachu-costume-tracker | **中，個人專案** |
-| 前兩個都沒有的裝扮圖 | Dittobase 的 CDN，5 筆 | **中，別人的網站，且沒有 CORS** |
+| 前兩個都沒有的裝扮圖 | 自己的 `img/extra/`，5 張 | 無 |
 | 立繪備援 | PokeAPI/sprites | 低 |
 | 背卡圖與代號 | PokeMiners/pogo_assets `Images/LocationCards/` | 低 |
 | 背卡的寶可夢清單 | Dittobase（一次性離線抽取，含型態） | **中，別人的網站** |
@@ -222,8 +222,10 @@ localStorage 使用者可以手動改，也可能是舊版寫的。
 `tools/build-dex.mjs` 離線解析前兩者產生 `js/godex.js`，
 網站執行時不會抓這些檔案。GO 更新後重跑腳本即可。
 
-**圖片不鏡像進 repo**。3426 張約 75 MB，而且是 Niantic 素材，
+**圖片原則上不鏡像進 repo**。3426 張約 75 MB，而且是 Niantic 素材，
 進了 git 歷史要拿掉得改寫歷史。一律直接連外部 CDN。
+例外是背卡的備援圖與 `img/extra/` 那 5 張，來源沒有 CORS，
+不收進來就畫不進分享圖。兩者合計不到 2 MB。
 
 ### 部署
 - 線上網址：`https://jp-study-list.github.io/poke-change/`
@@ -264,10 +266,15 @@ localStorage 使用者可以手動改，也可能是舊版寫的。
 - **捷拉奧拉上游沒有 GO 圖示**（`pm807.icon.png` 404），
   在 `js/extra.js` 手動補一筆，用官方立繪。
 
-- **Dittobase 的圖沒有 CORS 標頭**。畫面上的 `<img>` 不受影響，
-  但分享圖是 canvas，`crossOrigin="anonymous"` 會載入失敗，
-  結果退回官方立繪。所以那 5 筆在分享圖上看不到裝扮。
+- **外部圖沒有 CORS 標頭就不能畫進分享圖**。畫面上的 `<img>` 不受影響，
+  但 canvas 的 `crossOrigin="anonymous"` 會載入失敗而退回備援。
+  Dittobase 的 CDN 就是這種，所以那 5 張改成鏡像進 `img/extra/`。
   Choggor 與 PokeMiners 走 raw.githubusercontent，有 `access-control-allow-origin: *`，沒這個問題。
+
+- **`js/extra.js` 補的條目會跟 godex 搶同一個裝扮**。上游補上之後
+  兩邊都有，圖鑑就會出現兩張一樣的卡，而且是兩個不同的 id。
+  `extraEntries()` 會擋掉，比對規則是代碼轉小寫、底線換連字號、去掉
+  `_NOEVOLVE`，命名不同的走 `ALIAS`。`check.mjs` 會提醒哪幾筆可以刪了。
 
 - **世代靠圖鑑編號的區間判斷**，game master 沒有這個欄位。
   標籤走地區名不走世代編號。注意這跟種類裡的「地區型」是兩回事，
@@ -375,6 +382,7 @@ js/ui.js              全部繪製函式
 js/main.js            進入點、狀態、事件
 js/share.js           雙欄分享圖（canvas）
 img/bg/               背卡的本地備援圖（17 張，進 git）
+img/extra/            上游沒有的裝扮圖（5 張，進 git）
 tools/build-dex.mjs   產生圖鑑資料
 tools/build-bg.mjs    產生背卡骨架
 tools/check.mjs       自我檢查
