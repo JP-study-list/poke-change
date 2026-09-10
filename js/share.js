@@ -245,25 +245,22 @@ export async function buildShareImage(data, opts) {
       const box = CELL - 10;
       const bx = cx + 5;
 
-      ctx.save();
-      roundRect(ctx, bx, cy, box, box, 12);
-      ctx.fillStyle = C.card;
-      ctx.fill();
-      ctx.clip();
-
-      // 指定了背卡才畫底圖，疊在寶可夢後方
+      /*
+       * 格子不畫框，跟畫面上一致。只有指定了背卡的才畫底圖，
+       * 那張圖本身就是框，所以只有它需要裁圓角。
+       */
       if (bgImg) {
+        ctx.save();
+        roundRect(ctx, bx, cy, box, box, 12);
+        ctx.fillStyle = C.card;
+        ctx.fill();
+        ctx.clip();
         ctx.globalAlpha = dark ? 0.42 : 0.5;
         drawCover(ctx, bgImg, bx, cy, box);
         ctx.globalAlpha = 1;
+        ctx.restore();
       }
       if (sprite) drawContain(ctx, sprite, bx, cy, box, 0.78);
-      ctx.restore();
-
-      ctx.strokeStyle = C.line;
-      ctx.lineWidth = 1;
-      roundRect(ctx, bx + 0.5, cy + 0.5, box - 1, box - 1, 12);
-      ctx.stroke();
 
       /*
        * 異色是星星疊在左上角，跟畫面上的格子一致。

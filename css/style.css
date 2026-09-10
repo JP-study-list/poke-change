@@ -744,7 +744,15 @@ body.no-names .cell .no {
  * 交換表的格子。方塊本身是正方形，名稱與尺寸在方塊外面。
  * 這樣背卡底圖只鋪滿方塊，名稱不必再加一塊實色底去壓過它。
  */
-.want-cell {
+/*
+ * 交換表的格子不畫框，寶可夢直接站在面板上。
+ * 一頁最多兩百隻，每一隻都框起來的話整面都是線條。
+ * 指定了背卡的格子例外，底圖本身就是框。
+ */
+.want-cell,
+.want-cell:hover {
+  border-color: transparent;
+  background: none;
   cursor: pointer;
 }
 
@@ -754,6 +762,10 @@ body.no-names .cell .no {
   aspect-ratio: 1;
   overflow: hidden;
   border-radius: var(--radius);
+}
+
+/* 沒有框就沒有 hover 的邊框可以變色，改用淡底表示指到了 */
+.want-cell:hover .want-tile {
   background: var(--card);
 }
 
