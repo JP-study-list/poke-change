@@ -15,8 +15,7 @@
  *   d25.xREDS_HAT           裝扮，圖片來自外部個人專案
  *
  * ── 圖片備援 ──
- * GO 圖示 → 官方立繪。onerror 只能安全重試一次，再多會無限迴圈，
- * 所以剩下的來源放 data-fb，由 window.__imgfb 逐一取用。
+ * GO 圖示 → 官方立繪。備援鏈的機制在 imgchain.js，背卡也共用同一套。
  * 新增 <img> 一律用 iconAttrs 產生，自己寫 src 就沒有備援。
  */
 
@@ -24,6 +23,7 @@ import { GODEX } from "./godex.js";
 import { extraEntries } from "./extra.js";
 import { allBgEntryIds } from "./backgrounds.js";
 import { TYPES } from "./types.js";
+import { imgAttrs } from "./imgchain.js";
 
 /** 屬性的 key，順序就是篩選面板上的順序 */
 const TYPE_KEYS = Object.keys(TYPES);
@@ -80,17 +80,6 @@ export function fullName(e, lang) {
 /* ─────────── 圖片 ─────────── */
 
 /**
- * 依序嘗試多個來源，前一個失敗就換下一個。
- * @param {string[]} chain 圖片網址，空值會先濾掉
- */
-function imgAttrs(chain) {
-  const [first, ...rest] = chain.filter(Boolean);
-  if (!first) return "";
-  if (!rest.length) return `src="${first}"`;
-  return `src="${first}" data-fb="${rest.join(" ")}" onerror="__imgfb(this)"`;
-}
-
-/**
  * <img> 屬性。
  * @param {object} e 條目
  * @param {boolean} shiny 要異色版本
@@ -105,20 +94,6 @@ export function iconAttrs(e, shiny) {
 
 /** 這個條目有沒有異色可以收 */
 export const hasShiny = (e) => !!(e && e.shinyIcon);
-
-// 給 inline onerror 用。Node 測試環境沒有 window，所以要判斷
-if (typeof window !== "undefined") {
-  window.__imgfb = (img) => {
-    const rest = img.dataset.fb || "";
-    if (!rest) {
-      img.onerror = null; // 來源用完了，停止重試
-      return;
-    }
-    const i = rest.indexOf(" ");
-    img.dataset.fb = i < 0 ? "" : rest.slice(i + 1);
-    img.src = i < 0 ? rest : rest.slice(0, i);
-  };
-}
 
 /* ─────────── 搜尋與篩選 ─────────── */
 

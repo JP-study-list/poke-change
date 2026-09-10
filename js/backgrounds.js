@@ -1,394 +1,153 @@
 /**
- * backgrounds.js — 活動背卡資料
+ * backgrounds.js — 背卡的單一入口
  *
- * 背卡（Special Background）是在特定活動期間捕捉寶可夢時，
- * 有機率附加在寶可夢資料頁上的背景圖。
+ * 把兩個來源合併成一份清單，並負責收納夾分組、名稱與圖片備援。
+ * 畫面層只跟這個檔說話，不直接碰 bgdata.js 或 bgevents.js。
  *
- * ── 資料結構 ──
- * EVENTS 是活動清單，每個活動底下有一或多張背卡（cards）。
- * 每張背卡記錄哪些寶可夢可能帶有它（pokemon: 條目 id 陣列）。
+ *   bgdata.js    自動產生，240 張骨架，只有代號、圖、英文名與日期
+ *   bgevents.js  手工維護，17 張，有三語名、註記與寶可夢清單
+ *   bgseries.js  收納夾的譯名與順序
  *
- * ── 如何新增一個活動 ──
- * 1. 在 EVENTS 陣列加一筆，id 不要跟既有的重複
- * 2. 背卡圖片放進 img/bg/，檔名對應 card.img
- * 3. pokemon 陣列有兩種寫法：
+ * 背卡（Special Background）是在特定活動期間或特定地點捕捉寶可夢時，
+ * 附加在寶可夢資料頁上的背景圖。
  *
- *    "d150"                    圖鑑（data.js）裡的傳說，直接用 id
- *    { id: "d131" }              一般寶可夢，用全國圖鑑編號，名稱查 pokedex.js
- *    { id: "d131", note_zh:"布蘭琪風", note_ja:"ブランシェ", note_en:"Blanche" }
- *                              特殊造型，合併成本體但加註說明
- *    { id: "d25.xGOTOUR_2026_CALEMS_HAT" }
- *                              裝扮皮卡丘，圖片與名稱查 pikachu.js
+ * ── 合併規則 ──
+ * 以 asset（上游檔名）為準對上同一張卡，手工資料逐欄覆蓋骨架。
+ * 手工有的欄位才蓋，沒填的沿用骨架，所以補一個譯名不必連日期一起抄。
  *
- * 造型一律合併成本體（例如帕底亞肯泰羅三種都算「肯泰羅」一格），
- * 需要區分時用 note 註記。
+ * ── 背卡 id ──
+ * 發布後不可更改，這是使用者紀錄的鍵，存在 item.bg 裡。
+ * 既有的十七張沿用原本的短代號（gf26-global 那種），
+ * 新的照上游檔名產生（citysafari2025-amsterdam 那種）。
  *
- * ── scope 的意思 ──
- * "global"   全球活動，所有玩家都有機會取得
- * "regional" 地區限定，只有該地區的實體活動才拿得到，非常稀有
+ * ── 圖片 ──
+ * 連上游，不鏡像進 repo，新活動只要填檔名就有圖。
+ * 例外是有特效層的那 31 張，上游只有底層，本地 img/bg/ 有實際卡面的
+ * 那幾張會優先用本地的。詳見 bgSources。
+ *
+ * ── 收納夾 ──
+ * 兩百四十張攤平沒辦法看，照活動系列收進資料夾，夾內每張卡就是一個活動。
  */
 
-export const EVENTS = [
-  {
-    id: "gofest2026",
-    zh: "GO Fest 2026 全球",
-    ja: "GO Fest 2026 グローバル",
-    en: "GO Fest 2026: Global",
-    date: "2026-07-06 ~ 07-12",
-    cards: [
-      {
-        id: "gf26-global",
-        scope: "global",
-        img: "./img/bg/gofest2026-global.jpg",
-        zh: "GO Fest 2026",
-        ja: "GO Fest 2026",
-        en: "GO Fest 2026",
-        note_zh: "7/6～7/12 期間五星、原始、超級團戰捕捉的寶可夢有機率帶有",
-        note_ja: "7/6〜7/12 の五つ星・原始・メガレイドで捕獲したポケモンに付く可能性",
-        note_en: "From five-star, Primal, and Mega Raids between July 6 and 12",
-        pokemon: [
-          "d144", "d145", "d146", "d243", "d244", "d245", "d249", "d250",
-          "d480", "d481", "d482", "d483", "d484", "d487.fALTERED", "d487.fORIGIN", "d716",
-          "d717", "d791", "d792", "d382", "d383", "d384", "d643", "d644",
-          "d646.fNORMAL", "d377", "d378", "d379", "d483.fORIGIN", "d484.fORIGIN", "d485", "d486",
-          "d641.fINCARNATE", "d641.fTHERIAN", "d642.fINCARNATE", "d642.fTHERIAN", "d645.fINCARNATE", "d645.fTHERIAN", "d894", "d895",
-          "d905.fINCARNATE", "d905.fTHERIAN", "d386", "d386.fATTACK", "d386.fDEFENSE", "d386.fSPEED", "d649.fNORMAL", "d649.fBURN",
-          "d649.fCHILL", "d649.fDOUSE", "d649.fSHOCK", "d785", "d786", "d787", "d788", "d793",
-          "d794", "d795", "d796", "d797", "d798", "d799", "d800", "d805",
-          "d806", "d380", "d381", "d488", "d491", "d638", "d639", "d640",
-          "d888.fHERO", "d889.fHERO",
-        ],
-      },
-      {
-        id: "gf26-mewtwo",
-        scope: "global",
-        img: "./img/bg/gofest2026-mewtwo.jpg",
-        zh: "超夢限定",
-        ja: "ミュウツー限定",
-        en: "Mewtwo Special",
-        note_zh: "GO Fest 期間從超級究極團戰捕捉的超夢限定",
-        note_ja: "GO Fest 期間のスーパーメガレイドのミュウツー限定",
-        note_en: "Only from Super Mega Raid Mewtwo during GO Fest",
-        pokemon: ["d150"],
-      },
-    ],
-  },
+import { BG_CARDS } from "./bgdata.js";
+import { HAND_EVENTS } from "./bgevents.js";
+import { SERIES, seriesInfo, seriesOrder } from "./bgseries.js";
+import { imgAttrs } from "./imgchain.js";
 
-  {
-    id: "gofest2026-inperson",
-    zh: "GO Fest 2026 實體活動",
-    ja: "GO Fest 2026 リアルイベント",
-    en: "GO Fest 2026: In-Person",
-    date: "2026-05-25 ~ 06-15",
-    cards: [
-      {
-        id: "gf26-tokyo",
-        scope: "regional",
-        img: "./img/bg/gofest2026-tokyo.png",
-        zh: "東京",
-        ja: "東京",
-        en: "Tokyo",
-        note_zh: "5/25～6/1 台場，僅限持票者。急凍鳥、水君為當場限定",
-        note_ja: "5/25〜6/1 お台場、チケット所持者限定。フリーザーとスイクンが登場",
-        note_en: "May 25 – Jun 1, Tokyo Waterfront City. Ticket holders only.",
-        pokemon: [
-          "d144", "d245", "d150", "d382", "d383",
-          { id: "d128", note_zh: "帕底亞的樣子・水", note_ja: "パルデアのすがた・水", note_en: "Paldean Aqua" },
-          { id: "d131", note_zh: "布蘭琪風", note_ja: "ブランシェ風", note_en: "Blanche-themed" },
-          { id: "d807" },
-        ],
-      },
-      {
-        id: "gf26-chicago",
-        scope: "regional",
-        img: "./img/bg/gofest2026-chicago.png",
-        zh: "芝加哥",
-        ja: "シカゴ",
-        en: "Chicago",
-        note_zh: "6/4～6/8 Grant Park，僅限持票者。閃電鳥、雷公為當場限定",
-        note_ja: "6/4〜6/8 グラントパーク、チケット所持者限定。サンダーとライコウが登場",
-        note_en: "Jun 4 – 8, Grant Park. Ticket holders only.",
-        pokemon: [
-          "d145", "d243", "d150", "d382", "d383",
-          { id: "d128", note_zh: "帕底亞的樣子・火", note_ja: "パルデアのすがた・炎", note_en: "Paldean Blaze" },
-          { id: "d239", note_zh: "斯帕克風", note_ja: "スパーク風", note_en: "Spark-themed" },
-          { id: "d807" },
-        ],
-      },
-      {
-        id: "gf26-copenhagen",
-        scope: "regional",
-        img: "./img/bg/gofest2026-copenhagen.png",
-        zh: "哥本哈根",
-        ja: "コペンハーゲン",
-        en: "Copenhagen",
-        note_zh: "6/11～6/15 Fælledparken，僅限持票者。火焰鳥、炎帝為當場限定",
-        note_ja: "6/11〜6/15 フェレズパーケン、チケット所持者限定。ファイヤーとエンテイが登場",
-        note_en: "Jun 11 – 15, Fælledparken. Ticket holders only.",
-        pokemon: [
-          "d146", "d244", "d150", "d382", "d383",
-          { id: "d77", note_zh: "坎黛拉風", note_ja: "キャンデラ風", note_en: "Candela-themed" },
-          { id: "d128", note_zh: "帕底亞的樣子・鬥", note_ja: "パルデアのすがた・格闘", note_en: "Paldean Combat" },
-          { id: "d807" },
-        ],
-      },
-    ],
-  },
+/* ─────────── 圖片來源 ─────────── */
 
-  {
-    id: "gotour2026-kalos",
-    zh: "GO Tour: 卡洛斯 全球",
-    ja: "GO Tour: カロス グローバル",
-    en: "GO Tour: Kalos – Global",
-    date: "2026-02-28 ~ 03-02",
-    cards: [
-      {
-        id: "gt26-mega",
-        scope: "global",
-        img: "./img/bg/gotour2026-mega.webp",
-        zh: "GO Tour 2026 Mega",
-        ja: "GO Tour 2026 メガ",
-        en: "GO Tour 2026 Mega",
-        note_zh: "2/28～3/2 期間捕捉可超級進化的寶可夢有機率帶有",
-        note_ja: "2/28〜3/2 にメガシンカできるポケモンを捕獲すると付く可能性",
-        note_en: "From Mega-capable Pokémon caught between Feb 28 and Mar 2",
-        pokemon: [
-          { id: "d3" }, { id: "d6" }, { id: "d9" }, { id: "d18" }, { id: "d71" },
-          { id: "d115" }, { id: "d149" }, { id: "d212" }, { id: "d214" }, { id: "d248" },
-          { id: "d254" }, { id: "d257" }, { id: "d260" }, { id: "d282" }, { id: "d359" },
-          { id: "d373" }, { id: "d376" },
-          "d380", "d381",
-          { id: "d445" }, { id: "d448" }, { id: "d475" }, { id: "d687" },
-        ],
-      },
-      {
-        id: "gt26-x",
-        scope: "global",
-        img: "./img/bg/gotour2026-x.webp",
-        zh: "GO Tour 2026 X",
-        ja: "GO Tour 2026 X",
-        en: "GO Tour 2026 X",
-        note_zh: "2/27～3/9 卡洛斯御三家兌換碼與 GO Tour 期間取得",
-        note_ja: "2/27〜3/9 カロス御三家コードと GO Tour 期間に入手",
-        note_en: "From the Kalos Starters promo code and GO Tour, Feb 27 – Mar 9",
-        pokemon: [
-          { id: "d25.xGOTOUR_2026_CALEMS_HAT", note_zh: "卡爾姆帽", note_ja: "カルムの帽子", note_en: "Calem's Hat" },
-          { id: "d25.xGOTOUR_2026_SERENAS_HAT", note_zh: "莎莉娜帽", note_ja: "セレナの帽子", note_en: "Serena's Hat" },
-          { id: "d650" }, { id: "d653" }, { id: "d656" }, { id: "d679" },
-          "d716",
-        ],
-      },
-      {
-        id: "gt26-y",
-        scope: "global",
-        img: "./img/bg/gotour2026-y.webp",
-        zh: "GO Tour 2026 Y",
-        ja: "GO Tour 2026 Y",
-        en: "GO Tour 2026 Y",
-        note_zh: "2/27～3/9 卡洛斯御三家兌換碼與 GO Tour 期間取得",
-        note_ja: "2/27〜3/9 カロス御三家コードと GO Tour 期間に入手",
-        note_en: "From the Kalos Starters promo code and GO Tour, Feb 27 – Mar 9",
-        pokemon: [
-          { id: "d25.xGOTOUR_2026_CALEMS_HAT", note_zh: "卡爾姆帽", note_ja: "カルムの帽子", note_en: "Calem's Hat" },
-          { id: "d25.xGOTOUR_2026_SERENAS_HAT", note_zh: "莎莉娜帽", note_ja: "セレナの帽子", note_en: "Serena's Hat" },
-          { id: "d650" }, { id: "d653" }, { id: "d656" }, { id: "d679" },
-          "d717",
-        ],
-      },
-    ],
-  },
+const BG_BASE =
+  "https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Images/LocationCards/";
 
-  {
-    id: "roadtokalos2026",
-    zh: "通往卡洛斯之路",
-    ja: "カロスへの道",
-    en: "Road to Kalos",
-    date: "2026-02-24 ~ 02-27",
-    cards: [
-      {
-        id: "gt26-diamond",
-        scope: "global",
-        img: "./img/bg/gotour2026-diamond.webp",
-        zh: "GO Tour 2026 鑽石",
-        ja: "GO Tour 2026 ダイヤモンド",
-        en: "GO Tour 2026 Diamond",
-        note_zh: "2/26～2/27 通往卡洛斯之路活動期間取得",
-        note_ja: "2/26〜2/27 カロスへの道の期間に入手",
-        note_en: "From the Road to Kalos event, Feb 26 – 27",
-        pokemon: [
-          { id: "d25.fGOTOUR_2024_A", note_zh: "光輝帽", note_ja: "コウキの帽子", note_en: "Lucas's Hat" },
-          { id: "d25.fGOTOUR_2024_A_02", note_zh: "小光帽", note_ja: "ヒカリの帽子", note_en: "Dawn's Hat" },
-          { id: "d25.fGOTOUR_2024_B", note_zh: "零帽", note_ja: "テルの帽子", note_en: "Rei's Cap" },
-          { id: "d25.fGOTOUR_2024_B_02", note_zh: "小明頭巾", note_ja: "ショウのスカーフ", note_en: "Akari's Kerchief" },
-          "d483", "d483.fORIGIN",
-        ],
-      },
-      {
-        id: "gt26-pearl",
-        scope: "global",
-        img: "./img/bg/gotour2026-pearl.webp",
-        zh: "GO Tour 2026 珍珠",
-        ja: "GO Tour 2026 パール",
-        en: "GO Tour 2026 Pearl",
-        note_zh: "2/26～2/27 通往卡洛斯之路活動期間取得",
-        note_ja: "2/26〜2/27 カロスへの道の期間に入手",
-        note_en: "From the Road to Kalos event, Feb 26 – 27",
-        pokemon: [
-          { id: "d25.fGOTOUR_2024_A", note_zh: "光輝帽", note_ja: "コウキの帽子", note_en: "Lucas's Hat" },
-          { id: "d25.fGOTOUR_2024_A_02", note_zh: "小光帽", note_ja: "ヒカリの帽子", note_en: "Dawn's Hat" },
-          { id: "d25.fGOTOUR_2024_B", note_zh: "零帽", note_ja: "テルの帽子", note_en: "Rei's Cap" },
-          { id: "d25.fGOTOUR_2024_B_02", note_zh: "小明頭巾", note_ja: "ショウのスカーフ", note_en: "Akari's Kerchief" },
-          "d484", "d484.fORIGIN",
-        ],
-      },
-      {
-        id: "gt26-ruby",
-        scope: "global",
-        img: "./img/bg/gotour2026-ruby.webp",
-        zh: "GO Tour 2026 紅寶石",
-        ja: "GO Tour 2026 ルビー",
-        en: "GO Tour 2026 Ruby",
-        note_zh: "2/25～2/26 通往卡洛斯之路活動期間取得",
-        note_ja: "2/25〜2/26 カロスへの道の期間に入手",
-        note_en: "From the Road to Kalos event, Feb 25 – 26",
-        pokemon: [
-          { id: "d25.cGOTOUR_2023_HAT", note_zh: "小悠帽", note_ja: "ユウキの帽子", note_en: "Brendan's Hat" },
-          { id: "d25.cGOTOUR_2023_BANDANA", note_zh: "小遙頭巾", note_ja: "ハルカのバンダナ", note_en: "May's Bow" },
-          "d383",
-        ],
-      },
-      {
-        id: "gt26-sapphire",
-        scope: "global",
-        img: "./img/bg/gotour2026-sapphire.webp",
-        zh: "GO Tour 2026 藍寶石",
-        ja: "GO Tour 2026 サファイア",
-        en: "GO Tour 2026 Sapphire",
-        note_zh: "2/25～2/26 通往卡洛斯之路活動期間取得",
-        note_ja: "2/25〜2/26 カロスへの道の期間に入手",
-        note_en: "From the Road to Kalos event, Feb 25 – 26",
-        pokemon: [
-          { id: "d25.cGOTOUR_2023_HAT", note_zh: "小悠帽", note_ja: "ユウキの帽子", note_en: "Brendan's Hat" },
-          { id: "d25.cGOTOUR_2023_BANDANA", note_zh: "小遙頭巾", note_ja: "ハルカのバンダナ", note_en: "May's Bow" },
-          "d382",
-        ],
-      },
-      {
-        id: "gt26-gold",
-        scope: "global",
-        img: "./img/bg/gotour2026-gold.webp",
-        zh: "GO Tour 2026 金",
-        ja: "GO Tour 2026 ゴールド",
-        en: "GO Tour 2026 Gold",
-        note_zh: "2/24～2/25 通往卡洛斯之路活動期間取得",
-        note_ja: "2/24〜2/25 カロスへの道の期間に入手",
-        note_en: "From the Road to Kalos event, Feb 24 – 25",
-        pokemon: [
-          { id: "d25.xLYRAS_HAT", note_zh: "琴音帽", note_ja: "コトネの帽子", note_en: "Lyra's Hat" },
-          { id: "d25.xETHANS_HAT", note_zh: "小金帽", note_ja: "ヒビキの帽子", note_en: "Ethan's Hat" },
-          "d250",
-        ],
-      },
-      {
-        id: "gt26-silver",
-        scope: "global",
-        img: "./img/bg/gotour2026-silver.webp",
-        zh: "GO Tour 2026 銀",
-        ja: "GO Tour 2026 シルバー",
-        en: "GO Tour 2026 Silver",
-        note_zh: "2/24～2/25 通往卡洛斯之路活動期間取得",
-        note_ja: "2/24〜2/25 カロスへの道の期間に入手",
-        note_en: "From the Road to Kalos event, Feb 24 – 25",
-        pokemon: [
-          { id: "d25.xLYRAS_HAT", note_zh: "琴音帽", note_ja: "コトネの帽子", note_en: "Lyra's Hat" },
-          { id: "d25.xETHANS_HAT", note_zh: "小金帽", note_ja: "ヒビキの帽子", note_en: "Ethan's Hat" },
-          "d249",
-        ],
-      },
-    ],
-  },
+/** 本地備援，只有手工那批有圖 */
+const LOCAL_BASE = "./img/bg/";
 
-  {
-    id: "gotour2026-la",
-    zh: "GO Tour 2026 洛杉磯",
-    ja: "GO Tour 2026 ロサンゼルス",
-    en: "GO Tour 2026: Los Angeles",
-    date: "2026-02-20 ~ 02-23",
-    cards: [
-      {
-        id: "gt26-la",
-        scope: "regional",
-        img: "./img/bg/gotour2026-la.webp",
-        zh: "洛杉磯",
-        ja: "ロサンゼルス",
-        en: "Los Angeles",
-        note_zh: "2/20～2/23 洛杉磯實體活動，僅限持票者",
-        note_ja: "2/20〜2/23 ロサンゼルスのリアルイベント、チケット所持者限定",
-        note_en: "Feb 20 – 23, Los Angeles in-person event. Ticket holders only.",
-        pokemon: [
-          { id: "d6" }, { id: "d71" }, { id: "d130" }, { id: "d149" }, { id: "d181" },
-          { id: "d254" }, { id: "d282" }, { id: "d334" }, { id: "d359" }, { id: "d373" },
-          { id: "d445" }, { id: "d448" }, { id: "d679" }, { id: "d687" },
-          "d716", "d717",
-        ],
-      },
-    ],
-  },
+export const bgUrl = (card) => (card && card.asset ? `${BG_BASE}${card.asset}.png` : null);
+const localUrl = (card) => (card && card.local ? `${LOCAL_BASE}${card.local}` : null);
 
-  {
-    id: "gotour2026-tainan",
-    zh: "GO Tour 2026 台南",
-    ja: "GO Tour 2026 台南",
-    en: "GO Tour 2026: Tainan",
-    date: "2026-02-20 ~ 02-23",
-    cards: [
-      {
-        id: "gt26-tainan",
-        scope: "regional",
-        img: "./img/bg/gotour2026-tainan.webp",
-        zh: "台南",
-        ja: "台南",
-        en: "Tainan",
-        note_zh: "2/20～2/23 台南實體活動，僅限持票者",
-        note_ja: "2/20〜2/23 台南のリアルイベント、チケット所持者限定",
-        note_en: "Feb 20 – 23, Tainan in-person event. Ticket holders only.",
-        pokemon: [
-          { id: "d6" }, { id: "d71" }, { id: "d130" }, { id: "d149" }, { id: "d181" },
-          { id: "d254" }, { id: "d282" }, { id: "d334" }, { id: "d359" }, { id: "d373" },
-          { id: "d445" }, { id: "d448" }, { id: "d679" }, { id: "d687" },
-          "d716", "d717",
-        ],
-      },
-    ],
-  },
+/**
+ * 依序要嘗試的圖片網址。
+ *
+ * ── 為什麼有本地圖時本地優先 ──
+ * 有特效層的背卡（game master 標了 vfxAddress，31 張，全部是 sb_），
+ * 上游那個 PNG 只是底層，玩家實際看到的卡面是它再疊一層特效。
+ * 本地那 17 張是實際卡面，所以有本地圖就先用本地的，
+ * 上游只當備援。沒有本地圖的就只能顯示上游那張。
+ */
+export const bgSources = (card) =>
+  (card && card.local ? [localUrl(card), bgUrl(card)] : [bgUrl(card)]).filter(Boolean);
 
-  {
-    id: "pokepark2026",
-    zh: "PokéPark KANTO",
-    ja: "ポケパーク カントー",
-    en: "PokéPark KANTO",
-    date: "2026-02-05",
-    cards: [
-      {
-        id: "pp26-kanto",
-        scope: "regional",
-        img: "./img/bg/pokepark2026-kanto.webp",
-        zh: "寶可夢樂園",
-        ja: "ポケモンパーク",
-        en: "Pokémon Park",
-        note_zh: "2/5 PokéPark KANTO 開幕，園區內限定",
-        note_ja: "2/5 ポケパーク カントー開園、園内限定",
-        note_en: "Feb 5, PokéPark KANTO opening. On-site only.",
-        pokemon: ["d144", "d145", "d146"],
-      },
-    ],
-  },
-];
+/**
+ * 背卡 <img> 的屬性。
+ * 自己寫 src 就沒有備援，上游改檔名會直接破圖。
+ */
+export const bgAttrs = (card) => imgAttrs(bgSources(card));
 
-/** 攤平成 [{event, card}] 方便查詢 */
+/* ─────────── 合併 ─────────── */
+
+/** 手工那層攤平成 asset → 卡片，順便把活動名稱掛到卡片上 */
+function handCards() {
+  const out = [];
+  for (const ev of HAND_EVENTS) {
+    for (const card of ev.cards) {
+      out.push({
+        ...card,
+        date: card.date || ev.date || "",
+        event: { zh: ev.zh, ja: ev.ja, en: ev.en },
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * 全部背卡。手工的排前面，同一張卡以 asset 對應，手工逐欄覆蓋骨架。
+ * 骨架沒有 pokemon，所以沒有手工資料的卡片收集格是零。
+ */
+export const CARDS = (() => {
+  const byAsset = new Map();
+  for (const c of BG_CARDS) byAsset.set(c.asset, { ...c, pokemon: c.pokemon || [] });
+
+  for (const h of handCards()) {
+    const base = byAsset.get(h.asset) || {};
+    const merged = { ...base };
+    for (const [k, v] of Object.entries(h)) {
+      if (v !== undefined && v !== "" && !(Array.isArray(v) && !v.length)) merged[k] = v;
+    }
+    merged.pokemon = h.pokemon || base.pokemon || [];
+    byAsset.set(h.asset || h.id, merged);
+  }
+  return [...byAsset.values()];
+})();
+
+const CARD_INDEX = new Map(CARDS.map((c) => [c.id, c]));
+
+/** 依 id 查背卡 */
+export const findCard = (id) => CARD_INDEX.get(id) || null;
+
+export const CARD_COUNT = CARDS.length;
+
+/* ─────────── 收納夾 ─────────── */
+
+/** 檔名或日期裡的西元年，拿來排序 */
+const yearOf = (s) => Number((String(s || "").match(/20\d\d/) || [0])[0]);
+
+/** 新的排前面。同一年的照名稱排，避免每次重跑順序都在跳 */
+function cardOrder(a, b) {
+  const ya = yearOf(a.date) || yearOf(a.asset);
+  const yb = yearOf(b.date) || yearOf(b.asset);
+  if (ya !== yb) return yb - ya;
+  return String(a.en || "").localeCompare(String(b.en || ""));
+}
+
+/**
+ * 收納夾清單，順序照 bgseries.js。
+ * 沒有卡片的夾不會出現，所以刪掉一整個系列不會留下空殼。
+ */
+export const FOLDERS = (() => {
+  const bucket = new Map();
+  for (const c of CARDS) {
+    const key = seriesInfo(c.series) ? c.series : "lcmisc";
+    if (!bucket.has(key)) bucket.set(key, []);
+    bucket.get(key).push(c);
+  }
+  return [...bucket.entries()]
+    .sort((a, b) => seriesOrder(a[0]) - seriesOrder(b[0]))
+    .map(([id, cards]) => ({ ...seriesInfo(id), id, cards: cards.sort(cardOrder) }));
+})();
+
+/** 名稱，缺譯名時退回英文 */
+export const cardName = (card, lang) => (card ? card[lang] || card.en || card.id : "");
+export const folderName = (folder, lang) => (folder ? folder[lang] || folder.en : "");
+
+export { SERIES };
+
+/* ─────────── 查詢 ─────────── */
+
+/** 攤平成 [{folder, card}] 方便查詢 */
 export function allCards() {
   const out = [];
-  for (const ev of EVENTS) for (const card of ev.cards) out.push({ event: ev, card });
+  for (const folder of FOLDERS) for (const card of folder.cards) out.push({ folder, card });
   return out;
 }
 
@@ -411,18 +170,18 @@ export function normalizeEntry(entry) {
 
 /** 某張背卡的所有項目（已正規化） */
 export function entriesOf(card) {
-  return card.pokemon.map(normalizeEntry);
+  return (card.pokemon || []).map(normalizeEntry);
 }
 
 /**
  * 某個條目可能擁有的所有背卡。
- * @returns {Array<{event, card, note}>}
+ * @returns {Array<{folder, card, note}>}
  */
 export function cardsFor(entryId) {
   const out = [];
-  for (const { event, card } of allCards()) {
+  for (const { folder, card } of allCards()) {
     for (const e of entriesOf(card)) {
-      if (e.id === entryId) out.push({ event, card, note: e.note });
+      if (e.id === entryId) out.push({ folder, card, note: e.note });
     }
   }
   return out;
@@ -435,7 +194,7 @@ export function allBgEntryIds() {
   return out;
 }
 
-/** 背卡總數（用於統計） */
+/** 收集格總數（用於統計） */
 export function totalCardSlots() {
-  return allCards().reduce((n, { card }) => n + card.pokemon.length, 0);
+  return allCards().reduce((n, { card }) => n + (card.pokemon || []).length, 0);
 }

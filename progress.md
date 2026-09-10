@@ -4,6 +4,61 @@
 
 ---
 
+## 2026-09-10（五）
+- 類型：新增
+- 影響檔案：js/bgdata.js, js/bgevents.js, js/bgseries.js, js/backgrounds.js,
+  js/imgchain.js, js/dex.js, js/ui.js, js/main.js, js/share.js, js/i18n.js,
+  css/style.css, tools/build-bg.mjs, tools/check.mjs
+- 摘要：背卡從 17 張擴到 240 張，圖改連上游，照活動系列收進收納夾。
+  - **背卡其實有資料源**，先前寫「百分之百手工維護」是錯的。
+    game master 有 `LC_` 樣板 246 筆，pogo_assets 的 `Images/LocationCards/`
+    有 240 張圖，`sb_` 是特殊背景、`lc_` 是地點卡。
+  - **圖不再進 repo**，一律連上游，`img/bg/` 那 17 張留著當備援。
+    跟寶可夢圖示同一個原則，新活動只要填檔名就有圖。
+  - **備援鏈抽成 `js/imgchain.js`**。dex 與 backgrounds 互相有依賴，
+    共用的東西放在它們底下才不會繞成一圈。
+  - **資料分三層**，照 godex／extra／dex 那一套：`bgdata.js` 自動產生的
+    骨架 223 張，`bgevents.js` 手工那 17 張，`backgrounds.js` 合併並當入口。
+    合併以 asset 對應，手工逐欄覆蓋，重跑腳本不會洗掉手填的東西。
+  - **收納夾 23 個**，人孔蓋 41、英國國民信託 27、GO Fest 21、GO Tour 19、
+    City Safari 19、寶可夢中心 18、美職 15、日職 13，其餘較零散。
+    預設全部收合，搜尋有輸入時只顯示命中的夾並自動展開。
+  - **新 id 規則**：上游檔名去掉 `lc_`／`sb_` 前綴，駝峰與底線轉連字號。
+    240 張最長 37 字，沒有超過 store 的 40 字上限。既有 17 個 id 原封不動。
+  - **上游的圖不一定是卡面**。標了 `vfxAddress` 的 31 張（全部是 `sb_`）
+    上游只有底層，實際卡面還疊了一層特效。逐張比過本地那 17 張，
+    6 張 `lc_` 與上游完全相同，11 張 `sb_` 都不同。
+    所以改成有本地圖就本地優先，上游當備援。剩下 20 張有特效層又沒有
+    本地圖的，只能顯示底層。
+  - 順手修掉一個舊 bug：`hidden` 屬性只有瀏覽器預設樣式在管，任何一條
+    `display` 規則都蓋得過它。`.searchbar` 的 `display: flex` 就蓋掉了，
+    所以圖鑑的搜尋列在交換表與背卡檢視也一直看得到。收納夾的
+    `.bg-grid` 也踩到同一個坑，收合了格子還在。改成在基礎樣式
+    一次講死 `[hidden] { display: none !important }`。
+- 原因：使用者要把全部背卡納入，不只手工收的那十七張。
+- 決定：
+  - 寶可夢清單這一輪不做。上游沒有這份資料，Serebii 只到物種層級，
+    型態要另一輪從 Dittobase 補，所以骨架的 pokemon 一律留空。
+  - 交換表的背卡選單維持下拉，只改成照收納夾分 optgroup。
+    原本打算改成 sheet 選擇器，但下拉列的是「這隻能帶的背卡」不是全部，
+    數量有限，換掉是多餘的複雜度。
+- 驗證：
+  - `node tools/check.mjs` 全部通過，三語各 98 個 key。新增六條背卡測試：
+    每張都有上游檔名、id 不重複、id 不超過 40 字、既有 17 個 id 還在、
+    收納夾都有名稱、收納夾不是空的。第四條是回歸測試，防的是
+    腳本重跑把使用者的鍵洗掉。
+  - `node tools/check.mjs --net` 通過，240 張背卡圖片網址全部 200。
+  - headless Chrome 實際看過收納夾、展開、搜尋、背卡詳情與交換表。
+- 待辦/已知問題：
+  - 223 張骨架還沒有寶可夢清單，詳情面板會顯示「還沒收錄」。
+  - Serebii 對不到 47 張，那些沒有日期，名稱是檔名推的暫名。
+    上游有兩個拼字錯誤（gibslide、whimpole），對不上是正常的。
+  - 缺正式代號 12 張，game master 沒有對應樣板，可能還沒上線或已下架。
+  - 三語名稱只有手工那 17 張是完整的，其餘只有英文。
+  - 之後轉私人 repo 時要同時搬到 Cloudflare Pages。
+
+---
+
 ## 2026-09-10（四）
 - 類型：新增
 - 影響檔案：js/dex.js, js/ui.js, js/main.js, js/i18n.js, css/style.css,

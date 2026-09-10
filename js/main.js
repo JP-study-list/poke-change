@@ -25,6 +25,11 @@ const state = {
   openId: null, // 詳情面板顯示的條目
   openCard: null, // 詳情面板顯示的背卡
   openFilter: false, // 詳情面板顯示篩選
+  /*
+   * 背卡檢視自己的狀態。收納夾預設全部收合，兩百四十張一次攤開沒辦法看。
+   * 跟篩選一樣不寫進偏好，重新整理回到預設，免得下次打開只剩幾張卻不知為何。
+   */
+  bg: { query: "", scope: "all", open: new Set() },
   big: false, // 大圖示。預設小圖示，手機一排五隻
   names: true, // 格子下方顯示名稱
   code: "", // 訓練家代碼，只印在分享圖上
@@ -105,7 +110,7 @@ function draw() {
     ui.renderTrade(state.data, state.lang, t, state.code);
   } else {
     document.querySelector("#viewTitle").textContent = t("viewBg");
-    ui.renderBg(state.lang, t);
+    ui.renderBg(state.bg, state.lang, t);
   }
 }
 
@@ -386,6 +391,24 @@ document.addEventListener("click", (ev) => {
     return;
   }
 
+  // 背卡：收納夾開合
+  const folder = el("[data-folder]");
+  if (folder) {
+    const id = folder.dataset.folder;
+    if (state.bg.open.has(id)) state.bg.open.delete(id);
+    else state.bg.open.add(id);
+    draw();
+    return;
+  }
+
+  // 背卡：全球 / 地區限定
+  const scope = el("[data-bgscope]");
+  if (scope) {
+    state.bg.scope = scope.dataset.bgscope;
+    draw();
+    return;
+  }
+
   // 背卡卡片
   const card = el("[data-card]");
   if (card) {
@@ -418,6 +441,19 @@ document.addEventListener("input", (ev) => {
       box.value = state.query;
       box.focus();
       box.setSelectionRange(state.query.length, state.query.length);
+    }
+    return;
+  }
+
+  /* 背卡搜尋。跟圖鑑那個搜尋框一樣，重畫後要把游標放回去 */
+  if (el.id === "bgSearch") {
+    state.bg.query = el.value;
+    draw();
+    const box = document.querySelector("#bgSearch");
+    if (box) {
+      box.value = state.bg.query;
+      box.focus();
+      box.setSelectionRange(state.bg.query.length, state.bg.query.length);
     }
     return;
   }

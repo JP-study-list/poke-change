@@ -95,6 +95,9 @@ const { STRINGS, LANGS, makeT } = await import("../js/i18n.js");
 const dex = await import("../js/dex.js");
 const store = await import("../js/store.js");
 const bg = await import("../js/backgrounds.js");
+
+/** 背卡檢視的狀態，畫面測試用。收合狀態不影響資料正確性，給預設值就好 */
+const BG_STATE = { query: "", scope: "all", open: new Set() };
 const ui = await import("../js/ui.js");
 
 console.log("\n1. i18n");
@@ -209,8 +212,39 @@ console.log("\n3. 背卡");
   ok(`收集格 ${bg.totalCardSlots()} 個`, bg.totalCardSlots() > 0);
   ok("引用的條目都存在", !missing.length, [...new Set(missing)].slice(0, 5).join(", "));
 
-  const noImg = bg.allCards().filter(({ card }) => !card.img);
-  ok("每張背卡都有圖", !noImg.length);
+  const noAsset = bg.CARDS.filter((c) => !c.asset);
+  ok(`每張背卡都有上游檔名（${bg.CARD_COUNT} 張）`, !noAsset.length,
+     noAsset.map((c) => c.id).join(", "));
+
+  const ids = bg.CARDS.map((c) => c.id);
+  ok("背卡 id 不重複", new Set(ids).size === ids.length);
+
+  /*
+   * id 是使用者紀錄的鍵，存在 item.bg 裡，normalize 會截到 40 字。
+   * 超過就會被截斷，使用者的紀錄從此對不回來。
+   */
+  const tooLong = ids.filter((id) => id.length > 40);
+  ok("背卡 id 不超過 40 字", !tooLong.length, tooLong.join(", "));
+
+  /*
+   * 回歸測試：這十七個 id 已經發布，存在使用者的 localStorage 裡。
+   * 腳本重跑或資料重整都不可以讓它們消失。
+   */
+  const PUBLISHED = [
+    "gf26-global", "gf26-mewtwo", "gf26-tokyo", "gf26-chicago", "gf26-copenhagen",
+    "gt26-mega", "gt26-x", "gt26-y", "gt26-diamond", "gt26-pearl", "gt26-ruby",
+    "gt26-sapphire", "gt26-gold", "gt26-silver", "gt26-la", "gt26-tainan",
+    "pp26-kanto",
+  ];
+  const gone = PUBLISHED.filter((id) => !bg.findCard(id));
+  ok(`既有 ${PUBLISHED.length} 個背卡 id 都還在`, !gone.length, gone.join(", "));
+
+  const badSeries = bg.CARDS.filter((c) => !bg.SERIES.some((s) => s.id === c.series));
+  ok("每張背卡的收納夾都有名稱", !badSeries.length,
+     [...new Set(badSeries.map((c) => c.series))].join(", "));
+
+  ok(`收納夾 ${bg.FOLDERS.length} 個都不是空的`,
+     bg.FOLDERS.every((f) => f.cards.length));
 }
 
 console.log("\n4. 儲存往返");
@@ -283,11 +317,34 @@ console.log("\n5. 繪製函式");
   );
   run("renderGrid 空清單", () => ui.renderGrid([], data, "zh", t));
   run("renderTrade", () => ui.renderTrade(data, "zh", t));
+  run("renderTrade 帶背卡的格子", () => {
+    const withBg = store.normalize({
+      v: 1,
+      want: [{ id: "d150", bg: "gf26-copenhagen" }],
+      have: [],
+    });
+    ui.renderTrade(withBg, "zh", t);
+  });
   run("renderTrade 帶訓練家代碼", () =>
     ui.renderTrade(data, "zh", t, "499230220284")
   );
   run("renderTrade 空清單", () => ui.renderTrade(store.emptyData(), "zh", t));
-  run("renderBg", () => ui.renderBg("zh", t));
+  run("renderBg", () => ui.renderBg(BG_STATE, "zh", t));
+  run("renderBg 展開一個收納夾", () =>
+    ui.renderBg({ ...BG_STATE, open: new Set(["gofest"]) }, "zh", t)
+  );
+  run("renderBg 搜尋", () =>
+    ui.renderBg({ ...BG_STATE, query: "tokyo" }, "zh", t)
+  );
+  run("renderBg 搜尋沒有結果", () =>
+    ui.renderBg({ ...BG_STATE, query: "zzzzz" }, "zh", t)
+  );
+  run("renderBg 只看地區限定", () =>
+    ui.renderBg({ ...BG_STATE, scope: "regional" }, "zh", t)
+  );
+  run("renderBg 只看全球", () =>
+    ui.renderBg({ ...BG_STATE, scope: "global" }, "zh", t)
+  );
   run("toast", () => ui.toast("hi"));
 
   // 每個條目的詳情都畫一次，比只抽樣可靠
@@ -311,7 +368,7 @@ console.log("\n5. 繪製函式");
       break;
     }
   }
-  ok("renderCardDetail 全部 17 張", !cardErr, cardErr);
+  ok(`renderCardDetail 全部 ${bg.CARD_COUNT} 張`, !cardErr, cardErr);
 
   // 三種語言都要能畫
   for (const l of LANGS) {
@@ -319,7 +376,7 @@ console.log("\n5. 繪製函式");
     run(`三語繪製 ${l.code}`, () => {
       ui.renderGrid(dex.ENTRIES.slice(0, 30), data, l.code, tl);
       ui.renderTrade(data, l.code, tl);
-      ui.renderBg(l.code, tl);
+      ui.renderBg(BG_STATE, l.code, tl);
       ui.renderDetail("d150", data, l.code, tl);
     });
   }
@@ -348,6 +405,18 @@ if (NET) {
     const res = await fetch(url, { method: "HEAD" });
     ok(`${e.id} 圖片可取得`, res.ok, String(res.status));
   }
+
+  /*
+   * 背卡全部驗，不抽樣。圖改連上游之後，上游改一個檔名就會破圖，
+   * 而背卡只有兩百多張，驗得完。
+   */
+  console.log("\n8. 背卡圖片網址");
+  let bad = [];
+  for (const card of bg.CARDS) {
+    const res = await fetch(bg.bgUrl(card), { method: "HEAD" });
+    if (!res.ok) bad.push(`${card.id} ${res.status}`);
+  }
+  ok(`背卡圖片 ${bg.CARD_COUNT} 張都取得到`, !bad.length, bad.slice(0, 5).join(", "));
 }
 
 console.log(fail ? `\n失敗 ${fail} 項\n` : "\n全部通過\n");

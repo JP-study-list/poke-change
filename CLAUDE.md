@@ -158,7 +158,10 @@ Pokémon GO 交換清單製作工具。用圖鑑找出活動裝扮、地區型�
 
 **差異化在資料庫深度**，不在介面。一般交換工具只收一般型態，
 這裡收 1478 個條目，其中 298 個裝扮橫跨一百多個物種，
-再加 17 張活動背卡、195 個收集格。
+再加 240 張背卡收在 23 個收納夾裡、195 個收集格。
+
+背卡的圖與代號抓得到上游，「哪些寶可夢帶得了這張背卡」抓不到，
+那一份是手工的，也是真正的差異所在。目前 17 張有清單，其餘還沒補。
 
 ### 技術棧（一行摘要）
 純靜態站：ES modules，無建置流程，無後台，資料存在使用者裝置的 localStorage。
@@ -209,7 +212,10 @@ localStorage 使用者可以手動改，也可能是舊版寫的。
 | GO 圖示、官方三語名稱 | PokeMiners/pogo_assets | 低 |
 | 部分裝扮皮卡丘 | Choggor/Pikachu-costume-tracker | **中，個人專案** |
 | 立繪備援 | PokeAPI/sprites | 低 |
-| 背卡圖 | 自己的 `img/bg/` | 無 |
+| 背卡圖與代號 | PokeMiners/pogo_assets `Images/LocationCards/` | 低 |
+| 背卡的日期與英文名 | Serebii（一次性離線抽取） | **中，別人的網站** |
+| 背卡實際卡面的比對 | Dittobase（人工核對用，不進資料） | **中，別人的網站** |
+| 背卡的本地備援圖 | 自己的 `img/bg/`，17 張 | 無 |
 
 `tools/build-dex.mjs` 離線解析前兩者產生 `js/godex.js`，
 網站執行時不會抓這些檔案。GO 更新後重跑腳本即可。
@@ -276,7 +282,25 @@ localStorage 使用者可以手動改，也可能是舊版寫的。
   也就是異色、XXL、XXS、背卡這四個有視覺表示的維度。
   2026-09-10 已把 `note` 從儲存結構移除。
 
-- **背卡沒有任何資料源**，百分之百手工維護。這是護城河也是負擔。
+- **背卡的圖與代號有資料源，對應關係沒有**。game master 的 `LC_` 樣板給代號，
+  `Images/LocationCards/` 給圖，`sb_` 是特殊背景、`lc_` 是地點卡。
+  但「哪些寶可夢帶得了這張背卡」上游完全沒有，那一份仍是手工，也還是護城河。
+
+- **上游的背卡圖不一定是玩家看到的卡面**。game master 標了 `vfxAddress` 的
+  那 31 張（全部是 `sb_` 特殊背景），上游那個 PNG 只是底層，實際卡面是它
+  再疊一層特效。GO Tour 2026 鑽石那張上游只有一片漸層天空，實際卡面還有
+  石柱與星軌。`lc_` 地點卡沒有這個問題，實測五張與本地圖逐像素相同。
+  所以有本地圖的優先用本地那張，沒有的只能顯示底層。
+
+- **背卡的 game master 代號與圖檔名大小寫不一致**（`lc_citysafari2025_amsterdam`
+  對 `lc_CitySafari2025_amsterdam`），跟裝扮同一個坑，一律轉小寫再比對。
+
+- **Serebii 的背卡表是三列一組**（圖、日期、可取得寶可夢），
+  平面攤開對會錯位，一定要照列分組。它的代號不帶年份，
+  跟上游檔名要用去數字加年份的方式配。
+
+- **Serebii 只到物種層級**，不分型態。要型態得走 Dittobase，
+  它的圖檔名直接帶型態（`128-tauros-paldea-combat`）。
 
 - **GO 圖示非正方形**且各不相同。畫面一律 `object-fit: contain`、
   canvas 等比縮放，不可假設正方形。
@@ -294,10 +318,10 @@ localStorage 使用者可以手動改，也可能是舊版寫的。
 
 ```
 node tools/check.mjs        # 不連外網
-node tools/check.mjs --net  # 加驗圖片網址
+node tools/check.mjs --net  # 加驗圖片網址，含 240 張背卡逐一驗
 ```
 
-涵蓋：三語 i18n key 一致性、條目欄位完整與 id 不重複、背卡引用、
+涵蓋：三語 i18n key 一致性、條目欄位完整與 id 不重複、背卡引用與 id 回歸、
 儲存往返、全部繪製函式（含 1478 筆詳情逐一繪製）、HTML 逸出。
 
 DOM stub 在 `tools/check.mjs` 裡面，需要新的元素 id 時加進去就好。
@@ -320,14 +344,19 @@ js/extra.js           手動補的條目
 js/costumes.js        裝扮譯名
 js/dex.js             圖鑑單一入口
 js/store.js           localStorage 讀寫、匯出匯入
-js/backgrounds.js     活動背卡
+js/backgrounds.js     背卡單一入口（合併骨架與手工）
+js/bgdata.js          自動產生的背卡骨架（不要手改）
+js/bgevents.js        手工維護的背卡
+js/bgseries.js        收納夾譯名
+js/imgchain.js        圖片備援鏈（dex 與 backgrounds 共用）
 js/types.js           屬性顏色與名稱
 js/i18n.js            繁中／日／英字典
 js/ui.js              全部繪製函式
 js/main.js            進入點、狀態、事件
 js/share.js           雙欄分享圖（canvas）
-img/bg/               背卡圖片（17 張，進 git）
+img/bg/               背卡的本地備援圖（17 張，進 git）
 tools/build-dex.mjs   產生圖鑑資料
+tools/build-bg.mjs    產生背卡骨架
 tools/check.mjs       自我檢查
 project-index.md      檔案索引與依賴關係
 progress.md           開發歷史
@@ -344,8 +373,8 @@ progress.md           開發歷史
 | 　型態變化（含地區型 55） | 287 |
 | 　裝扮 | 298 |
 | 已實裝異色 | 1434 |
-| 活動 / 背卡 / 收集格 | 7 / 17 / 195 |
-| 介面文字 | 三語各 91 個 key |
+| 收納夾 / 背卡 / 收集格 | 23 / 240 / 195 |
+| 介面文字 | 三語各 98 個 key |
 
 ### 待辦
 

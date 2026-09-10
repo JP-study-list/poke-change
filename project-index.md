@@ -35,9 +35,16 @@ main.js ──┬─► i18n.js      語言字典 + makeT()
 dex.js ──┬─► godex.js       自動產生的圖鑑資料
          ├─► extra.js       手動補的條目
          ├─► backgrounds.js 「有背卡可拿」這個篩選條件要用
+         ├─► imgchain.js    圖片備援鏈
          └─► types.js       屬性篩選的選項清單
 
+backgrounds.js ──┬─► bgdata.js    自動產生的背卡骨架
+                 ├─► bgevents.js  手工維護的背卡
+                 ├─► bgseries.js  收納夾譯名與順序
+                 └─► imgchain.js  圖片備援鏈
+
 tools/build-dex.mjs ──► costumes.js（裝扮譯名）
+tools/build-bg.mjs ───► bgseries.js, bgevents.js（產生 bgdata.js）
 tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑）
 ```
 
@@ -71,7 +78,9 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `js/godex.js` | `GODEX` `GODEX_COUNT` | **自動產生，不要手改。** 1455 個條目，含 dex / 型態 / 裝扮 / 三語名 / 屬性 / 稀有度 / 圖檔名 / 有無異色 |
 | `js/extra.js` | `PIKA_EXTRA` `ALIAS` `MISSING_ICON` `extraEntries()` | 手動補 godex 缺的 23 筆：22 種上游沒有的裝扮皮卡丘，以及沒有 GO 圖示的捷拉奧拉 |
 | `js/costumes.js` | `COSTUME_NAMES` `costumeName()` | 裝扮的三語譯名。**遊戲內裝扮沒有官方名稱**，只能自己取，這是唯一來源 |
-| `js/backgrounds.js` | `EVENTS` `allCards` `entriesOf` `cardsFor` `allBgEntryIds` `totalCardSlots` | 7 個活動 / 17 張背卡 / 195 個收集格。`pokemon` 陣列填 dex.js 的條目 id |
+| `js/bgdata.js` | `BG_CARDS` `BG_CARD_COUNT` | **自動產生，不要手改。** 240 張背卡骨架，含代號、上游檔名、收納夾、英文名、日期與特效層旗標 |
+| `js/bgevents.js` | `HAND_EVENTS` | 手工維護的 17 張，有三語名、註記、寶可夢清單與本地備援圖。會逐欄覆蓋骨架 |
+| `js/bgseries.js` | `SERIES` `seriesInfo` `seriesOrder` | 23 個收納夾的三語名與顯示順序 |
 | `js/types.js` | `TYPES` `typeInfo` | 18 種屬性的代表色與三語名 |
 | `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 91 個 key，必須完全一致 |
 
@@ -79,6 +88,8 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 檔案 | 匯出 | 用途 |
 | --- | --- | --- |
+| `js/backgrounds.js` | `CARDS` `FOLDERS` `findCard` `bgUrl` `bgAttrs` `bgSources` `cardName` `folderName` `allCards` `entriesOf` `cardsFor` `allBgEntryIds` `totalCardSlots` | 合併骨架與手工資料，240 張背卡 / 23 個收納夾 / 195 個收集格 |
+| `js/imgchain.js` | `imgAttrs` | 圖片備援鏈。dex 與 backgrounds 共用，獨立成檔是為了不讓那兩個檔繞成一圈 |
 | `js/dex.js` | `ENTRIES` `find` `fullName` `speciesName` `formName` `iconAttrs` `hasShiny` `search` `FILTER_GROUPS` `GROUP_KEYS` `emptyFilter` `normalizeFilter` `applyFilter` `filterCount` `goUrl` `artUrl` | 合併 godex 與 extra，1478 個條目。負責名稱組合、搜尋、篩選、圖片備援鏈 |
 | `js/store.js` | `emptyData` `newItem` `normalize` `load` `save` `flush` `clear` `toJSON` `fromJSON` `exportName` `cleanCode` `formatCode` `MAX_ITEMS` `COLUMNS` | localStorage 讀寫。**任何讀進來的資料都不信任**，一律過 `normalize` |
 
@@ -113,6 +124,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 檔案 | 用途 |
 | --- | --- |
 | `tools/build-dex.mjs` | 從 PokeMiners 產生 `js/godex.js`。`--force` 忽略快取重抓。快取在 `tools/.cache/`（不進 git，約 25 MB） |
+| `tools/build-bg.mjs` | 從 PokeMiners 與 Serebii 產生 `js/bgdata.js`，另外寫一份 `tools/bg-report.md` 列出對不上的。快取在 `tools/.cache/bg/` |
 | `tools/check.mjs` | 自我檢查。i18n key、條目完整性、背卡引用、儲存往返、全部繪製函式、逸出。`--net` 加驗圖片網址 |
 
 ### 資源
@@ -131,7 +143,9 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 想做的事 | 改哪裡 |
 | --- | --- |
 | GO 出了新寶可夢或新裝扮 | `node tools/build-dex.mjs --force`，缺譯名時補 `js/costumes.js` |
-| 新增活動背卡 | `js/backgrounds.js` + 圖放 `img/bg/` |
+| GO 出了新背卡 | `node tools/build-bg.mjs --force`，骨架會自己長出來 |
+| 補背卡的寶可夢清單或譯名 | `js/bgevents.js`，會覆蓋骨架 |
+| 改收納夾的名稱或順序 | `js/bgseries.js`；改分類規則是 `tools/build-bg.mjs` 的 `SERIES_RULES` |
 | 加 `<img>` | **一律用 `iconAttrs()` 產生屬性**，自己寫 `src` 就沒有備援鏈 |
 | 改配色、字級、間距 | `css/style.css` 的 `:root` |
 | 改介面文字、加語言 | `js/i18n.js`（三語 key 必須一致） |

@@ -21,7 +21,7 @@
  */
 
 import { find, speciesName, formName, goUrl, artUrl } from "./dex.js";
-import { allCards } from "./backgrounds.js";
+import { findCard, bgSources } from "./backgrounds.js";
 import { formatCode } from "./store.js";
 
 const SCALE = 2;
@@ -81,6 +81,17 @@ function loadImage(src) {
     img.onerror = () => resolve(null);
     img.src = src;
   });
+}
+
+/** 背卡圖。上游優先，本地備援，跟畫面上的備援鏈同一個順序 */
+async function loadBg(cardId) {
+  const card = cardId ? findCard(cardId) : null;
+  if (!card) return null;
+  for (const src of bgSources(card)) {
+    const img = await loadImage(src);
+    if (img) return img;
+  }
+  return null;
 }
 
 /** 依條目取圖，順序跟畫面上的備援鏈一致 */
@@ -183,9 +194,6 @@ export async function buildShareImage(data, opts) {
   ctx.textAlign = "left";
   ctx.fillText(fit(ctx, title, W - PAD * 2), PAD, TITLE_H / 2 + 4);
 
-  const cardById = Object.create(null);
-  for (const { card } of allCards()) cardById[card.id] = card;
-
   // 先把要用的圖全部載入，避免逐格等待
   const jobs = [];
   for (const s of sections) {
@@ -194,8 +202,7 @@ export async function buildShareImage(data, opts) {
         (async () => ({
           it,
           sprite: await loadSprite(find(it.id), it.shiny),
-          bgImg:
-            it.bg && cardById[it.bg] ? await loadImage(cardById[it.bg].img) : null,
+          bgImg: await loadBg(it.bg),
         }))()
       );
     }

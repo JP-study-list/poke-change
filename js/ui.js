@@ -22,7 +22,17 @@ import {
   search,
 } from "./dex.js";
 import { typeInfo } from "./types.js";
-import { EVENTS, allCards, entriesOf, cardsFor } from "./backgrounds.js";
+import {
+  FOLDERS,
+  allCards,
+  entriesOf,
+  cardsFor,
+  findCard,
+  bgAttrs,
+  bgUrl,
+  cardName,
+  folderName,
+} from "./backgrounds.js";
 import { MAX_ITEMS, formatCode } from "./store.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -253,16 +263,30 @@ function editBlock(col, data, id, e, lang, t) {
     `<button type="button" class="mk ${cls}" data-field="${field}"
              aria-pressed="${!!item[field]}">${esc(label)}</button>`;
 
+  /*
+   * 背卡下拉照收納夾分組。同一隻寶可夢能帶的背卡會隨著資料補齊變多，
+   * 一長串平的選項在手機上滑不完，分組之後至少找得到。
+   */
   const cards = cardsFor(id);
+  const groups = [];
+  for (const { folder, card } of cards) {
+    const last = groups[groups.length - 1];
+    if (last && last.folder === folder) last.cards.push(card);
+    else groups.push({ folder, cards: [card] });
+  }
+  const opt = (card) =>
+    `<option value="${esc(card.id)}"${
+      card.id === item.bg ? " selected" : ""
+    }>${esc(cardName(card, lang))}</option>`;
   const bgSelect = cards.length
     ? `<select data-field="bg">
          <option value="">${esc(t("bgAny"))}</option>
-         ${cards
+         ${groups
            .map(
-             ({ card }) =>
-               `<option value="${esc(card.id)}"${
-                 card.id === item.bg ? " selected" : ""
-               }>${esc(card[lang] || card.en)}</option>`
+             (g) =>
+               `<optgroup label="${esc(folderName(g.folder, lang))}">${g.cards
+                 .map(opt)
+                 .join("")}</optgroup>`
            )
            .join("")}
        </select>`
@@ -299,11 +323,11 @@ export function renderDetail(id, data, lang, t) {
   const bgBlock = cards.length
     ? `<div class="bg-list">${cards
         .map(
-          ({ event, card, note }) => `<div class="bg-row">
-            <img src="${esc(card.img)}" alt="" loading="lazy" />
+          ({ folder, card, note }) => `<div class="bg-row">
+            <img ${bgAttrs(card)} alt="" loading="lazy" />
             <div>
-              <div class="t">${esc(card[lang] || card.en)}</div>
-              <div class="s">${esc(event[lang] || event.en)}${
+              <div class="t">${esc(cardName(card, lang))}</div>
+              <div class="s">${esc(folderName(folder, lang))}${
             note && note[lang] ? ` · ${esc(note[lang])}` : ""
           }</div>
             </div>
@@ -361,9 +385,10 @@ function tradeCell(item, col, idx, lang, t) {
   const e = find(item.id);
   if (!e) return "";
 
-  const hit = item.bg ? allCards().find((x) => x.card.id === item.bg) : null;
-  const bgLayer = hit
-    ? `<span class="want-bg" style="background-image:url('${esc(hit.card.img)}')"></span>`
+  // 背景圖走 CSS，沒有 onerror 可以接，所以只給上游那一個網址
+  const card = item.bg ? findCard(item.bg) : null;
+  const bgLayer = card
+    ? `<span class="want-bg" style="background-image:url('${esc(bgUrl(card))}')"></span>`
     : "";
 
   /*
@@ -444,31 +469,93 @@ export function renderTrade(data, lang, t, code = "") {
 
 /* ─────────── 背卡 ─────────── */
 
-export function renderBg(lang, t) {
-  $("#app").innerHTML = `<div class="bg-grid">${EVENTS.map(
-    (ev) => `
-    <h2 class="ev-title">${esc(ev[lang] || ev.en)}<span class="dim"> · ${esc(
-      ev.date || ""
-    )}</span></h2>
-    ${ev.cards
+/**
+ * 背卡檢視。
+ *
+ * 兩百四十張攤平沒辦法看，所以照收納夾收起來，預設全部收合，
+ * 標題右邊寫張數。點標題展開，狀態存在 main.js 的 state.bgOpen。
+ *
+ * 搜尋有輸入時改成另一種行為：只顯示有命中的夾並全部展開，
+ * 否則使用者得先猜對活動屬於哪一類才找得到。
+ */
+export function renderBg(bg, lang, t) {
+  const q = String(bg.query || "").trim().toLowerCase();
+
+  const hitCard = (card) =>
+    !q ||
+    ["zh", "ja", "en"].some((l) =>
+      String(card[l] || "").toLowerCase().includes(q)
+    ) ||
+    String(card.id).includes(q);
+
+  const inScope = (card) => bg.scope === "all" || card.scope === bg.scope;
+
+  const folders = FOLDERS.map((folder) => {
+    const all = folder.cards.filter(inScope);
+    const cards = q
+      ? all.filter((c) => hitCard(c) || folderName(folder, lang).toLowerCase().includes(q))
+      : all;
+    return { folder, cards, total: all.length };
+  }).filter((f) => f.cards.length);
+
+  const scopes = [
+    ["all", t("bgScopeAll")],
+    ["global", t("bgScopeGlobal")],
+    ["regional", t("bgScopeRegional")],
+  ];
+
+  const tools = `<div class="bg-tools">
+    <input id="bgSearch" type="search" value="${esc(bg.query || "")}"
+           placeholder="${esc(t("bgSearch"))}" />
+    <div class="bg-scope">${scopes
       .map(
-        (card) => `<button class="bg-card" type="button" data-card="${esc(card.id)}">
-        <img src="${esc(card.img)}" alt="" loading="lazy" />
-        <div class="b">
-          <div class="t">${esc(card[lang] || card.en)}</div>
-          <div class="s">${esc(t("bgSlots", card.pokemon.length))}</div>
-        </div>
-      </button>`
+        ([k, label]) =>
+          `<button type="button" data-bgscope="${k}" aria-pressed="${
+            k === bg.scope
+          }">${esc(label)}</button>`
       )
-      .join("")}`
-  ).join("")}</div>`;
+      .join("")}</div>
+  </div>`;
+
+  if (!folders.length) {
+    $("#app").innerHTML = `${tools}<p class="dim pad">${esc(t("bgNoResult"))}</p>`;
+    return;
+  }
+
+  const body = folders
+    .map(({ folder, cards, total }) => {
+      const open = q ? true : bg.open.has(folder.id);
+      return `<section class="bg-folder">
+      <button class="folder-head" type="button" data-folder="${esc(folder.id)}"
+              aria-expanded="${open}">
+        <span class="nm">${esc(folderName(folder, lang))}</span>
+        <span class="ct">${esc(t("bgCount", q ? `${cards.length}/${total}` : total))}</span>
+      </button>
+      <div class="bg-grid"${open ? "" : " hidden"}>${cards.map(bgCard(lang, t)).join("")}</div>
+    </section>`;
+    })
+    .join("");
+
+  $("#app").innerHTML = `${tools}<div class="bg-folders">${body}</div>`;
 }
+
+/** 一張背卡的方格。收集格是零的不寫張數，寫了只會讓人以為壞掉 */
+const bgCard = (lang, t) => (card) =>
+  `<button class="bg-card" type="button" data-card="${esc(card.id)}">
+    <img ${bgAttrs(card)} alt="" loading="lazy" />
+    <div class="b">
+      <div class="t">${esc(cardName(card, lang))}</div>
+      <div class="s">${esc(
+        card.pokemon.length ? t("bgSlots", card.pokemon.length) : card.date || ""
+      )}</div>
+    </div>
+  </button>`;
 
 /** 單張背卡的詳情：列出所有可能帶有它的寶可夢 */
 export function renderCardDetail(cardId, lang, t) {
   const hit = allCards().find(({ card }) => card.id === cardId);
   if (!hit) return;
-  const { event, card } = hit;
+  const { folder, card } = hit;
 
   const cells = entriesOf(card)
     .map(({ id, note }) => {
@@ -486,19 +573,30 @@ export function renderCardDetail(cardId, lang, t) {
     })
     .join("");
 
+  // 骨架那批還沒有寶可夢清單，講明白比留一塊空白好
+  const list = card.pokemon.length
+    ? `<p class="d-sect">${esc(t("bgSlots", card.pokemon.length))}</p>
+       <div class="grid">${cells}</div>`
+    : `<p class="dim">${esc(t("bgNoList"))}</p>`;
+
+  const meta = [
+    folderName(folder, lang),
+    card.date || "",
+    card.event ? card.event[lang] || card.event.en : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   $("#panel").innerHTML = `
-    <div class="d-name">${esc(card[lang] || card.en)}</div>
-    <div class="d-meta">${esc(event[lang] || event.en)} · ${esc(
-    t("bgSlots", card.pokemon.length)
-  )}</div>
+    <div class="d-name">${esc(cardName(card, lang))}</div>
+    <div class="d-meta">${esc(meta)}</div>
     ${
       card[`note_${lang}`]
         ? `<p class="d-meta">${esc(card[`note_${lang}`])}</p>`
         : ""
     }
-    <img src="${esc(card.img)}" alt="" style="width:100%;border-radius:8px;margin:14px 0" />
-    <p class="d-sect">${esc(t("bgSlots", card.pokemon.length))}</p>
-    <div class="grid">${cells}</div>
+    <img ${bgAttrs(card)} alt="" style="width:100%;border-radius:8px;margin:14px 0" />
+    ${list}
     <button class="btn-close" type="button" data-close="1">${esc(t("close"))}</button>`;
 }
 

@@ -52,9 +52,14 @@ node tools/build-dex.mjs --force
 
 ## 新增活動背卡
 
-1. 圖片放進 `img/bg/`
-2. 在 `js/backgrounds.js` 的 `EVENTS` 加一筆，`pokemon` 陣列填條目 id
-3. `node tools/check.mjs` 確認 id 都對得上
+背卡骨架由腳本產生，圖直接連上游，不用自己找圖。
+
+```
+node tools/build-bg.mjs --force
+```
+
+要補寶可夢清單或三語譯名，改 `js/bgevents.js`，那一份會逐欄覆蓋骨架。
+改完跑 `node tools/check.mjs` 確認 id 都對得上。
 
 ## 資料來源
 
@@ -64,6 +69,8 @@ node tools/build-dex.mjs --force
 | GO 圖示與官方三語名稱 | PokeMiners/pogo_assets |
 | 部分裝扮皮卡丘 | Choggor/Pikachu-costume-tracker |
 | 立繪備援 | PokeAPI/sprites |
-| 背卡圖 | 本 repo 的 `img/bg/` |
+| 背卡圖與代號 | PokeMiners/pogo_assets `Images/LocationCards/` |
+| 背卡日期與英文名 | Serebii（一次性離線抽取） |
+| 背卡本地備援圖 | 本 repo 的 `img/bg/` |
 
 圖片一律直接連外部 CDN，不鏡像進 repo。
