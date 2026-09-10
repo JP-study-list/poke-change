@@ -50,6 +50,24 @@ export function newItem(id, shiny = true) {
   return { id, shiny: !!shiny, xxl: false, xxs: false, bg: "" };
 }
 
+/* ─────────── 訓練家代碼 ─────────── */
+
+/*
+ * 代碼存在偏好而不是清單裡，因為它是使用者的身分，
+ * 不是某一份清單的屬性。這兩個函式放在這裡是為了讓
+ * 畫面與分享圖共用同一套規則，不要各寫一份。
+ */
+
+/** 只留數字，最多 12 碼 */
+export function cleanCode(v) {
+  return String(v || "").replace(/\D/g, "").slice(0, 12);
+}
+
+/** 顯示用，四碼一組。存的一律是純數字 */
+export function formatCode(v) {
+  return cleanCode(v).replace(/(\d{4})(?=\d)/g, "$1 ");
+}
+
 /* ─────────── 正規化 ─────────── */
 
 /**

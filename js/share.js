@@ -1,11 +1,16 @@
 /**
  * share.js — 產生交換清單的分享圖
  *
- * 版面刻意跟畫面上的交換表一致：方格牆，背卡圖疊在寶可夢後方，
- * 狀態用角落的小符號表示。看圖的人不必讀字就知道你要什麼。
+ * 版面刻意跟畫面上的交換表一致：一排五個的方格牆，背卡圖疊在寶可夢後方，
+ * 異色是左上角的星星，尺寸在格子下方。看圖的人不必讀字就知道你要什麼。
+ *
+ * 名稱顯不顯示跟著使用者的偏好走，關掉的話整張圖會明顯變短。
  *
  * 兩區上下排列，上面「想要」下面「可以給」。
  * 左右並排會太寬，傳進 LINE 會被縮到看不清楚。
+ *
+ * 底部的訓練家代碼是整張圖唯一需要讀字的地方，
+ * 對方要照著加好友，所以字級比浮水印大，也給了實色底。
  *
  * ── 為什麼要 crossOrigin ──
  * 圖片來自別的網域，沒設 crossOrigin 的話 canvas 會被標記為「污染」，
@@ -17,15 +22,24 @@
 
 import { find, speciesName, formName, goUrl, artUrl } from "./dex.js";
 import { allCards } from "./backgrounds.js";
+import { formatCode } from "./store.js";
 
 const SCALE = 2;
 const PAD = 20;
-const COLS = 4;
-const CELL = 148;
-const NAME_H = 34;
+const COLS = 5;
+const CELL = 120;
 const TITLE_H = 60;
 const SECT_H = 34;
+const SECT_GAP = 12;
+const PANEL_PAD = 10;
 const FOOT_H = 28;
+
+/*
+ * 格子下方那一行的高度。顯示名稱時要放名稱與型態兩行，
+ * 關掉名稱時仍留一點空間給 XXL 與 XXS，跟畫面上一致。
+ */
+const CAP_ON = 34;
+const CAP_OFF = 14;
 
 const LIGHT = {
   bg: "#f5f5f3",
@@ -124,8 +138,10 @@ function drawCover(ctx, img, x, y, box) {
  * @returns {Promise<Blob|null>}
  */
 export async function buildShareImage(data, opts) {
-  const { title, dark, lang, t } = opts;
+  const { title, dark, lang, t, names = true, code = "" } = opts;
   const C = dark ? DARK : LIGHT;
+  const CAP = names ? CAP_ON : CAP_OFF;
+  const codeText = formatCode(code);
 
   /*
    * 查不到條目的紀錄先濾掉，否則標題的數量會跟畫出來的格子對不上。
@@ -140,11 +156,17 @@ export async function buildShareImage(data, opts) {
 
   if (!sections.length) return null;
 
-  const sectionH = (s) =>
-    SECT_H + Math.ceil(s.items.length / COLS) * (CELL + NAME_H);
+  const rowsOf = (s) => Math.ceil(s.items.length / COLS);
+  const gridH = (s) => rowsOf(s) * (CELL + CAP);
+  const sectionH = (s) => SECT_H + gridH(s) + PANEL_PAD * 2 + SECT_GAP;
 
-  const W = PAD * 2 + COLS * CELL;
-  const H = TITLE_H + sections.reduce((n, s) => n + sectionH(s), 0) + FOOT_H + PAD;
+  const W = PAD * 2 + PANEL_PAD * 2 + COLS * CELL;
+  const H =
+    TITLE_H +
+    sections.reduce((n, s) => n + sectionH(s), 0) +
+    (codeText ? FOOT_H : 0) +
+    FOOT_H +
+    PAD;
 
   const canvas = document.createElement("canvas");
   canvas.width = W * SCALE;
@@ -184,27 +206,42 @@ export async function buildShareImage(data, opts) {
   let y = TITLE_H;
 
   for (const sect of sections) {
+    // 圓點認區塊，跟畫面上的交換表一致
+    const dotR = 6;
     ctx.fillStyle = sect.color;
-    ctx.font = `600 15px ${FONT}`;
+    ctx.beginPath();
+    ctx.arc(PAD + dotR, y + SECT_H / 2, dotR, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.font = `600 16px ${FONT}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText(`${sect.label}  ${sect.items.length}`, PAD, y + SECT_H / 2);
+    ctx.fillText(sect.label, PAD + dotR * 2 + 8, y + SECT_H / 2);
 
-    ctx.strokeStyle = sect.color;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(PAD, y + SECT_H - 5);
-    ctx.lineTo(W - PAD, y + SECT_H - 5);
+    ctx.fillStyle = C.dim;
+    ctx.font = `12px ${FONT}`;
+    ctx.textAlign = "right";
+    ctx.fillText(t("itemCount", sect.items.length), W - PAD, y + SECT_H / 2);
+    ctx.textAlign = "left";
+
+    // 面板把格子牆框起來
+    const panelY = y + SECT_H;
+    const panelH = gridH(sect) + PANEL_PAD * 2;
+    roundRect(ctx, PAD + 0.5, panelY + 0.5, W - PAD * 2 - 1, panelH - 1, 14);
+    ctx.fillStyle = C.bg;
+    ctx.fill();
+    ctx.strokeStyle = C.line;
+    ctx.lineWidth = 1;
     ctx.stroke();
 
-    const top = y + SECT_H;
+    const top = panelY + PANEL_PAD;
 
     sect.items.forEach((it, i) => {
       const e = find(it.id);
       const { sprite, bgImg } = loaded.get(it) || {};
 
-      const cx = PAD + (i % COLS) * CELL;
-      const cy = top + Math.floor(i / COLS) * (CELL + NAME_H);
+      const cx = PAD + PANEL_PAD + (i % COLS) * CELL;
+      const cy = top + Math.floor(i / COLS) * (CELL + CAP);
       const box = CELL - 10;
       const bx = cx + 5;
 
@@ -228,47 +265,77 @@ export async function buildShareImage(data, opts) {
       roundRect(ctx, bx + 0.5, cy + 0.5, box - 1, box - 1, 12);
       ctx.stroke();
 
-      // 狀態符號，跟畫面上的格子一致
-      const tags = [];
-      if (it.xxl) tags.push(["XXL", C.xxl]);
-      if (it.xxs) tags.push(["XXS", C.xxs]);
-      if (it.shiny) tags.push(["✦", C.shiny]);
-
-      let tx = bx + 6;
-      ctx.font = `600 11px ${FONT}`;
-      ctx.textBaseline = "middle";
-      for (const [label, color] of tags) {
-        const w = ctx.measureText(label).width + 12;
-        ctx.fillStyle = color;
-        roundRect(ctx, tx, cy + 6, w, 17, 8);
-        ctx.fill();
-        ctx.fillStyle = "#fff";
-        ctx.fillText(label, tx + 6, cy + 15);
-        tx += w + 4;
+      /*
+       * 異色是星星疊在左上角，跟畫面上的格子一致。
+       * 描邊是因為背卡底圖有亮有暗，只靠顏色會在淺色背卡上看不見。
+       */
+      if (it.shiny) {
+        ctx.font = `600 14px ${FONT}`;
+        ctx.textBaseline = "top";
+        ctx.textAlign = "left";
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = C.card;
+        ctx.strokeText("✦", bx + 4, cy + 3);
+        ctx.fillStyle = C.shiny;
+        ctx.fillText("✦", bx + 4, cy + 3);
       }
 
-      // 名稱在格子下方，型態或裝扮另起一行小字
-      const form = formName(e, lang);
-      ctx.textAlign = "center";
       const mid = bx + box / 2;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
 
-      ctx.fillStyle = C.ink;
-      ctx.font = `500 13px ${FONT}`;
-      ctx.fillText(
-        fit(ctx, speciesName(e, lang), box),
-        mid,
-        cy + box + (form ? 11 : 17)
-      );
+      const size = [it.xxl ? "XXL" : "", it.xxs ? "XXS" : ""]
+        .filter(Boolean)
+        .join(" ");
 
-      if (form) {
+      if (names) {
+        // 名稱在格子下方，型態或裝扮另起一行小字
+        const form = formName(e, lang);
+        ctx.fillStyle = C.ink;
+        ctx.font = `500 12px ${FONT}`;
+        ctx.fillText(
+          fit(ctx, speciesName(e, lang), box),
+          mid,
+          cy + box + (form || size ? 10 : 15)
+        );
+
+        const sub = [form, size].filter(Boolean).join(" · ");
+        if (sub) {
+          ctx.fillStyle = C.dim;
+          ctx.font = `10px ${FONT}`;
+          ctx.fillText(fit(ctx, sub, box), mid, cy + box + 24);
+        }
+      } else if (size) {
+        // 名稱關掉時只剩尺寸，沒有尺寸的格子下方就是空的
         ctx.fillStyle = C.dim;
-        ctx.font = `11px ${FONT}`;
-        ctx.fillText(fit(ctx, form, box), mid, cy + box + 25);
+        ctx.font = `600 10px ${FONT}`;
+        ctx.fillText(size, mid, cy + box + 9);
       }
       ctx.textAlign = "left";
     });
 
     y += sectionH(sect);
+  }
+
+  if (codeText) {
+    const cy = H - PAD - FOOT_H;
+    ctx.font = `600 17px ${FONT}`;
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "left";
+
+    const label = `${t("trainerCode")}  ${codeText}`;
+    const w = ctx.measureText(label).width + 24;
+    roundRect(ctx, (W - w) / 2, cy - 15, w, 30, 8);
+    ctx.fillStyle = C.card;
+    ctx.fill();
+    ctx.strokeStyle = C.line;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = C.ink;
+    ctx.textAlign = "center";
+    ctx.fillText(label, W / 2, cy);
+    ctx.textAlign = "left";
   }
 
   ctx.fillStyle = C.dim;

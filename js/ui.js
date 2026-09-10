@@ -21,7 +21,7 @@ import {
 } from "./dex.js";
 import { typeInfo } from "./types.js";
 import { EVENTS, allCards, entriesOf, cardsFor } from "./backgrounds.js";
-import { MAX_ITEMS } from "./store.js";
+import { MAX_ITEMS, formatCode } from "./store.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -35,13 +35,26 @@ export function esc(s) {
 
 /* ─────────── 版面 ─────────── */
 
-export function renderChrome(t, lang) {
+export function renderChrome(t, lang, disp = {}) {
   document.documentElement.lang = t("htmlLang");
   $("#appName").textContent = t("appName");
   $("#subtitle").textContent = t("subtitle");
   $("#q").placeholder = t("search");
   $("#filterTitle").textContent = t("viewDex");
+  $("#displayTitle").textContent = t("display");
   $("#dataTitle").textContent = t("data");
+
+  /*
+   * 兩個顯示選項用 aria-pressed 表示開關，實際的版面切換靠
+   * body 的 class，這樣圖鑑與交換表不必各自傳一個旗標下去。
+   */
+  $("#displayOpts").innerHTML = `
+    <button type="button" data-disp="big" aria-pressed="${!!disp.big}">${esc(
+    t("bigIcons")
+  )}</button>
+    <button type="button" data-disp="names" aria-pressed="${!!disp.names}">${esc(
+    t("showNames")
+  )}</button>`;
   $("#localNotice").innerHTML = `<strong>${esc(t("localOnly"))}</strong>${esc(
     t("localHint")
   )}`;
@@ -311,21 +324,26 @@ function tradeCell(item, col, idx, lang, t) {
     ? `<span class="want-bg" style="background-image:url('${esc(hit.card.img)}')"></span>`
     : "";
 
-  const tags = [
-    item.xxl ? `<em class="wt" style="--wt:var(--xxl)">XXL</em>` : "",
-    item.xxs ? `<em class="wt" style="--wt:var(--xxs)">XXS</em>` : "",
-    item.shiny ? `<em class="wt" style="--wt:var(--shiny)">✦</em>` : "",
-  ].join("");
+  /*
+   * 異色是星星，疊在格子左上角。尺寸是文字，放在格子下方。
+   * 兩者分開是因為尺寸有 XXL 與 XXS 兩種，塞進格子裡會蓋到圖。
+   */
+  const size = [item.xxl ? "XXL" : "", item.xxs ? "XXS" : ""]
+    .filter(Boolean)
+    .join(" ");
 
   return `<div class="cell want-cell" data-id="${esc(item.id)}">
-    ${bgLayer}
-    <img ${iconAttrs(e, item.shiny)} alt="" loading="lazy" />
+    <span class="want-tile">
+      ${bgLayer}
+      <img ${iconAttrs(e, item.shiny)} alt="" loading="lazy" />
+      ${item.shiny ? '<i class="spark">✦</i>' : ""}
+      <button class="want-del" type="button" data-del="${idx}" data-col="${col}"
+              title="${esc(t("remove"))}">×</button>
+    </span>
     <span class="nm">${esc(speciesName(e, lang))}${
     formName(e, lang) ? `<span class="form">${esc(formName(e, lang))}</span>` : ""
   }</span>
-    ${tags ? `<span class="want-tags">${tags}</span>` : ""}
-    <button class="want-del" type="button" data-del="${idx}" data-col="${col}"
-            title="${esc(t("remove"))}">×</button>
+    ${size ? `<span class="sz">${size}</span>` : ""}
   </div>`;
 }
 
@@ -349,19 +367,29 @@ function tradeColumn(col, items, lang, t) {
 
   return `<section class="col ${col}">
     <div class="col-head">
+      <i class="dot"></i>
       <span class="t">${esc(title)}</span>
       <span class="n">${esc(t("itemCount", rows.length))}</span>
     </div>
-    ${body}
+    <div class="panel">${body}</div>
   </section>`;
 }
 
-export function renderTrade(data, lang, t) {
+/**
+ * 交換表。
+ *
+ * 訓練家代碼只是輸入框，畫面上不另外顯示，它的用途是印在分享圖底部。
+ * 收到圖的人可以直接照著加好友，這是圖片唯一需要「讀字」的地方。
+ */
+export function renderTrade(data, lang, t, code = "") {
   const total = data.want.length + data.have.length;
   $("#app").innerHTML = `
     <div class="trade-head">
       <input id="listName" value="${esc(data.name.want)}"
              placeholder="${esc(t("listNameHint"))}" maxlength="24" />
+      <input id="trainerCode" value="${esc(formatCode(code))}" inputmode="numeric"
+             placeholder="${esc(t("trainerCodeHint"))}"
+             aria-label="${esc(t("trainerCode"))}" maxlength="14" />
       <button type="button" class="btn-share" id="shareBtn"${
         total ? "" : " disabled"
       }>${esc(t("share"))}</button>

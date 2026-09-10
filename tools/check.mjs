@@ -60,6 +60,7 @@ function installDom() {
     "appName", "subtitle", "filterTitle", "dataTitle", "dataActions",
     "localNotice", "viewTitle", "scrim", "sidebar", "filterBlock",
     "searchbar", "importFile", "listName", "shareBtn",
+    "displayTitle", "displayOpts", "trainerCode",
   ]) {
     els[id] = mk(id);
   }
@@ -178,6 +179,12 @@ console.log("\n4. 儲存往返");
   ok("過長字串會截斷", dirty.want[0].bg.length === 40);
   ok("舊版的備註欄位會被洗掉", !("note" in dirty.want[0]));
   ok("非字串清單名變空字串", dirty.name.want === "");
+
+  ok("代碼只留數字", store.cleanCode("4992-3022 0284") === "499230220284");
+  ok("代碼最多 12 碼", store.cleanCode("1".repeat(30)).length === 12);
+  ok("代碼四碼一組", store.formatCode("499230220284") === "4992 3022 0284");
+  ok("代碼不足 12 碼也能顯示", store.formatCode("49923") === "4992 3");
+  ok("空代碼是空字串", store.formatCode(null) === "");
 }
 
 console.log("\n5. 繪製函式");
@@ -198,6 +205,9 @@ console.log("\n5. 繪製函式");
   };
 
   run("renderChrome", () => ui.renderChrome(t, "zh"));
+  run("renderChrome 帶顯示選項", () =>
+    ui.renderChrome(t, "zh", { big: true, names: false })
+  );
   run("renderViews", () => ui.renderViews("dex", t));
   run("renderFilters", () => ui.renderFilters("all", t));
   run("renderGrid", () =>
@@ -205,6 +215,9 @@ console.log("\n5. 繪製函式");
   );
   run("renderGrid 空清單", () => ui.renderGrid([], data, "zh", t));
   run("renderTrade", () => ui.renderTrade(data, "zh", t));
+  run("renderTrade 帶訓練家代碼", () =>
+    ui.renderTrade(data, "zh", t, "499230220284")
+  );
   run("renderTrade 空清單", () => ui.renderTrade(store.emptyData(), "zh", t));
   run("renderBg", () => ui.renderBg("zh", t));
   run("toast", () => ui.toast("hi"));

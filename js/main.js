@@ -24,6 +24,9 @@ const state = {
   query: "",
   openId: null, // 詳情面板顯示的條目
   openCard: null, // 詳情面板顯示的背卡
+  big: false, // 大圖示。預設小圖示，手機一排五隻
+  names: true, // 格子下方顯示名稱
+  code: "", // 訓練家代碼，只印在分享圖上
 };
 
 let t = makeT(state.lang);
@@ -31,8 +34,11 @@ let t = makeT(state.lang);
 /* ─────────── 偏好設定 ─────────── */
 
 /**
- * 語言與深淺色存在另一個 key，跟交換清單分開。
+ * 語言、深淺色、顯示選項與訓練家代碼存在另一個 key，跟交換清單分開。
  * 這樣「清空全部」不會把語言也重設掉。
+ *
+ * 訓練家代碼放這裡而不是清單裡，因為它是使用者的身分，
+ * 不是某一份清單的屬性。換一份清單不該要重打一次。
  */
 const PREF_KEY = "poke-change/pref";
 
@@ -41,9 +47,14 @@ function loadPref() {
     const p = JSON.parse(localStorage.getItem(PREF_KEY) || "{}");
     if (LANGS.some((l) => l.code === p.lang)) state.lang = p.lang;
     if (p.dark) document.body.classList.add("dark");
+    state.big = !!p.big;
+    // 舊的偏好沒有這個欄位，沒寫過就當成要顯示
+    state.names = p.names !== false;
+    state.code = store.cleanCode(p.code);
   } catch {
     /* 讀不到就用預設，不是錯誤 */
   }
+  applyDisplay();
 }
 
 function savePref() {
@@ -53,6 +64,9 @@ function savePref() {
       JSON.stringify({
         lang: state.lang,
         dark: document.body.classList.contains("dark"),
+        big: state.big,
+        names: state.names,
+        code: state.code,
       })
     );
   } catch {
@@ -60,10 +74,19 @@ function savePref() {
   }
 }
 
+/*
+ * 顯示選項走 body 的 class，不是傳旗標給每個繪製函式。
+ * 圖鑑與交換表共用同一組格子樣式，用 CSS 切換只要改一個地方。
+ */
+function applyDisplay() {
+  document.body.classList.toggle("big-icons", state.big);
+  document.body.classList.toggle("no-names", !state.names);
+}
+
 /* ─────────── 繪製 ─────────── */
 
 function draw() {
-  ui.renderChrome(t, state.lang);
+  ui.renderChrome(t, state.lang, { big: state.big, names: state.names });
   ui.renderViews(state.view, t);
 
   const isDex = state.view === "dex";
@@ -79,7 +102,7 @@ function draw() {
     ui.renderGrid(list, state.data, state.lang, t);
   } else if (state.view === "trade") {
     document.querySelector("#viewTitle").textContent = t("viewTrade");
-    ui.renderTrade(state.data, state.lang, t);
+    ui.renderTrade(state.data, state.lang, t, state.code);
   } else {
     document.querySelector("#viewTitle").textContent = t("viewBg");
     ui.renderBg(state.lang, t);
@@ -196,6 +219,8 @@ async function doShare(btn) {
       title: state.data.name.want || t("shareTitle"),
       dark: document.body.classList.contains("dark"),
       lang: state.lang,
+      names: state.names,
+      code: state.code,
       t,
     });
     if (!blob) throw new Error("empty blob");
@@ -251,6 +276,17 @@ document.addEventListener("click", (ev) => {
   }
   if (ev.target.id === "scrim") {
     ui.setSidebar(false);
+    return;
+  }
+
+  // 顯示選項
+  const disp = el("[data-disp]");
+  if (disp) {
+    if (disp.dataset.disp === "big") state.big = !state.big;
+    else state.names = !state.names;
+    applyDisplay();
+    savePref();
+    draw();
     return;
   }
 
@@ -350,6 +386,21 @@ document.addEventListener("input", (ev) => {
   if (el.id === "listName") {
     state.data.name.want = el.value;
     save();
+    return;
+  }
+
+  /*
+   * 代碼只存數字，但輸入框要看到四碼一組的樣子。
+   * 重寫 value 會把游標推到最前面，所以補回結尾。
+   */
+  if (el.id === "trainerCode") {
+    state.code = store.cleanCode(el.value);
+    savePref();
+    const shown = store.formatCode(state.code);
+    if (el.value !== shown) {
+      el.value = shown;
+      el.setSelectionRange(shown.length, shown.length);
+    }
     return;
   }
 

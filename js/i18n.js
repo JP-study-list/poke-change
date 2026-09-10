@@ -63,6 +63,8 @@ export const STRINGS = {
     remove: "移除",
     listName: "清單名稱",
     listNameHint: "例如：小明的交換清單",
+    trainerCode: "訓練家代碼",
+    trainerCodeHint: "12 碼數字",
     itemCount: "%s 項",
     emptyWant: "還沒有想要的寶可夢。到圖鑑點一隻加進來。",
     emptyHave: "還沒有可以給的寶可夢。到圖鑑點一隻加進來。",
@@ -72,7 +74,6 @@ export const STRINGS = {
     markXxl: "XXL",
     markXxs: "XXS",
     markBg: "背卡",
-    markNote: "備註",
     bgAny: "不指定",
 
     share: "產生分享圖",
@@ -81,6 +82,10 @@ export const STRINGS = {
     shareFailed: "產生失敗，請再試一次",
     shareEmpty: "兩欄都是空的，沒有東西可以分享",
     shareTitle: "我的交換清單",
+
+    display: "顯示",
+    bigIcons: "大圖示",
+    showNames: "顯示名稱",
 
     data: "資料",
     export: "匯出備份",
@@ -145,6 +150,8 @@ export const STRINGS = {
     remove: "削除",
     listName: "リスト名",
     listNameHint: "例：タロウの交換リスト",
+    trainerCode: "トレーナーコード",
+    trainerCodeHint: "12桁の数字",
     itemCount: "%s 件",
     emptyWant: "まだ登録がありません。図鑑から選んで追加してください。",
     emptyHave: "まだ登録がありません。図鑑から選んで追加してください。",
@@ -154,7 +161,6 @@ export const STRINGS = {
     markXxl: "XXL",
     markXxs: "XXS",
     markBg: "背景カード",
-    markNote: "メモ",
     bgAny: "指定なし",
 
     share: "画像を作成",
@@ -163,6 +169,10 @@ export const STRINGS = {
     shareFailed: "作成に失敗しました。もう一度お試しください",
     shareEmpty: "両方とも空なので共有できません",
     shareTitle: "交換リスト",
+
+    display: "表示",
+    bigIcons: "大きいアイコン",
+    showNames: "名前を表示",
 
     data: "データ",
     export: "バックアップを書き出す",
@@ -227,6 +237,8 @@ export const STRINGS = {
     remove: "Remove",
     listName: "List name",
     listNameHint: "e.g. Alex's trade list",
+    trainerCode: "Trainer code",
+    trainerCodeHint: "12 digits",
     itemCount: "%s items",
     emptyWant: "Nothing here yet. Pick a Pokemon from the dex to add one.",
     emptyHave: "Nothing here yet. Pick a Pokemon from the dex to add one.",
@@ -236,7 +248,6 @@ export const STRINGS = {
     markXxl: "XXL",
     markXxs: "XXS",
     markBg: "Background",
-    markNote: "Note",
     bgAny: "Any",
 
     share: "Make share image",
@@ -245,6 +256,10 @@ export const STRINGS = {
     shareFailed: "Could not build the image, please try again",
     shareEmpty: "Both columns are empty, nothing to share",
     shareTitle: "My trade list",
+
+    display: "Display",
+    bigIcons: "Large icons",
+    showNames: "Show names",
 
     data: "Data",
     export: "Export backup",
