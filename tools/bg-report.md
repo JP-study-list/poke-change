@@ -30,6 +30,223 @@
 | sbmisc | 12 | 其他特殊背景 |
 | lcmisc | 14 | 其他地區活動 |
 
+## 寶可夢清單
+
+214 張有清單，共 1526 個收集格，來自 Dittobase。
+33 張對不到 Dittobase，清單是空的。
+
+- lc_2026_NPB_belluna
+- lc_2026_NPB_chunichiDragons
+- lc_2026_NPB_hokkaidoFighters
+- lc_2026_NPB_koshienHanshinTigers
+- lc_2026_NPB_kyocera
+- lc_2026_NPB_softbankHawks
+- lc_2026_NPB_yokohamaStadium
+- lc_2026_NPB_zozoMarine
+- lc_2026_jp_red
+- lc_2026_ppk_001
+- lc_CR_2026_001
+- lc_ID_CarFreeDay
+- lc_NFL_cardinals
+- lc_OsakaEvent2025_01
+- lc_OsakaEvent2025_02
+- lc_OsakaEvent2025_03
+- lc_Paris2025_01
+- lc_Paris2025_02
+- lc_TokMun_koto
+- lc_TokMun_minato
+- lc_TokMun_shinagawa
+- lc_carnivalFlamigo_cologne_2026
+- lc_carnivalFlamigo_rio_2026
+- lc_nationalTrust_beltonHouse
+- lc_nationalTrust_whimpole
+- lc_taipeiAmusementPark_2025
+- lc_tpc30th_malaysia
+- lc_tpc30th_philippines
+- lc_tpc30th_singapore
+- lc_tpc30th_taiwan
+- sb_MidAutumn
+- sb_PatternWild
+- sb_WorldSpecial_Blue
+
+### 對不回條目 id 的寶可夢 5 種
+
+多半是超級進化、極巨化，或是圖鑑還沒收的裝扮。
+
+- 25-pikachu-wcs-2026（1 張，例如 lc_Wcs2026_sanFrancisco）
+- 25-pikachu-pxp-2026（1 張，例如 lc_Wcs2026_sanFrancisco）
+- 760-bewear-wildarea-2025（2 張，例如 lc_nagasaki2025）
+- 132-ditto-cap（1 張，例如 lc_pokopia2026）
+- 132-ditto-hat（1 張，例如 lc_pokopia2026）
+
+## 手工那批與 Dittobase 的差異
+
+手工資料優先，這裡只是列出來讓人決定要不要跟進。
+Dittobase 會收進化取得的，手工那批多半沒收。
+
+- **gf26-global** Dittobase 多：d888, d889, d376, d445, d531, d15, d127, d254, d248, d282, d448, d181, d257, d460, d65, d94, d260, d18, d142, d373 ／ 手工多：d649.fSHOCK, d888.fHERO, d889.fHERO
+- **gf26-tokyo** Dittobase 多：d128.fPALDEA_AQUA, d131.cSPRING_2023_MYSTIC ／ 手工多：d128, d131
+- **gf26-chicago** Dittobase 多：d128.fPALDEA_BLAZE, d239.cSPRING_2023_INSTINCT, d125.cSPRING_2023_INSTINCT, d466.cSPRING_2023_INSTINCT ／ 手工多：d128, d239
+- **gf26-copenhagen** Dittobase 多：d128.fPALDEA_COMBAT, d77.cSPRING_2023_VALOR, d78.cSPRING_2023_VALOR ／ 手工多：d77, d128
+- **gt26-mega** Dittobase 多：d653, d654, d655, d656, d657, d658, d650, d651, d652, d15, d127, d460, d150, d65, d80, d121, d308, d94, d229, d354, d26, d181, d310, d208, d227, d306, d362, d319, d323, d428, d870, d130, d142, d334, d302, d303, d531
+- **gt26-x** Dittobase 多：d651, d652, d654, d655, d657, d658, d680, d681.fBLADE
+- **gt26-y** Dittobase 多：d651, d652, d654, d655, d657, d658, d680, d681.fBLADE
+- **gt26-la** Dittobase 多：d680, d681.fBLADE
+- **gt26-tainan** Dittobase 多：d680, d681.fBLADE
+
+## 交叉比對
+
+只比物種不比型態，因為 Serebii 沒有型態。
+三邊都對得上的不列，以下是有出入的。
+
+| 背卡 | Dittobase | Serebii | Bulbapedia | 差異 |
+| --- | --- | --- | --- | --- |
+| lc_2025_kr_pyeongchangWinterFestival | 3 | 2 | — | Serebii 少 586 |
+| lc_AirAdv2024_jakarta | 11 | 3 | 2 | Serebii 少 134/135/136/196/197/470/471/700；Bulbapedia 少 133/134/135/136/196/197/470/471/700 |
+| lc_CitySafari2023_barcelona_2023 | 9 | 1 | 9 | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_CitySafari2023_mexicoCity_2023 | 9 | 1 | 9 | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_CitySafari2023_seoul_2023 | 9 | 1 | 9 | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_CitySafari2024_hongkong | 9 | 1 | — | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_CitySafari2024_incheon | 3 | 2 | 2 | Serebii 少 673；Bulbapedia 少 25 |
+| lc_CitySafari2024_milan | 9 | 1 | — | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_CitySafari2024_mumbai | 9 | 1 | — | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_CitySafari2024_santiago | 9 | 1 | — | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_CitySafari2024_saopaulo | 9 | 1 | — | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_CitySafari2024_singapore | 9 | 1 | — | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_CitySafari2024_tainan | 9 | 1 | 9 | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_CitySafari2025_amsterdam | 9 | 1 | — | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_CitySafari2025_bangkok | 9 | 1 | — | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_CitySafari2025_cancun | 9 | 1 | — | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_CitySafari2025_miami | 9 | 1 | — | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_CitySafari2025_sydney | 9 | 1 | — | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_CitySafari2025_valencia | 9 | 1 | — | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_CitySafari2025_vancouver | 9 | 1 | — | Serebii 少 134/135/136/196/197/470/471/700 |
+| lc_GoFest2024_madrid | 8 | 8 | 6 | Serebii 多 805；Serebii 少 795；Bulbapedia 少 791/792 |
+| lc_GoFest2024_newyork | 8 | 8 | 6 | Bulbapedia 少 791/792 |
+| lc_GoFest2024_sendai | 8 | 8 | 6 | Bulbapedia 少 791/792 |
+| lc_GoFest2025_jerseycity | 2 | 3 | 2 | Serebii 多 815 |
+| lc_GoFest2025_osaka | 2 | 3 | — | Serebii 多 812 |
+| lc_GoFest2025_paris | 5 | 4 | 2 | Serebii 多 818；Serebii 少 5/6；Bulbapedia 少 4/5/6 |
+| lc_GoFest2026_chicago | 10 | 7 | — | Serebii 少 239/125/466 |
+| lc_GoFest2026_copenhagen | 9 | 7 | — | Serebii 少 77/78 |
+| lc_GoFest2026_tokyo | 8 | 7 | — | Serebii 少 131 |
+| lc_GoTour2026_losAngeles | 18 | 11 | — | Serebii 多 686；Serebii 少 680/681/687/6/181/373/334/445 |
+| lc_GoTour2026_tainan | 18 | 11 | 9 | Serebii 多 686；Serebii 少 680/681/687/6/181/373/334/445；Bulbapedia 多 133/134/135/136/196/197/470/471/700；Bulbapedia 少 716/717/679/680/681/71/687/149/282/130/359/448/6/181/373/254/334/445 |
+| lc_Jangheung_Water_Festival_2025 | 4 | 3 | — | Serebii 少 586 |
+| lc_LotteGiants | 2 | 1 | — | Serebii 少 26 |
+| lc_MLB_arizonaDiamondbacks | 2 | 1 | — | Serebii 少 26 |
+| lc_MLB_baltimoreOrioles | 2 | 1 | — | Serebii 少 26 |
+| lc_MLB_bostonRedSox | 2 | 1 | — | Serebii 少 26 |
+| lc_MLB_chicagoWhitesox | 2 | 1 | — | Serebii 少 26 |
+| lc_MLB_clevelandGuardians | 2 | 1 | — | Serebii 少 26 |
+| lc_MLB_mariners | 2 | 1 | — | Serebii 少 26 |
+| lc_MLB_marlins | 2 | 1 | — | Serebii 少 26 |
+| lc_MLB_milwaukeeBrewers | 2 | 1 | — | Serebii 少 26 |
+| lc_MLB_minnesotaTwins | 2 | 1 | — | Serebii 少 26 |
+| lc_MLB_newyorkMets | 2 | 1 | — | Serebii 少 26 |
+| lc_MLB_sanFranciscoGiants | 2 | 1 | — | Serebii 少 26 |
+| lc_MLB_tampaBayRays | 2 | 1 | — | Serebii 少 26 |
+| lc_MLB_tampaBayRays2 | 2 | 1 | — | Serebii 少 26 |
+| lc_MLB_texasRangers | 2 | 1 | — | Serebii 少 26 |
+| lc_MLB_washingtonNationals | 2 | 1 | — | Serebii 少 26 |
+| lc_Paris2025_01 | 0 | — | 2 | Bulbapedia 多 888/889 |
+| lc_Paris2025_02 | 0 | — | 2 | Bulbapedia 多 888/889 |
+| lc_carnivalFlamigo_cologne_2026 | 0 | 1 | — | Serebii 多 973 |
+| lc_carnivalFlamigo_rio_2026 | 0 | 1 | — | Serebii 多 973 |
+| lc_nagasaki2025 | 22 | — | 2 | Bulbapedia 少 728/729/730/633/634/635/859/860/861/229/359/461/862/908/210/303/282/38/858/181 |
+| lc_nationalTrust_angleseyAbbey | 6 | 4 | — | Serebii 少 541/542 |
+| lc_nationalTrust_attinghampark | 6 | 4 | — | Serebii 少 541/542 |
+| lc_nationalTrust_calkeAbbey | 6 | 4 | — | Serebii 少 541/542 |
+| lc_nationalTrust_chirk | 6 | 4 | — | Serebii 少 274/275 |
+| lc_nationalTrust_cliveden | 6 | 4 | — | Serebii 少 188/189 |
+| lc_nationalTrust_clumberPark | 6 | 4 | — | Serebii 少 541/542 |
+| lc_nationalTrust_dunhamMassey | 5 | 4 | — | Serebii 少 205 |
+| lc_nationalTrust_fountainsAbbeyEstate | 5 | 4 | — | Serebii 少 205 |
+| lc_nationalTrust_hanbury | 6 | 4 | — | Serebii 少 541/542 |
+| lc_nationalTrust_hardwick | 6 | 4 | — | Serebii 少 541/542 |
+| lc_nationalTrust_killerton | 6 | 4 | — | Serebii 少 274/275 |
+| lc_nationalTrust_kingstonLacy | 6 | 4 | — | Serebii 少 274/275 |
+| lc_nationalTrust_lacock | 6 | 4 | — | Serebii 少 274/275 |
+| lc_nationalTrust_lymePark | 5 | 4 | — | Serebii 少 205 |
+| lc_nationalTrust_mottisfont | 6 | 4 | — | Serebii 少 188/189 |
+| lc_nationalTrust_mountStewart | 5 | 4 | — | Serebii 少 205 |
+| lc_nationalTrust_nymans | 6 | 4 | — | Serebii 少 188/189 |
+| lc_nationalTrust_polesden | 6 | 4 | — | Serebii 少 188/189 |
+| lc_nationalTrust_scotneyCastle | 6 | 4 | — | Serebii 少 188/189 |
+| lc_nationalTrust_stourhead | 6 | 4 | — | Serebii 少 274/275 |
+| lc_nationalTrust_stoweGardenPark | 6 | 4 | — | Serebii 少 188/189 |
+| lc_nationalTrust_tredegarHouse | 6 | 4 | — | Serebii 少 274/275 |
+| lc_nationalTrust_trelissick | 6 | 4 | — | Serebii 少 274/275 |
+| lc_nationalTrust_tyntesfield | 6 | 3 | — | Serebii 少 254/274/275 |
+| lc_pokecenter_fukuoka | 1 | 1 | 2 | Bulbapedia 多 483/484；Bulbapedia 少 25 |
+| lc_pokecenter_osaka | 1 | 1 | 9 | Bulbapedia 多 1/2/3/4/5/6/7/8/9；Bulbapedia 少 25 |
+| lc_pokecenter_osakaDX | 1 | 1 | 9 | Bulbapedia 多 1/2/3/4/5/6/7/8/9；Bulbapedia 少 25 |
+| lc_pokelid_aichi | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_akita | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_aomori | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_chiba | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_ehime | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_fukui | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_fukuoka | 2 | 1 | 2 | Serebii 少 26；Bulbapedia 多 483/484；Bulbapedia 少 25/26 |
+| lc_pokelid_fukushima | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_gifu | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_hokkaido | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_hyogo | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_ibaraki | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_ishikawa | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_iwate | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_kagawa | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_kagoshima | 2 | 1 | — | Serebii 少 26 |
+| lc_pokelid_kanagawa | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_kochi | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_kyoto | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_mie | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_miyagi | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_miyazaki | 2 | 1 | — | Serebii 少 26 |
+| lc_pokelid_nagasaki | 2 | 2 | 2 | Serebii 多 181；Serebii 少 26；Bulbapedia 多 488/491；Bulbapedia 少 25/26 |
+| lc_pokelid_nara | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_niigata | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_okayama | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_okinawa | 2 | 1 | — | Serebii 少 26 |
+| lc_pokelid_osaka | 2 | 0 | 9 | Serebii 少 25/26；Bulbapedia 多 1/2/3/4/5/6/7/8/9；Bulbapedia 少 25/26 |
+| lc_pokelid_saga | 2 | 1 | — | Serebii 少 26 |
+| lc_pokelid_saitama | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_shiga | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_shimane | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_shizuoka | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_tochigi | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_tokushima | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_tokyo | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_tottori | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_toyama | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_wakayama | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokelid_yamaguchi | 2 | 0 | — | Serebii 少 25/26 |
+| lc_pokopia2026 | 3 | 4 | — | Serebii 多 132 |
+| lc_roadtrip2025_berlin | 2 | 1 | — | Serebii 少 26 |
+| lc_roadtrip2025_cologne | 2 | 1 | — | Serebii 少 26 |
+| lc_roadtrip2025_london | 2 | 1 | 4 | Serebii 少 26；Bulbapedia 多 384/488/716/717；Bulbapedia 少 25/26 |
+| lc_roadtrip2025_manchester | 2 | 1 | — | Serebii 少 26 |
+| lc_roadtrip2025_paris | 2 | 1 | 2 | Serebii 少 26；Bulbapedia 多 888/889；Bulbapedia 少 25/26 |
+| lc_roadtrip2025_valencia | 2 | 1 | — | Serebii 少 26 |
+| sb_Community_2026 | 25 | 2 | 3 | Serebii 少 394/395/811/812/37/38/813/814/815/957/958/959/915/916/633/634/635/996/997/998/816/817/818；Bulbapedia 少 810/811/812/37/38/813/814/815/957/958/959/915/916/633/634/635/996/997/998/816/817/818 |
+| sb_GOWA2025_Global | 9 | 4 | 7 | Serebii 多 760/861；Serebii 少 249/250/785/786/787/788/800；Bulbapedia 少 488/491 |
+| sb_GoFest2024_wormhole_moon | 1 | 10 | — | Serebii 多 793/794/795/796/797/798/799/805/806 |
+| sb_GoFest2024_wormhole_sun | 1 | 10 | — | Serebii 多 793/794/795/796/797/798/799/805/806 |
+| sb_GoFest2026_global | 78 | 0 | — | Serebii 少 144/145/146/243/244/245/249/382/383/384/480/481/482/483/484/643/644/646/716/717/791/792/250/487/377/378/379/380/381/485/486/488/491/638/639/640/649/793/794/795/796/797/798/799/800/805/806/894/895/641/642/645/905/386/785/786/787/788/888/889/376/445/531/15/127/254/248/282/448/181/257/460/65/94/260/18/142/373 |
+| sb_GoFest2026_mewtwo | 1 | 0 | 1 | Serebii 少 150 |
+| sb_GoTour2025_enigma | 32 | 14 | 27 | Serebii 少 510/520/521/526/528/533/534/536/537/552/553/560/570/571/596/598/600/601；Bulbapedia 少 527/528/555/570/571 |
+| sb_GoTour2026_mega | 60 | 22 | — | Serebii 少 149/653/654/655/656/657/658/650/651/652/15/127/460/150/65/80/121/308/94/229/354/26/181/310/208/227/306/362/319/323/428/870/130/142/334/302/303/531 |
+| sb_GoTour2026_x | 14 | 3 | — | Serebii 少 650/651/652/653/654/655/656/657/658/680/681 |
+| sb_GoTour2026_y | 14 | 3 | — | Serebii 少 650/651/652/653/654/655/656/657/658/680/681 |
+| sb_Season18_MightAndMastery | 24 | 9 | — | Serebii 少 910/911/159/160/583/584/922/923/308/435/748/936/937/67/68 |
+| sb_Season19_DelightfulDays | 22 | 11 | 1 | Serebii 多 812/815/818；Serebii 少 783/784/134/135/136/196/197/470/471/700/913/914/146/822；Bulbapedia 少 782/783/784/145/133/134/135/136/196/197/470/471/700/131/912/913/914/146/821/822/823 |
+| sb_Season20_TalesOfTransformation | 21 | 6 | 1 | Serebii 少 670/671/639/578/579/153/154/159/160/499/500/640/731/732/733；Bulbapedia 少 669/670/671/639/577/578/579/152/153/154/158/159/160/498/499/500/640/731/732/733 |
+| sb_WorldSpecial_Blue | 0 | — | 1 | Bulbapedia 多 959 |
+| sb_lego_2026 | 2 | 1 | — | Serebii 少 26 |
+
+對過 Serebii 的 193 張，其中 133 張有出入。
+對過 Bulbapedia 的 45 張，其中 24 張有出入。
+
 ## 上游只有底層 31 張
 
 game master 標了 vfxAddress，玩家看到的卡面是這張圖再疊一層特效。

@@ -70,7 +70,9 @@ node tools/build-bg.mjs --force
 | 部分裝扮皮卡丘 | Choggor/Pikachu-costume-tracker |
 | 立繪備援 | PokeAPI/sprites |
 | 背卡圖與代號 | PokeMiners/pogo_assets `Images/LocationCards/` |
+| 背卡寶可夢清單 | Dittobase（一次性離線抽取） |
 | 背卡日期與英文名 | Serebii（一次性離線抽取） |
+| 背卡清單交叉比對 | Bulbapedia |
 | 背卡本地備援圖 | 本 repo 的 `img/bg/` |
 
 圖片一律直接連外部 CDN，不鏡像進 repo。

@@ -32,6 +32,8 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { SERIES, seriesInfo } from "../js/bgseries.js";
 import { HAND_EVENTS } from "../js/bgevents.js";
+import { GODEX } from "../js/godex.js";
+import { extraEntries } from "../js/extra.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CACHE = join(ROOT, "tools", ".cache");
@@ -213,21 +215,22 @@ function norm(s) {
 }
 
 /** 檔名或日期字串裡的西元年，用來拆同名不同年的活動 */
-const yearOf = (s) => (s.match(/20\d\d/) || [""])[0];
+const yearOf = (s) => (String(s || "").match(/20\d\d/) || [""])[0];
 
 /**
- * 把上游檔名對到 Serebii 的一筆。
+ * 把上游檔名對到外部來源的一筆。Serebii 與 Dittobase 共用。
  * 先試完全相同，再試互相包含（Serebii 的 bostonredsox 對上游的 mlbbostonredsox）。
- * 剩兩筆以上就用年份拆，拆不開一律當作沒對到，寧可缺日期也不要給錯的。
+ * 剩兩筆以上就用年份拆，拆不開一律當作沒對到，
+ * 寧可缺資料也不要把別張卡的清單掛上去。
  */
-function matchSerebii(file, list) {
+function matchByKey(file, list) {
   const key = norm(file);
   if (!key) return null;
   let hit = list.filter((s) => s.key === key);
   if (!hit.length) hit = list.filter((s) => s.key.includes(key) || key.includes(s.key));
   if (hit.length > 1) {
     const y = yearOf(file);
-    const same = hit.filter((s) => yearOf(s.date) === y);
+    const same = hit.filter((s) => yearOf(s.date || s.slug) === y);
     hit = same.length === 1 ? same : hit;
   }
   return hit.length === 1 ? hit[0] : null;
@@ -259,15 +262,203 @@ function seriesOf(file) {
   return "lcmisc";
 }
 
+/* ─────────── Dittobase：寶可夢清單 ─────────── */
+
+const DB_INDEX = "https://www.dittobase.com/pokemon-go/backgrounds";
+const DB_CARD = "https://www.dittobase.com/pokemon-go/backgrounds/";
+const UA = "Mozilla/5.0 (compatible; poke-change/build-bg)";
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * 頁面裡嵌了一份結構化 JSON，比解 DOM 穩。
+ * 每一筆帶物種編號、型態代號，以及異色、進化取得、暗影、
+ * 超級進化、極巨化的旗標。
+ */
+const DB_ROW =
+  /"goPokemonSlug":"([^"]+)","canBeShiny":(true|false),"manuallyEvolved":(true|false),"goPokemon":\{"slug":"[^"]*","speciesId":(\d+),"isShadow":(true|false),"isMega":(true|false),"isDynamax":(true|false),"isGigantamax":(true|false)/g;
+
+function parseCardPage(html) {
+  const text = html.replaceAll('\\"', '"');
+  const out = [];
+  const seen = new Set();
+  for (const m of text.matchAll(DB_ROW)) {
+    const [, slug, shiny, evolve, dex, shadow, mega, , gmax] = m;
+    // 超級進化與極巨化不是可交換條目，整批排除
+    if (mega === "true" || gmax === "true") continue;
+    // 暗影是狀態不是條目，併回本體
+    const base = shadow === "true" ? slug.replace(/-shadow$/, "") : slug;
+    const key = `${dex}-${base}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ key, shiny: shiny === "true", evolve: evolve === "true" });
+  }
+  return out;
+}
+
+/**
+ * 抓 Dittobase 每張背卡的寶可夢清單。
+ *
+ * 兩百多頁，每頁約 700 KB，所以只存抽出來的結果不存原始 HTML，
+ * 而且一秒一次。已經抓過的不重抓，除非 --force。
+ */
+async function dittobase() {
+  const path = join(BGCACHE, "dittobase.json");
+  let store = {};
+  if (!FORCE) {
+    try {
+      store = JSON.parse(await readFile(path, "utf8"));
+    } catch {
+      /* 沒快取就從頭抓 */
+    }
+  }
+
+  const indexHtml = await cached("dittobase-index.html", DB_INDEX, (x) => x);
+  const slugs = [
+    ...new Set(
+      [...indexHtml.matchAll(/href="\/pokemon-go\/backgrounds\/([a-z0-9-]+)"/g)].map(
+        (m) => m[1]
+      )
+    ),
+  ].sort();
+
+  const todo = slugs.filter((s) => !store[s]);
+  if (todo.length) {
+    console.log(`  Dittobase 要抓 ${todo.length} 頁，一秒一頁`);
+    let n = 0;
+    for (const slug of todo) {
+      const res = await fetch(DB_CARD + slug, { headers: { "User-Agent": UA } });
+      if (res.ok) store[slug] = parseCardPage(await res.text());
+      else store[slug] = [];
+      if (++n % 25 === 0) process.stdout.write(`    ${n}/${todo.length}\n`);
+      await sleep(1000);
+    }
+    await mkdir(BGCACHE, { recursive: true });
+    await writeFile(path, JSON.stringify(store));
+  }
+  return { slugs, store };
+}
+
+/* ─────────── 條目 id 對照 ─────────── */
+
+/**
+ * Dittobase 的代號組成是「編號-英文名-型態代號」，
+ * 我們的 id 是「d編號.f型態代號」，兩邊都轉成同一個形狀再對。
+ */
+const slugify = (s) =>
+  String(s)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Flabébé 這種帶重音的字，去掉重音再比
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+/**
+ * Dittobase 與我們對同一個裝扮的叫法不同，只能人工對。
+ * 對不上的會列在報告裡，補進來就好。
+ */
+const POKEMON_ALIAS = new Map([
+  ["54-psyduck-swim-ring", "d54.fSWIM_2025"],
+]);
+
+/**
+ * 條目 id 的查表。同一個條目登記多個鍵，因為上游的叫法不只一種：
+ *   d1.cJAN_2020_NOEVOLVE  也要能用 1-bulbasaur-jan-2020 找到
+ *   d646.fNORMAL           也要能用 646-kyurem 找到
+ */
+function entryKeyMap() {
+  const map = new Map();
+  const put = (k, id) => {
+    if (!map.has(k)) map.set(k, id);
+  };
+  for (const e of [...GODEX, ...extraEntries()]) {
+    const code = e.id.includes(".") ? e.id.split(".")[1].slice(1) : "";
+    const base = `${e.dex}-${slugify(e.en)}`;
+    put(base + (code ? "-" + slugify(code) : ""), e.id);
+    // 「穿了不能進化」是遊戲機制不是外觀，上游的清單不帶這個後綴
+    if (/_NOEVOLVE$/.test(code)) put(`${base}-${slugify(code.replace(/_NOEVOLVE$/, ""))}`, e.id);
+    // 只有型態沒有本體的（酋雷姆、代歐奇希斯），NORMAL 當本體
+    if (code === "NORMAL") put(base, e.id);
+  }
+  for (const [k, id] of POKEMON_ALIAS) map.set(k, id);
+  return map;
+}
+
+/* ─────────── Bulbapedia：交叉比對用 ─────────── */
+
+const BULBA_URL =
+  "https://bulbapedia.bulbagarden.net/w/api.php?action=parse&page=Background_(GO)" +
+  "&prop=wikitext&format=json&formatversion=2";
+
+/**
+ * Bulbapedia 只收了八十幾張，涵蓋不到人孔蓋那些，所以不當資料來源，
+ * 只拿來對 Dittobase 的清單。
+ *
+ * 原始碼是 wikitext，每一隻寫成 {{MSP/GO|編號+型態|名稱|旗標}}，
+ * 比 HTML 好解析。rowspan 的續列沒有自己的圖，直接跳過。
+ */
+function parseBulba(json) {
+  const w = JSON.parse(json)?.parse?.wikitext || "";
+  const out = [];
+  for (const chunk of w.split("\n|-")) {
+    if (!/\[\[File:[^\]]*background\.png/i.test(chunk)) continue;
+    const cells = chunk.split(/\n\|/).map((c) => c.replace(/^\s*rowspan=\d+\s*\|/, "").trim());
+    const name = cells.find(
+      (c) => c && !c.startsWith("[[File:") && !c.startsWith("{{MSP") && !c.startsWith("!")
+    );
+    const dex = [...chunk.matchAll(/\{\{MSP\/GO\|(\d{4})([A-Za-z0-9]*)\|/g)].map((m) => ({
+      dex: Number(m[1]),
+      form: m[2],
+    }));
+    const year = (chunk.match(/20\d\d/g) || []).slice(-1)[0] || "";
+    if (name && dex.length) out.push({ name, dex, year });
+  }
+  return out;
+}
+
+/** 圖鑑編號 → 英文物種名，Serebii 只給編號時要用 */
+const SPECIES_EN = new Map();
+for (const e of GODEX) if (!SPECIES_EN.has(e.dex)) SPECIES_EN.set(e.dex, e.en);
+const speciesEn = (dex) => SPECIES_EN.get(dex) || "";
+const dexExists = (dex) => SPECIES_EN.has(dex);
+
+/** 條目 id 的圖鑑編號。d128.fPALDEA_COMBAT → 128 */
+const dexOfId = (id) => Number(String(id).slice(1).split(".")[0]);
+
+/**
+ * 把一張卡對到 Bulbapedia 的一列。
+ * 它寫的是地點或活動名稱（Las Vegas, Nevada, USA），
+ * 我們的是卡片名稱（GO Tour Las Vegas），取地點的第一段去比包含關係。
+ * 年份兩邊都有的話要一致，拆不開就當作沒對到。
+ */
+function matchBulba(cardName, file, list) {
+  const key = norm(String(cardName).split(",")[0]);
+  if (key.length < 4) return null;
+  let hit = list.filter((b) => {
+    const bk = norm(String(b.name).split(",")[0]);
+    return bk.length >= 4 && (bk.includes(key) || key.includes(bk));
+  });
+  if (hit.length > 1) {
+    const y = yearOf(file);
+    const same = hit.filter((b) => b.year === y);
+    hit = same.length === 1 ? same : hit;
+  }
+  return hit.length === 1 ? hit[0] : null;
+}
+
 /* ─────────── 主流程 ─────────── */
 
 console.log("讀取來源");
 const gm = await gameMaster();
 const files = await assetList();
 const serebii = parseSerebii(await cached("serebii.html", SEREBII_URL, (s) => s));
+const db = await dittobase();
+const bulba = parseBulba(await cached("bulbapedia.json", BULBA_URL, (x) => x));
 console.log(`  game master ${gm.length} 筆樣板`);
 console.log(`  圖檔 ${files.length} 張`);
 console.log(`  Serebii ${serebii.length} 筆`);
+console.log(`  Dittobase ${db.slugs.length} 張`);
+console.log(`  Bulbapedia ${bulba.length} 張（只用來交叉比對）`);
 
 // 正式代號：imageUrl（轉小寫）→ templateId
 const codeByImage = new Map();
@@ -283,6 +474,13 @@ for (const t of gm) {
 // Serebii：先算好比對用的鍵，之後逐張找
 const serebiiKeyed = serebii.map((s) => ({ ...s, key: norm(s.slug) }));
 
+// Dittobase 同樣的做法。它的代號跟上游檔名幾乎一致，只差斷字與字序
+const dbKeyed = db.slugs.map((slug) => ({ slug, key: norm(slug), rows: db.store[slug] || [] }));
+
+// 條目 id 對照表，用來把 Dittobase 的寶可夢代號換成我們的 id
+const ENTRY_KEYS = entryKeyMap();
+const unknownPokemon = new Map();
+
 // 手工資料已經認領的圖檔，骨架不重複產生
 const handAssets = new Set();
 for (const ev of HAND_EVENTS) for (const c of ev.cards) if (c.asset) handAssets.add(c.asset);
@@ -290,6 +488,7 @@ for (const ev of HAND_EVENTS) for (const c of ev.cards) if (c.asset) handAssets.
 const idSeen = new Map();
 const cards = [];
 const noSerebii = [];
+const noDitto = [];
 
 for (const file of files) {
   let id = makeId(file);
@@ -300,8 +499,43 @@ for (const file of files) {
     id = `${file.slice(0, 2)}-${id}`;
   }
 
-  const hit = matchSerebii(file, serebiiKeyed);
+  const hit = matchByKey(file, serebiiKeyed);
   if (!hit) noSerebii.push(file);
+
+  // Dittobase 用同一套比對，拿寶可夢清單
+  const dbHit = matchByKey(file, dbKeyed);
+  const pokemon = [];
+  for (const row of dbHit?.rows || []) {
+    const id = ENTRY_KEYS.get(row.key);
+    if (id) pokemon.push(id);
+    else {
+      if (!unknownPokemon.has(row.key)) unknownPokemon.set(row.key, []);
+      unknownPokemon.get(row.key).push(file);
+    }
+  }
+  if (!dbHit) noDitto.push(file);
+
+  /*
+   * Dittobase 完全沒有這張的資料時才退回 Serebii。
+   * Serebii 只到物種層級，而且會漏掉進化取得的，所以只當墊底，
+   * 不跟 Dittobase 的清單混在一起——混了會冒出型態不明的重複條目。
+   */
+  let src = pokemon.length ? "ditto" : "";
+  if (!pokemon.length && hit?.dex?.length) {
+    for (const d of hit.dex) {
+      const id = ENTRY_KEYS.get(`${d}-${slugify(speciesEn(d))}`) || (dexExists(d) ? `d${d}` : null);
+      if (id && !pokemon.includes(id)) pokemon.push(id);
+    }
+    if (pokemon.length) src = "serebii";
+  }
+
+  // 交叉比對用：三邊各自的物種集合，只比物種不比型態
+  const bulbaHit = matchBulba(hit?.en || fallbackName(file), file, bulba);
+  const cross = {
+    ditto: new Set(pokemon.map(dexOfId)),
+    serebii: hit ? new Set(hit.dex) : null,
+    bulba: bulbaHit ? new Set(bulbaHit.dex.map((d) => d.dex)) : null,
+  };
 
   const card = {
     id,
@@ -312,6 +546,9 @@ for (const file of files) {
     en: hit?.en || fallbackName(file),
     date: hit?.date || "",
     vfx: vfxImages.has(file.toLowerCase()),
+    pokemon,
+    src,
+    cross,
   };
   idSeen.set(makeId(file), card);
   cards.push(card);
@@ -332,7 +569,9 @@ const body = auto
       `  { id: ${JSON.stringify(c.id)}, asset: ${JSON.stringify(c.asset)}, ` +
       `series: ${JSON.stringify(c.series)}, scope: ${JSON.stringify(c.scope)}, ` +
       `en: ${JSON.stringify(c.en)}, date: ${JSON.stringify(c.date)}, ` +
-      `code: ${JSON.stringify(c.code)}, vfx: ${c.vfx}, pokemon: [] },`
+      `code: ${JSON.stringify(c.code)}, vfx: ${c.vfx}, ` +
+      `src: ${JSON.stringify(c.src)}, ` +
+      `pokemon: [${c.pokemon.map((x) => JSON.stringify(x)).join(", ")}] },`
   )
   .join("\n");
 
@@ -354,7 +593,10 @@ await writeFile(
  *   code     game master 的正式代號，用來對上游，畫面上不顯示
  *   vfx      上游那張圖只是底層，玩家看到的卡面還疊了一層特效。
  *            true 的話畫面上會看到跟遊戲裡不一樣的圖，只能將就
- *   pokemon  可能帶有這張背卡的條目，骨架一律留空
+ *   src      清單的來源。ditto 是 Dittobase（有型態），
+ *            serebii 是退而求其次的物種層級，空字串是沒有清單
+ *   pokemon  可能帶有這張背卡的條目。
+ *            暗影併回本體，超級進化與極巨化整批排除
  */
 
 export const BG_CARDS = [
@@ -366,6 +608,68 @@ export const BG_CARD_COUNT = ${auto.length};
 );
 
 /* ─────────── 報告 ─────────── */
+
+const withList = cards.filter((c) => c.pokemon.length);
+const slotCount = cards.reduce((n, c) => n + c.pokemon.length, 0);
+
+/*
+ * 交叉比對。三邊都只比物種編號，Serebii 沒有型態沒得比。
+ * 只列出有出入的，全部一致的列出來只是洗版。
+ */
+const crossStats = { serebii: 0, serebiiDiff: 0, bulba: 0, bulbaDiff: 0 };
+const crossRows = [];
+for (const c of cards) {
+  const d = c.cross.ditto;
+  const cmp = (other) => {
+    const missing = [...other].filter((x) => !d.has(x));
+    const extra = [...d].filter((x) => !other.has(x));
+    return { missing, extra, same: !missing.length && !extra.length };
+  };
+  const se = c.cross.serebii ? cmp(c.cross.serebii) : null;
+  const bu = c.cross.bulba ? cmp(c.cross.bulba) : null;
+  if (se) crossStats.serebii++;
+  if (bu) crossStats.bulba++;
+  if (se && !se.same) crossStats.serebiiDiff++;
+  if (bu && !bu.same) crossStats.bulbaDiff++;
+  if ((!se || se.same) && (!bu || bu.same)) continue;
+
+  const note = [];
+  if (se && !se.same) {
+    if (se.missing.length) note.push(`Serebii 多 ${se.missing.join("/")}`);
+    if (se.extra.length) note.push(`Serebii 少 ${se.extra.join("/")}`);
+  }
+  if (bu && !bu.same) {
+    if (bu.missing.length) note.push(`Bulbapedia 多 ${bu.missing.join("/")}`);
+    if (bu.extra.length) note.push(`Bulbapedia 少 ${bu.extra.join("/")}`);
+  }
+  crossRows.push(
+    `| ${c.asset} | ${d.size} | ${c.cross.serebii ? c.cross.serebii.size : "—"} | ` +
+      `${c.cross.bulba ? c.cross.bulba.size : "—"} | ${note.join("；")} |`
+  );
+}
+
+/*
+ * 手工那批跟 Dittobase 的差異。合併時手工優先，所以這裡不動資料，
+ * 只列出來讓人自己決定。
+ */
+const autoByAsset = new Map(cards.map((c) => [c.asset, c]));
+const handDiff = [];
+for (const ev of HAND_EVENTS) {
+  for (const card of ev.cards) {
+    const auto = autoByAsset.get(card.asset);
+    if (!auto || !auto.pokemon.length) continue;
+    const handIds = new Set(
+      (card.pokemon || []).map((x) => (typeof x === "string" ? x : x.id))
+    );
+    const extra = auto.pokemon.filter((id) => !handIds.has(id));
+    const missing = [...handIds].filter((id) => !auto.pokemon.includes(id));
+    if (!extra.length && !missing.length) continue;
+    handDiff.push(
+      `- **${card.id}**${extra.length ? ` Dittobase 多：${extra.join(", ")}` : ""}` +
+        `${missing.length ? ` ／ 手工多：${missing.join(", ")}` : ""}`
+    );
+  }
+}
 
 const noCode = cards.filter((c) => !c.code);
 const noDate = cards.filter((c) => !c.date);
@@ -383,6 +687,40 @@ const report = [
   "| 系列 | 張數 | 名稱 |",
   "| --- | --- | --- |",
   ...SERIES.map((s) => `| ${s.id} | ${byCount.get(s.id) || 0} | ${s.zh} |`),
+  "",
+  `## 寶可夢清單`,
+  "",
+  `${withList.length} 張有清單，共 ${slotCount} 個收集格，來自 Dittobase。`,
+  `${noDitto.length} 張對不到 Dittobase，清單是空的。`,
+  "",
+  ...noDitto.map((f) => `- ${f}`),
+  "",
+  `### 對不回條目 id 的寶可夢 ${unknownPokemon.size} 種`,
+  "",
+  "多半是超級進化、極巨化，或是圖鑑還沒收的裝扮。",
+  "",
+  ...[...unknownPokemon.entries()].map(
+    ([k, files]) => `- ${k}（${files.length} 張，例如 ${files[0]}）`
+  ),
+  "",
+  "## 手工那批與 Dittobase 的差異",
+  "",
+  "手工資料優先，這裡只是列出來讓人決定要不要跟進。",
+  "Dittobase 會收進化取得的，手工那批多半沒收。",
+  "",
+  ...handDiff,
+  "",
+  "## 交叉比對",
+  "",
+  "只比物種不比型態，因為 Serebii 沒有型態。",
+  "三邊都對得上的不列，以下是有出入的。",
+  "",
+  `| 背卡 | Dittobase | Serebii | Bulbapedia | 差異 |`,
+  `| --- | --- | --- | --- | --- |`,
+  ...crossRows,
+  "",
+  `對過 Serebii 的 ${crossStats.serebii} 張，其中 ${crossStats.serebiiDiff} 張有出入。`,
+  `對過 Bulbapedia 的 ${crossStats.bulba} 張，其中 ${crossStats.bulbaDiff} 張有出入。`,
   "",
   `## 上游只有底層 ${cards.filter((c) => c.vfx).length} 張`,
   "",
@@ -421,9 +759,14 @@ console.log("\n產生完成 js/bgdata.js");
 console.log(`  骨架張數        ${auto.length}`);
 console.log(`  其中手工覆蓋    ${handAssets.size}`);
 console.log(`  收納夾          ${byCount.size}`);
+console.log(`  有寶可夢清單    ${withList.length} 張，共 ${slotCount} 個收集格`);
+console.log(`  交叉比對        Serebii ${crossStats.serebii} 張比對 ${crossStats.serebiiDiff} 張有出入`);
+console.log(`                  Bulbapedia ${crossStats.bulba} 張比對 ${crossStats.bulbaDiff} 張有出入`);
 const vfxCount = cards.filter((c) => c.vfx).length;
 if (vfxCount) console.log(`  ! 上游只有底層 ${vfxCount} 張（有特效層）`);
 if (noCode.length) console.log(`  ! 缺正式代號 ${noCode.length} 張`);
 if (noSerebii.length) console.log(`  ! Serebii 對不到 ${noSerebii.length} 張`);
+if (noDitto.length) console.log(`  ! Dittobase 對不到 ${noDitto.length} 張，這些沒有清單`);
+if (unknownPokemon.size) console.log(`  ! 有 ${unknownPokemon.size} 種寶可夢對不回條目 id`);
 if (unnamed.length) console.log(`  ! 系列缺名稱 ${unnamed.join(", ")}，補進 js/bgseries.js`);
 console.log("  詳情見 tools/bg-report.md");
