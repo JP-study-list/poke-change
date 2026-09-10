@@ -32,7 +32,7 @@
 
 ## 寶可夢清單
 
-214 張有清單，共 1526 個收集格，來自 Dittobase。
+214 張有清單，共 1532 個收集格，來自 Dittobase。
 33 張對不到 Dittobase，清單是空的。
 
 - lc_2026_NPB_belluna
@@ -69,15 +69,10 @@
 - sb_PatternWild
 - sb_WorldSpecial_Blue
 
-### 對不回條目 id 的寶可夢 5 種
+### 對不回條目 id 的寶可夢 0 種
 
 多半是超級進化、極巨化，或是圖鑑還沒收的裝扮。
 
-- 25-pikachu-wcs-2026（1 張，例如 lc_Wcs2026_sanFrancisco）
-- 25-pikachu-pxp-2026（1 張，例如 lc_Wcs2026_sanFrancisco）
-- 760-bewear-wildarea-2025（2 張，例如 lc_nagasaki2025）
-- 132-ditto-cap（1 張，例如 lc_pokopia2026）
-- 132-ditto-hat（1 張，例如 lc_pokopia2026）
 
 ## 手工那批與 Dittobase 的差異
 
@@ -153,7 +148,7 @@ Dittobase 會收進化取得的，手工那批多半沒收。
 | lc_Paris2025_02 | 0 | — | 2 | Bulbapedia 多 888/889 |
 | lc_carnivalFlamigo_cologne_2026 | 0 | 1 | — | Serebii 多 973 |
 | lc_carnivalFlamigo_rio_2026 | 0 | 1 | — | Serebii 多 973 |
-| lc_nagasaki2025 | 22 | — | 2 | Bulbapedia 少 728/729/730/633/634/635/859/860/861/229/359/461/862/908/210/303/282/38/858/181 |
+| lc_nagasaki2025 | 23 | — | 2 | Bulbapedia 少 728/729/730/633/634/635/859/860/861/229/359/461/862/908/210/303/282/38/858/760/181 |
 | lc_nationalTrust_angleseyAbbey | 6 | 4 | — | Serebii 少 541/542 |
 | lc_nationalTrust_attinghampark | 6 | 4 | — | Serebii 少 541/542 |
 | lc_nationalTrust_calkeAbbey | 6 | 4 | — | Serebii 少 541/542 |
@@ -221,7 +216,6 @@ Dittobase 會收進化取得的，手工那批多半沒收。
 | lc_pokelid_toyama | 2 | 0 | — | Serebii 少 25/26 |
 | lc_pokelid_wakayama | 2 | 0 | — | Serebii 少 25/26 |
 | lc_pokelid_yamaguchi | 2 | 0 | — | Serebii 少 25/26 |
-| lc_pokopia2026 | 3 | 4 | — | Serebii 多 132 |
 | lc_roadtrip2025_berlin | 2 | 1 | — | Serebii 少 26 |
 | lc_roadtrip2025_cologne | 2 | 1 | — | Serebii 少 26 |
 | lc_roadtrip2025_london | 2 | 1 | 4 | Serebii 少 26；Bulbapedia 多 384/488/716/717；Bulbapedia 少 25/26 |
@@ -229,7 +223,7 @@ Dittobase 會收進化取得的，手工那批多半沒收。
 | lc_roadtrip2025_paris | 2 | 1 | 2 | Serebii 少 26；Bulbapedia 多 888/889；Bulbapedia 少 25/26 |
 | lc_roadtrip2025_valencia | 2 | 1 | — | Serebii 少 26 |
 | sb_Community_2026 | 25 | 2 | 3 | Serebii 少 394/395/811/812/37/38/813/814/815/957/958/959/915/916/633/634/635/996/997/998/816/817/818；Bulbapedia 少 810/811/812/37/38/813/814/815/957/958/959/915/916/633/634/635/996/997/998/816/817/818 |
-| sb_GOWA2025_Global | 9 | 4 | 7 | Serebii 多 760/861；Serebii 少 249/250/785/786/787/788/800；Bulbapedia 少 488/491 |
+| sb_GOWA2025_Global | 10 | 4 | 7 | Serebii 多 861；Serebii 少 249/250/785/786/787/788/800；Bulbapedia 少 488/491/760 |
 | sb_GoFest2024_wormhole_moon | 1 | 10 | — | Serebii 多 793/794/795/796/797/798/799/805/806 |
 | sb_GoFest2024_wormhole_sun | 1 | 10 | — | Serebii 多 793/794/795/796/797/798/799/805/806 |
 | sb_GoFest2026_global | 78 | 0 | — | Serebii 少 144/145/146/243/244/245/249/382/383/384/480/481/482/483/484/643/644/646/716/717/791/792/250/487/377/378/379/380/381/485/486/488/491/638/639/640/649/793/794/795/796/797/798/799/800/805/806/894/895/641/642/645/905/386/785/786/787/788/888/889/376/445/531/15/127/254/248/282/448/181/257/460/65/94/260/18/142/373 |
@@ -244,7 +238,7 @@ Dittobase 會收進化取得的，手工那批多半沒收。
 | sb_WorldSpecial_Blue | 0 | — | 1 | Bulbapedia 多 959 |
 | sb_lego_2026 | 2 | 1 | — | Serebii 少 26 |
 
-對過 Serebii 的 193 張，其中 133 張有出入。
+對過 Serebii 的 193 張，其中 132 張有出入。
 對過 Bulbapedia 的 45 張，其中 24 張有出入。
 
 ## 上游只有底層 31 張

@@ -76,7 +76,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 檔案 | 匯出 | 用途 |
 | --- | --- | --- |
 | `js/godex.js` | `GODEX` `GODEX_COUNT` | **自動產生，不要手改。** 1455 個條目，含 dex / 型態 / 裝扮 / 三語名 / 屬性 / 稀有度 / 圖檔名 / 有無異色 |
-| `js/extra.js` | `PIKA_EXTRA` `ALIAS` `MISSING_ICON` `extraEntries()` | 手動補 godex 缺的 23 筆：22 種上游沒有的裝扮皮卡丘，以及沒有 GO 圖示的捷拉奧拉 |
+| `js/extra.js` | `PIKA_EXTRA` `DB_EXTRA` `ALIAS` `MISSING_ICON` `extraEntries()` | 手動補 godex 缺的 28 筆：22 種 Choggor 的裝扮皮卡丘、5 種只有 Dittobase 有圖的裝扮，以及沒有 GO 圖示的捷拉奧拉 |
 | `js/costumes.js` | `COSTUME_NAMES` `costumeName()` | 裝扮的三語譯名。**遊戲內裝扮沒有官方名稱**，只能自己取，這是唯一來源 |
 | `js/bgdata.js` | `BG_CARDS` `BG_CARD_COUNT` | **自動產生，不要手改。** 240 張背卡骨架，含代號、上游檔名、收納夾、英文名、日期、特效層旗標與寶可夢清單 |
 | `js/bgevents.js` | `HAND_EVENTS` | 手工維護的 17 張，有三語名、註記、寶可夢清單與本地備援圖。會逐欄覆蓋骨架 |
