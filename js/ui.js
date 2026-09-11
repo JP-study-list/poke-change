@@ -249,23 +249,23 @@ const CLS_LABEL = {
 };
 
 /**
- * 詳情面板裡的條件編輯區。
+ * 詳情面板裡「已經加進清單」的那幾筆。
  *
- * 所有文字型的設定都集中在這裡，交換表本身只顯示圖與符號。
- * 沒加進這一欄就不顯示，避免面板變成一長串沒用的選項。
+ * 同一隻可以配不同背卡各收一筆，所以這裡列的是該欄裡所有
+ * id 相同的項目，每一筆各自有自己的標記與背卡，互不影響。
+ * 沒加進這一欄就整區不顯示，避免面板變成一長串沒用的選項。
  */
-function editBlock(col, data, id, e, lang, t) {
-  const idx = data[col].findIndex((x) => x.id === id);
-  if (idx < 0) return "";
-  const item = data[col][idx];
-
-  const mk = (field, label, cls) =>
-    `<button type="button" class="mk ${cls}" data-field="${field}"
-             aria-pressed="${!!item[field]}">${esc(label)}</button>`;
+function editBlock(col, data, id, e, lang, t, flash) {
+  const rows = data[col]
+    .map((item, idx) => ({ item, idx }))
+    .filter((r) => r.item.id === id);
+  if (!rows.length) return "";
 
   /*
    * 背卡下拉照收納夾分組。同一隻寶可夢能帶的背卡會隨著資料補齊變多，
    * 一長串平的選項在手機上滑不完，分組之後至少找得到。
+   * 上面選背卡是點圖，這裡是下拉，因為這裡改的是已經收進清單的那一筆，
+   * 每一筆都攤成一整排圖會把面板撐得很長。
    */
   const cards = cardsFor(id);
   const groups = [];
@@ -274,41 +274,64 @@ function editBlock(col, data, id, e, lang, t) {
     if (last && last.folder === folder) last.cards.push(card);
     else groups.push({ folder, cards: [card] });
   }
-  const opt = (card) =>
-    `<option value="${esc(card.id)}"${
-      card.id === item.bg ? " selected" : ""
-    }>${esc(cardName(card, lang))}</option>`;
-  const bgSelect = cards.length
-    ? `<select data-field="bg">
-         <option value="">${esc(t("bgAny"))}</option>
-         ${groups
-           .map(
-             (g) =>
-               `<optgroup label="${esc(folderName(g.folder, lang))}">${g.cards
-                 .map(opt)
-                 .join("")}</optgroup>`
-           )
-           .join("")}
-       </select>`
-    : "";
 
-  return `<div class="d-edit ${col}" data-col="${col}" data-idx="${idx}">
-    <p class="d-sect">${esc(col === "want" ? t("colWant") : t("colHave"))}</p>
-    <div class="marks">
-      ${hasShiny(e) ? mk("shiny", t("markShiny"), "shiny") : ""}
-      ${mk("xxl", t("markXxl"), "xxl")}
-      ${mk("xxs", t("markXxs"), "xxs")}
-    </div>
-    ${bgSelect}
-  </div>`;
+  const block = ({ item, idx }) => {
+    const mk = (field, label, cls) =>
+      `<button type="button" class="mk ${cls}" data-field="${field}"
+               aria-pressed="${!!item[field]}">${esc(label)}</button>`;
+
+    const opt = (card) =>
+      `<option value="${esc(card.id)}"${
+        card.id === item.bg ? " selected" : ""
+      }>${esc(cardName(card, lang))}</option>`;
+    const bgSelect = cards.length
+      ? `<select data-field="bg">
+           <option value="">${esc(t("bgAny"))}</option>
+           ${groups
+             .map(
+               (g) =>
+                 `<optgroup label="${esc(folderName(g.folder, lang))}">${g.cards
+                   .map(opt)
+                   .join("")}</optgroup>`
+             )
+             .join("")}
+         </select>`
+      : "";
+
+    const hit = flash && flash.col === col && flash.idx === idx;
+    return `<div class="d-edit ${col}${hit ? " flash" : ""}"
+                 data-col="${col}" data-idx="${idx}">
+      <div class="marks">
+        ${hasShiny(e) ? mk("shiny", t("markShiny"), "shiny") : ""}
+        ${mk("xxl", t("markXxl"), "xxl")}
+        ${mk("xxs", t("markXxs"), "xxs")}
+        <button type="button" class="mk del" data-del="${idx}" data-col="${col}">${esc(
+      t("remove")
+    )}</button>
+      </div>
+      ${bgSelect}
+    </div>`;
+  };
+
+  return `<p class="d-sect">${esc(
+    col === "want" ? t("colWant") : t("colHave")
+  )} · ${esc(t("itemCount", rows.length))}</p>
+    ${rows.map(block).join("")}`;
 }
 
-export function renderDetail(id, data, lang, t) {
+/**
+ * 條目詳情。
+ *
+ * 由上到下就是操作順序：確認是哪一隻 → 選條件 → 選背卡 → 加進某一欄。
+ * 條件與背卡是草稿（`draft`），按下加入才會寫進清單，關掉面板就丟。
+ * 已經在清單裡的那幾筆列在按鈕下方，各自編輯，互不干擾。
+ */
+export function renderDetail(id, data, lang, t, draft = null, flash = null) {
   const e = find(id);
   if (!e) return;
 
-  const inWant = data.want.some((i) => i.id === id);
-  const inHave = data.have.some((i) => i.id === id);
+  // 沒有草稿（例如自我檢查直接呼叫）就當場開一份，繪製不依賴 main.js 的狀態
+  const d = draft || { shiny: hasShiny(e), xxl: false, xxs: false, bg: "" };
 
   const types = e.types
     .map((ty) => {
@@ -319,21 +342,32 @@ export function renderDetail(id, data, lang, t) {
     })
     .join("");
 
+  const dmk = (field, label, cls) =>
+    `<button type="button" class="mk ${cls}" data-draft="${field}"
+             aria-pressed="${!!d[field]}">${esc(label)}</button>`;
+
   const cards = cardsFor(id);
   const bgBlock = cards.length
-    ? `<div class="bg-list">${cards
-        .map(
-          ({ folder, card, note }) => `<div class="bg-row">
+    ? `<div class="bg-list">
+        <button type="button" class="bg-row none" data-pick=""
+                aria-pressed="${!d.bg}">
+          <span class="tx"><span class="t">${esc(t("bgAny"))}</span></span>
+        </button>
+        ${cards
+          .map(
+            ({ folder, card, note }) => `<button type="button" class="bg-row"
+              data-pick="${esc(card.id)}" aria-pressed="${d.bg === card.id}">
             <img ${bgAttrs(card)} alt="" loading="lazy" />
-            <div>
-              <div class="t">${esc(cardName(card, lang))}</div>
-              <div class="s">${esc(folderName(folder, lang))}${
-            note && note[lang] ? ` · ${esc(note[lang])}` : ""
-          }</div>
-            </div>
-          </div>`
-        )
-        .join("")}</div>`
+            <span class="tx">
+              <span class="t">${esc(cardName(card, lang))}</span>
+              <span class="s">${esc(folderName(folder, lang))}${
+              note && note[lang] ? ` · ${esc(note[lang])}` : ""
+            }</span>
+            </span>
+          </button>`
+          )
+          .join("")}
+      </div>`
     : `<p class="dim">${esc(t("bgNone"))}</p>`;
 
   const form = formName(e, lang);
@@ -354,20 +388,27 @@ export function renderDetail(id, data, lang, t) {
       </div>
     </div>
 
-    <div class="d-actions">
-      <button type="button" class="want" data-add="want" aria-pressed="${inWant}">${esc(
-    t("addWant")
-  )}</button>
-      <button type="button" class="have" data-add="have" aria-pressed="${inHave}">${esc(
-    t("addHave")
-  )}</button>
+    <p class="d-sect">${esc(t("condSection"))}</p>
+    <div class="marks draft">
+      ${hasShiny(e) ? dmk("shiny", t("markShiny"), "shiny") : ""}
+      ${dmk("xxl", t("markXxl"), "xxl")}
+      ${dmk("xxs", t("markXxs"), "xxs")}
     </div>
-
-    ${editBlock("want", data, id, e, lang, t)}
-    ${editBlock("have", data, id, e, lang, t)}
 
     <p class="d-sect">${esc(t("bgSection"))}</p>
     ${bgBlock}
+
+    <div class="d-actions">
+      <button type="button" class="want" data-add="want">${esc(
+        t("addWant")
+      )}</button>
+      <button type="button" class="have" data-add="have">${esc(
+        t("addHave")
+      )}</button>
+    </div>
+
+    ${editBlock("want", data, id, e, lang, t, flash)}
+    ${editBlock("have", data, id, e, lang, t, flash)}
 
     <button class="btn-close" type="button" data-close="1">${esc(t("close"))}</button>`;
 }
@@ -399,7 +440,13 @@ function tradeCell(item, col, idx, lang, t) {
     .filter(Boolean)
     .join(" ");
 
-  return `<div class="cell want-cell" data-id="${esc(item.id)}">
+  /*
+   * 格子帶著自己在那一欄的索引。同一隻可以有好幾筆，
+   * 點進詳情面板時要指得出點的是哪一筆，不然面板列出三筆會分不清。
+   */
+  return `<div class="cell want-cell" data-id="${esc(
+    item.id
+  )}" data-col="${col}" data-idx="${idx}">
     <span class="want-tile">
       ${bgLayer}
       <img ${iconAttrs(e, item.shiny)} alt="" loading="lazy" />

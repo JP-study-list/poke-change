@@ -377,6 +377,53 @@ console.log("\n5. 繪製函式");
   );
   run("toast", () => ui.toast("hi"));
 
+  /*
+   * 同一隻寶可夢可以配不同背卡各收一筆，詳情面板要把那幾筆都列出來，
+   * 而且每一筆帶自己的索引，否則改其中一筆會改到另一筆。
+   */
+  run("renderDetail 同一隻配不同背卡各一筆", () => {
+    const id = dex.ENTRIES.map((e) => e.id).find(
+      (x) => bg.cardsFor(x).length >= 2
+    );
+    const picks = bg.cardsFor(id);
+    const multi = store.normalize({
+      v: 1,
+      want: [
+        { id, bg: picks[0].card.id },
+        { id, bg: picks[1].card.id },
+      ],
+      have: [],
+    });
+    ui.renderDetail(id, multi, "zh", t);
+    const idx = [...els.panel.innerHTML.matchAll(/data-idx="(\d+)"/g)].map(
+      (m) => m[1]
+    );
+    if (idx.join(",") !== "0,1") throw new Error(`列出的索引是 ${idx.join(",")}`);
+  });
+
+  // 草稿是「還沒加進清單」的條件，面板上要看得出哪些已經選了
+  run("renderDetail 草稿的條件與背卡有標起來", () => {
+    const id = dex.ENTRIES.map((e) => e.id).find(
+      (x) => bg.cardsFor(x).length >= 1
+    );
+    const card = bg.cardsFor(id)[0].card.id;
+    ui.renderDetail(id, store.emptyData(), "zh", t, {
+      shiny: false,
+      xxl: true,
+      xxs: false,
+      bg: card,
+    });
+    const html = els.panel.innerHTML;
+    if (!/data-draft="xxl"\s+aria-pressed="true"/.test(html))
+      throw new Error("XXL 沒有標起來");
+    if (!html.includes(`data-pick="${card}" aria-pressed="true"`))
+      throw new Error("選起來的背卡沒有標起來");
+    if (!/data-pick=""\s+aria-pressed="false"/.test(html))
+      throw new Error("「不指定」那一列的狀態不對");
+    if (html.includes('data-idx="'))
+      throw new Error("還沒加進清單就不該出現編輯區");
+  });
+
   // 每個條目的詳情都畫一次，比只抽樣可靠
   let detailErr = null;
   for (const e of dex.ENTRIES) {

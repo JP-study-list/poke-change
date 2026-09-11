@@ -26,6 +26,13 @@ const state = {
   openCard: null, // 詳情面板顯示的背卡
   openFilter: false, // 詳情面板顯示篩選
   /*
+   * 詳情面板上的條件草稿。按下「加入」才會變成清單裡的一筆，
+   * 關掉面板就丟，不進 localStorage。同一隻配不同背卡要各收一筆，
+   * 靠的就是改草稿再按一次加入。
+   */
+  draft: null,
+  flash: null, // 剛才想加的那一筆已經在清單裡，閃一下指出是哪一筆
+  /*
    * 背卡檢視自己的狀態。收納夾預設全部收合，兩百四十張一次攤開沒辦法看。
    * 跟篩選一樣不寫進偏好，重新整理回到預設，免得下次打開只剩幾張卻不知為何。
    */
@@ -120,13 +127,23 @@ function draw() {
  */
 function drawDetail() {
   if (state.openFilter) ui.renderFilterPanel(state.filter, state.lang, t);
-  else if (state.openId) ui.renderDetail(state.openId, state.data, state.lang, t);
-  else if (state.openCard) ui.renderCardDetail(state.openCard, state.lang, t);
+  else if (state.openId) {
+    ui.renderDetail(
+      state.openId,
+      state.data,
+      state.lang,
+      t,
+      state.draft,
+      state.flash
+    );
+    state.flash = null; // 閃一次就好，下一次重畫不該再閃
+  } else if (state.openCard) ui.renderCardDetail(state.openCard, state.lang, t);
 }
 
 function closePanels() {
   state.openId = state.openCard = null;
   state.openFilter = false;
+  state.draft = state.flash = null;
   ui.closeSheet();
 }
 
@@ -138,21 +155,49 @@ function save() {
 
 /* ─────────── 操作 ─────────── */
 
-/** 把條目加進某一欄，已經在裡面就移除，讓同一顆按鈕可以來回切 */
-function toggleColumn(id, col) {
+/** 面板上那份條件草稿。沒有異色可收的條目不預設勾異色，不然會出現收不到的需求 */
+function newDraft(id) {
+  const e = find(id);
+  return { shiny: !!(e && e.shinyIcon), xxl: false, xxs: false, bg: "" };
+}
+
+/**
+ * 把條目加進某一欄，條件取自面板上的草稿。
+ *
+ * 按鈕不是開關。同一隻可以配不同背卡各收一筆，
+ * 「再按一次就移除」在這種情況下沒有意義，移除走每一筆自己的刪除鈕。
+ * 四個條件完全一樣的那一筆已經在清單裡就不再新增，改成閃一下指出它，
+ * 因為那是手滑按兩次，不是真的想要兩格一模一樣的。
+ */
+function addItem(id, col) {
   const list = state.data[col];
-  const i = list.findIndex((x) => x.id === id);
-  if (i >= 0) {
-    list.splice(i, 1);
-  } else {
-    if (list.length >= store.MAX_ITEMS) {
-      ui.toast(t("full", store.MAX_ITEMS));
-      return;
-    }
-    // 沒有異色可收的條目不預設勾異色，不然會出現收不到的需求
-    const e = find(id);
-    list.push(store.newItem(id, !!(e && e.shinyIcon)));
+  const d = state.draft || newDraft(id);
+
+  const same = list.findIndex(
+    (x) =>
+      x.id === id &&
+      (x.bg || "") === (d.bg || "") &&
+      !!x.shiny === !!d.shiny &&
+      !!x.xxl === !!d.xxl &&
+      !!x.xxs === !!d.xxs
+  );
+  if (same >= 0) {
+    state.flash = { col, idx: same };
+    ui.toast(t("dupe"));
+    drawDetail();
+    return;
   }
+
+  if (list.length >= store.MAX_ITEMS) {
+    ui.toast(t("full", store.MAX_ITEMS));
+    return;
+  }
+
+  const item = store.newItem(id, d.shiny);
+  item.xxl = !!d.xxl;
+  item.xxs = !!d.xxs;
+  item.bg = d.bg || "";
+  list.push(item);
   save();
   draw();
   drawDetail();
@@ -170,6 +215,7 @@ function removeItem(col, idx) {
   state.data[col].splice(idx, 1);
   save();
   draw();
+  drawDetail(); // 詳情面板開著時，被刪掉的那一列要跟著消失
 }
 
 /* ─────────── 匯出與匯入 ─────────── */
@@ -357,10 +403,28 @@ document.addEventListener("click", (ev) => {
     return;
   }
 
+  // 詳情面板上的條件草稿
+  const dmk = el(".mk[data-draft]");
+  if (dmk && state.draft) {
+    const f = dmk.dataset.draft;
+    state.draft[f] = !state.draft[f];
+    drawDetail();
+    return;
+  }
+
+  // 詳情面板上的背卡。點一下選起來，點「不指定」或點同一張取消
+  const pick = el("[data-pick]");
+  if (pick && state.draft) {
+    const id = pick.dataset.pick;
+    state.draft.bg = state.draft.bg === id ? "" : id;
+    drawDetail();
+    return;
+  }
+
   // 加入某一欄
   const add = el("[data-add]");
   if (add && state.openId) {
-    toggleColumn(state.openId, add.dataset.add);
+    addItem(state.openId, add.dataset.add);
     return;
   }
 
@@ -424,6 +488,11 @@ document.addEventListener("click", (ev) => {
   if (cell) {
     state.openId = cell.dataset.id;
     state.openCard = null;
+    state.draft = newDraft(state.openId);
+    // 從交換表點進來就指出是哪一筆，圖鑑點進來沒有對應的筆數就不閃
+    state.flash = cell.dataset.col
+      ? { col: cell.dataset.col, idx: Number(cell.dataset.idx) }
+      : null;
     drawDetail();
     ui.openSheet();
   }

@@ -719,29 +719,43 @@ body.no-names .cell .no {
   color: var(--have);
 }
 
-.d-actions button.want[aria-pressed="true"] {
-  background: var(--want);
-  color: #fff;
-}
-
-.d-actions button.have[aria-pressed="true"] {
-  background: var(--have);
-  color: #fff;
-}
-
 .bg-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
+/*
+ * 背卡列是按鈕不是清單：點一下就把那張背卡選進草稿，再按加入。
+ * 選中的那一列整列變色，因為縮圖本身就有顏色，只描邊看不出來。
+ */
 .bg-row {
   display: flex;
   gap: 10px;
   align-items: center;
+  width: 100%;
   padding: 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
+  background: var(--card);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bg-row:hover {
+  border-color: var(--bgcard);
+}
+
+.bg-row[aria-pressed="true"] {
+  border-color: var(--bgcard);
+  box-shadow: inset 0 0 0 1px var(--bgcard);
+  background: color-mix(in srgb, var(--bgcard) 12%, var(--card));
+}
+
+/* 「不指定」沒有縮圖，高度補齊成一樣，不然那一列會矮一截 */
+.bg-row.none {
+  min-height: 58px;
 }
 
 .bg-row img {
@@ -750,6 +764,13 @@ body.no-names .cell .no {
   object-fit: cover;
   border-radius: 5px;
   flex: 0 0 62px;
+}
+
+.bg-row .tx {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .bg-row .t {
@@ -996,8 +1017,11 @@ body.dark .want-bg {
   border-left-color: var(--have);
 }
 
-.d-edit .d-sect {
-  margin: 0 0 8px;
+/* 加入前的條件。跟已加入那幾筆用的是同一組小圓鈕，只是不包在框裡 */
+.marks.draft {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .d-edit .marks {
@@ -1031,6 +1055,38 @@ body.dark .want-bg {
 
 .mk.xxs[aria-pressed="true"] {
   background: var(--xxs);
+}
+
+/* 已經有一模一樣的一筆時閃一下，指出是哪一筆，而不是默默不動 */
+.d-edit.flash {
+  animation: flash 1.2s ease-out;
+}
+
+@keyframes flash {
+  0%,
+  40% {
+    background: color-mix(in srgb, var(--gold) 22%, transparent);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .d-edit.flash {
+    animation: none;
+    background: color-mix(in srgb, var(--gold) 18%, transparent);
+  }
+}
+
+.mk.del {
+  margin-left: auto;
+}
+
+.mk.del:hover {
+  color: #fff;
+  border-color: transparent;
+  background: #a33;
 }
 
 .d-edit select {

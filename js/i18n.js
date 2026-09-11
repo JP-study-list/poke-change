@@ -94,7 +94,9 @@ export const STRINGS = {
     emptyWant: "還沒有想要的寶可夢。到圖鑑點一隻加進來。",
     emptyHave: "還沒有可以給的寶可夢。到圖鑑點一隻加進來。",
     full: "這一欄已達上限 %s 項",
+    dupe: "這一筆已經在清單裡了",
 
+    condSection: "條件",
     markShiny: "異色",
     markXxl: "XXL",
     markXxs: "XXS",
@@ -206,7 +208,9 @@ export const STRINGS = {
     emptyWant: "まだ登録がありません。図鑑から選んで追加してください。",
     emptyHave: "まだ登録がありません。図鑑から選んで追加してください。",
     full: "この列は上限の %s 件に達しています",
+    dupe: "この組み合わせはすでにリストにあります",
 
+    condSection: "条件",
     markShiny: "色違い",
     markXxl: "XXL",
     markXxs: "XXS",
@@ -318,7 +322,9 @@ export const STRINGS = {
     emptyWant: "Nothing here yet. Pick a Pokemon from the dex to add one.",
     emptyHave: "Nothing here yet. Pick a Pokemon from the dex to add one.",
     full: "This column is at its limit of %s items",
+    dupe: "That one is already in your list",
 
+    condSection: "Options",
     markShiny: "Shiny",
     markXxl: "XXL",
     markXxs: "XXS",
