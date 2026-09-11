@@ -114,9 +114,11 @@ export const STRINGS = {
     shareEmpty: "兩欄都是空的，沒有東西可以分享",
     shareTitle: "我的交換清單",
 
+    settings: "設定",
     display: "顯示",
     bigIcons: "大圖示",
     showNames: "顯示名稱",
+    theme: "深色模式",
 
     data: "資料",
     export: "匯出備份",
@@ -133,9 +135,6 @@ export const STRINGS = {
     localHint:
       "沒有帳號也沒有雲端。換裝置、清除瀏覽資料，或長時間沒開啟本站，紀錄都會消失。重要的清單請按「匯出備份」存成檔案。",
     saveFailed: "儲存失敗，瀏覽器可能停用了網站資料",
-
-    settings: "設定",
-    theme: "深色模式",
   },
 
   ja: {
@@ -233,9 +232,11 @@ export const STRINGS = {
     shareEmpty: "両方とも空なので共有できません",
     shareTitle: "交換リスト",
 
+    settings: "設定",
     display: "表示",
     bigIcons: "大きいアイコン",
     showNames: "名前を表示",
+    theme: "ダークモード",
 
     data: "データ",
     export: "バックアップを書き出す",
@@ -252,9 +253,6 @@ export const STRINGS = {
     localHint:
       "アカウントもクラウドもありません。端末を変える、閲覧データを消す、長期間アクセスしないと記録は消えます。大事なリストは書き出して保存してください。",
     saveFailed: "保存に失敗しました。ブラウザの設定をご確認ください",
-
-    settings: "設定",
-    theme: "ダークモード",
   },
 
   en: {
@@ -352,9 +350,11 @@ export const STRINGS = {
     shareEmpty: "Both columns are empty, nothing to share",
     shareTitle: "My trade list",
 
+    settings: "Settings",
     display: "Display",
     bigIcons: "Large icons",
     showNames: "Show names",
+    theme: "Dark mode",
 
     data: "Data",
     export: "Export backup",
@@ -371,9 +371,6 @@ export const STRINGS = {
     localHint:
       "No account, no cloud. Switching devices, clearing site data, or not visiting for a long time will lose your lists. Export a backup for anything you care about.",
     saveFailed: "Could not save. Your browser may be blocking site data.",
-
-    settings: "Settings",
-    theme: "Dark mode",
   },
 };
 

@@ -58,8 +58,8 @@ function installDom() {
   for (const id of [
     "app", "panel", "sheet", "toast", "filters", "views", "langs", "q",
     "appName", "subtitle", "dataTitle", "dataActions",
-    "localNotice", "scrim", "sidebar", "infobar",
-    "filterBtn", "filterN", "fpicked", "fpanel",
+    "localNotice", "infobar",
+    "filterBtn", "filterN", "fpicked", "fpanel", "gearBtn", "settings",
     "searchbar", "importFile", "listName", "shareBtn",
     "displayTitle", "displayOpts", "trainerCode",
   ]) {

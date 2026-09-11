@@ -12,27 +12,53 @@
       骨架而已。所有內容由 js/ui.js 在執行時填入，
       這裡只保留容器與不會變的結構。
 
-      圖示用 inline SVG 不用文字符號。☰ 與 ◐ 是字，
-      跨平台的字重與基線會飄，也吃不到 currentColor 以外的控制。
+      圖示一律 inline SVG 不用文字符號。文字符號的字重與基線跨平台會飄，
+      也吃不到 currentColor 以外的控制。
     -->
     <header class="topbar">
-      <button class="icon-btn" id="menuBtn" type="button" aria-label="選單">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 7h16M4 12h16M4 17h16" />
-        </svg>
-      </button>
       <div class="brand">
         <strong id="appName">交換表</strong>
         <span id="subtitle" class="dim"></span>
       </div>
+
+      <!--
+        三個檢視。桌機排在頂部列裡，900 以下同一段 DOM 變成貼底的 bar，
+        跟右欄與那兩個面板同一個手法：位置只有一處，形態靠 CSS 切換。
+      -->
+      <nav class="views" id="views"></nav>
+
       <div class="top-right">
         <div class="langs" id="langs"></div>
-        <button class="icon-btn" id="themeBtn" type="button" aria-label="深色模式">
+        <button
+          class="icon-btn"
+          id="gearBtn"
+          type="button"
+          aria-expanded="false"
+          aria-controls="settings"
+        >
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="8" />
-            <path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none" />
+            <path
+              d="M9.5 2.8 L14.5 2.8 L13.9 5.8 L16.4 7.2 L18.7 5.3 L21.2 9.5 L18.3 10.5 L18.3 13.5 L21.2 14.5 L18.7 18.7 L16.4 16.8 L13.9 18.2 L14.5 21.2 L9.5 21.2 L10.1 18.2 L7.6 16.8 L5.3 18.7 L2.8 14.5 L5.7 13.5 L5.7 10.5 L2.8 9.5 L5.3 5.3 L7.6 7.2 L10.1 5.8Z"
+            />
+            <circle cx="12" cy="12" r="3" />
           </svg>
         </button>
+
+        <!--
+          設定。原本這些是左側欄的兩個區塊，側欄拆掉之後整段搬進來。
+          深淺色也在裡面，頂部列不再有那顆半黑半白的圓。
+        -->
+        <div class="pop settings" id="settings" hidden>
+          <section class="side-block">
+            <p class="side-title" id="displayTitle"></p>
+            <div class="toggles" id="displayOpts"></div>
+          </section>
+          <section class="side-block">
+            <p class="side-title" id="dataTitle"></p>
+            <div class="data-actions" id="dataActions"></div>
+            <p class="notice" id="localNotice"></p>
+          </section>
+        </div>
       </div>
     </header>
 
@@ -42,22 +68,7 @@
     -->
     <div class="infobar" id="infobar"></div>
 
-    <div class="scrim" id="scrim" hidden></div>
-
     <div class="layout">
-      <aside class="sidebar" id="sidebar">
-        <nav class="views" id="views"></nav>
-        <section class="side-block">
-          <p class="side-title" id="displayTitle"></p>
-          <div class="toggles" id="displayOpts"></div>
-        </section>
-        <section class="side-block">
-          <p class="side-title" id="dataTitle"></p>
-          <div class="data-actions" id="dataActions"></div>
-          <p class="notice" id="localNotice"></p>
-        </section>
-      </aside>
-
       <main class="content">
         <!--
           搜尋列。36 個篩選條件收在漏斗裡，已選的那幾個排在漏斗右邊，
@@ -81,7 +92,7 @@
             <span class="fbtn-n" id="filterN" hidden></span>
           </button>
           <div class="fpicked" id="fpicked"></div>
-          <div class="fpanel" id="fpanel" hidden></div>
+          <div class="pop fpanel" id="fpanel" hidden></div>
         </div>
         <div id="app"></div>
       </main>

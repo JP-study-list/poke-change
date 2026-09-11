@@ -26,10 +26,11 @@ const state = {
   view: "dex", // dex / trade / bg
   filter: emptyFilter(), // 五個群組，組間 AND、組內 OR
   /*
-   * 篩選面板開著沒。跟篩選本身一樣不寫進偏好，
-   * 重新整理回到收起，免得下次打開先看到一片面板蓋在格子牆上。
+   * 現在哪一個面板開著：null、"filter" 或 "settings"。
+   * 一次只有一個，兩個下拉不會疊在一起。
+   * 跟篩選本身一樣不寫進偏好，重新整理回到全部收起。
    */
-  fopen: false,
+  pop: null,
   query: "",
   openId: null, // 詳情面板顯示的條目
   openCard: null, // 詳情面板顯示的背卡
@@ -116,8 +117,18 @@ function applyDisplay() {
 /* ─────────── 繪製 ─────────── */
 
 function draw() {
-  ui.renderChrome(t, state.lang, { big: state.big, names: state.names });
+  ui.renderChrome(t, state.lang, {
+    big: state.big,
+    names: state.names,
+    dark: document.body.classList.contains("dark"),
+  });
   ui.renderViews(state.view, t);
+
+  /*
+   * 設定面板在三個檢視都要開得起來，所以它的開合不能收在圖鑑那一段裡。
+   * 篩選那一個在別的檢視裡連鈕都藏著，狀態切檢視時會歸零。
+   */
+  ui.setPop(state.pop);
 
   /*
    * 搜尋列只有圖鑑要。背卡有自己的搜尋與範圍切換，交換表兩樣都不需要。
@@ -130,7 +141,6 @@ function draw() {
     const list = ui.visibleEntries(state.filter, state.query);
     ui.renderFilterBar(state.filter, state.lang, t);
     ui.renderFilterPanel(state.filter, state.lang, t);
-    ui.setFilterOpen(state.fopen);
     ui.renderInfoBar(
       {
         title: t("viewDex"),
@@ -176,7 +186,7 @@ const railHasContent = () =>
 /*
  * 右欄一次只顯示一種：條目詳情、背卡詳情、選寶可夢。
  * 打開任一種之前要把另外兩種清掉。
- * 篩選已經搬到常駐 chip 列，不再跟這裡搶位置。
+ * 篩選與設定是自己浮出來的面板，不跟這裡搶位置。
  *
  * 三種都沒有的時候顯示目前清單摘要，桌機右欄常駐，空著是浪費。
  * 但交換表例外：那個檢視本身就是清單，再擺一份摘要是同一件事說兩次，
@@ -388,16 +398,16 @@ document.addEventListener("click", (ev) => {
   const el = (sel) => ev.target.closest(sel);
 
   /*
-   * 點面板外面就關掉篩選。
+   * 點面板外面就關掉那個面板。
    *
    * 放在最前面，因為底下每一段處理完都會 return，
    * 收在最後就只有「點到空白處」那一種情況執行得到。
-   * 面板裡面與漏斗本身不算外面，連選幾個條件時面板不該關。
+   * 兩個面板自己與那兩顆鈕不算外面，連選幾個條件時面板不該關。
    * 這裡不 return，這一下點到的東西照常處理。
    */
-  if (state.fopen && !el("#fpanel") && !el("#filterBtn")) {
-    state.fopen = false;
-    ui.setFilterOpen(false);
+  if (state.pop && !el(ui.POP_PARTS)) {
+    state.pop = null;
+    ui.setPop(null);
   }
 
   // 語言
@@ -416,7 +426,7 @@ document.addEventListener("click", (ev) => {
   if (view) {
     state.view = view.dataset.view;
     closePanels();
-    ui.setSidebar(false);
+    state.pop = null;
     draw();
     return;
   }
@@ -429,27 +439,18 @@ document.addEventListener("click", (ev) => {
     return;
   }
 
-  // 側欄與遮罩
-  if (el("#menuBtn")) {
-    ui.setSidebar(!document.body.classList.contains("side-open"));
-    return;
-  }
-  if (ev.target.id === "scrim") {
-    ui.setSidebar(false);
-    return;
-  }
-
-  // 篩選的漏斗
-  if (el("#filterBtn")) {
-    state.fopen = !state.fopen;
-    ui.setFilterOpen(state.fopen);
+  // 篩選的漏斗與設定的齒輪。同一顆再按一次就收起來
+  const pop = el("#filterBtn") ? "filter" : el("#gearBtn") ? "settings" : null;
+  if (pop) {
+    state.pop = state.pop === pop ? null : pop;
+    ui.setPop(state.pop);
     return;
   }
 
   // 面板底部的完成鈕。桌機點外面就關了，這顆是給手機抽屜用的
   if (el("[data-fclose]")) {
-    state.fopen = false;
-    ui.setFilterOpen(false);
+    state.pop = null;
+    ui.setPop(null);
     return;
   }
 
@@ -487,18 +488,13 @@ document.addEventListener("click", (ev) => {
   // 顯示選項
   const disp = el("[data-disp]");
   if (disp) {
-    if (disp.dataset.disp === "big") state.big = !state.big;
-    else state.names = !state.names;
+    const which = disp.dataset.disp;
+    if (which === "big") state.big = !state.big;
+    else if (which === "names") state.names = !state.names;
+    else document.body.classList.toggle("dark");
     applyDisplay();
     savePref();
     draw();
-    return;
-  }
-
-  // 深淺色
-  if (el("#themeBtn")) {
-    document.body.classList.toggle("dark");
-    savePref();
     return;
   }
 
@@ -733,9 +729,8 @@ document.addEventListener("change", (ev) => {
 document.addEventListener("keydown", (ev) => {
   if (ev.key === "Escape") {
     closePanels();
-    ui.setSidebar(false);
-    state.fopen = false;
-    ui.setFilterOpen(false);
+    state.pop = null;
+    ui.setPop(null);
   }
 });
 

@@ -4,8 +4,8 @@
  * 設計 token 全部集中在 :root，改配色只要動這一段。
  * 深色模式用 body.dark 覆寫同一組變數，不重寫規則。
  *
- * 版面只有兩段：桌機是側欄加內容，手機側欄變成抽屜。
- * 斷點只有一個，900px。
+ * 版面：桌機是內容加右欄，導覽在頂部列；900 以下導覽變成貼底的 bar。
+ * 斷點兩個，900px（手機）與 1200px（右欄常駐）。
  */
 
 :root {
@@ -66,15 +66,15 @@
   --type-water: #4d90d5;
 
   /*
-   * 唯一的陰影顏色。全站只有篩選面板用得到：它浮在格子牆上面，
-   * 靠一條邊框分不出誰在上面。深色底上同一個值看不見，所以做成 token
-   * 讓 body.dark 調濃度，不另外寫一條深色規則。
+   * 唯一的陰影顏色。只有浮出來的那兩個面板（篩選、設定）用得到：
+   * 它們蓋在內容上面，靠一條邊框分不出誰在上面。深色底上同一個值看不見，
+   * 所以做成 token 讓 body.dark 調濃度，不另外寫一條深色規則。
    */
   --shadow-ink: rgba(0, 0, 0, 0.11);
 
   --radius: 10px;
-  --side-w: 228px;
   --topbar-h: 52px;
+  --tab-h: 56px; /* 手機貼底的檢視 bar。900 以下才存在 */
   --bar-h: 44px; /* 資訊列。頂部列下面那條，寫「現在在看什麼」 */
   --rail-w: 340px; /* 右欄。桌機常駐，1200 以下收起來 */
 
@@ -188,12 +188,17 @@ select {
   border-bottom: 1px solid var(--line);
 }
 
+/*
+ * 標題不再吃掉所有剩餘空間。檢視要緊接在它右邊，
+ * 像一般網站的 wordmark 加導覽；靠右擠著語言鈕會離標題太遠。
+ * 副標題還是會在寬度不夠時自己截斷。
+ */
 .brand {
   display: flex;
   align-items: baseline;
   gap: 10px;
   min-width: 0;
-  flex: 1;
+  flex: 0 1 auto;
 }
 
 .brand strong {
@@ -210,6 +215,7 @@ select {
 }
 
 .top-right {
+  position: relative; /* 設定面板的定位基準 */
   display: flex;
   align-items: center;
   gap: 8px;
@@ -247,10 +253,6 @@ select {
 .icon-btn:hover {
   background: var(--sunk);
   color: var(--ink);
-}
-
-#menuBtn {
-  display: none;
 }
 
 /* 語言。分段控制，底是凹下去那一階，選中的那一段才浮起來 */
@@ -347,34 +349,48 @@ select {
   align-items: flex-start;
 }
 
-/*
- * 側欄不再是一塊白底面板。它跟內容同一個底色，靠一條線分開。
- * 原本側欄是白的、內容是灰的，白的那一半看起來比較重要，
- * 但那裡放的只是導覽與三顆很少按的鈕。
- */
-.sidebar {
-  position: sticky;
-  top: calc(var(--topbar-h) + var(--bar-h));
-  width: var(--side-w);
-  flex: 0 0 var(--side-w);
-  height: calc(100vh - var(--topbar-h) - var(--bar-h));
-  overflow-y: auto;
-  padding: 18px 12px 32px;
-  border-right: 1px solid var(--line);
-  background: var(--bg);
-}
-
 .content {
   flex: 1;
   min-width: 0;
   padding: 16px 18px 48px;
 }
 
-.scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 25;
-  background: rgba(0, 0, 0, 0.4);
+/* ─────────── 浮出來的面板 ─────────── */
+
+/*
+ * 篩選與設定共用這個殼。桌機貼著自己那顆鈕浮著，
+ * 900 以下同一段 DOM 變成貼底的抽屜，跟右欄同一個手法。
+ * 位置與寬度各自寫在 `.fpanel` 與 `.settings`。
+ *
+ * absolute 不佔流排，所以浮出來不會把旁邊的東西推窄。
+ */
+.pop {
+  position: absolute;
+  z-index: 20;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 14px 16px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: 0 10px 26px var(--shadow-ink);
+}
+
+/* 設定。貼著齒輪的右緣往下，裡面是原本左側欄那兩個區塊 */
+.settings {
+  top: calc(100% + 4px);
+  right: 0;
+  width: 296px;
+}
+
+/* 面板裡的第一區不要那條線，最後一區不要留白 */
+.pop .side-block:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.pop .side-block:last-child {
+  margin-bottom: 0;
 }
 
 /* ─────────── 右欄 ─────────── */
@@ -502,23 +518,43 @@ select {
  * 檢視切換。選中的那一項不是整塊塗成金色，而是文字變重變色、
  * 左邊一條金線。導覽是導覽，不是一顆大按鈕。
  */
+/*
+ * 三個檢視。桌機是頂部列裡的一排圖示加文字，
+ * 900 以下同一段 DOM 變成貼底的 bar（手機那一段在檔案最後）。
+ */
 .views {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
-  margin-bottom: 26px;
+  align-items: center;
+  gap: 2px;
+  margin-right: auto; /* 把語言與齒輪推到最右邊 */
 }
 
 .views button {
   position: relative;
-  text-align: left;
-  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 11px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 8px;
   background: none;
   color: var(--ink2);
+  font: inherit;
   font-size: var(--fs-base);
+  line-height: 1.2;
   cursor: pointer;
+}
+
+.views button svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .views button:hover {
@@ -532,18 +568,7 @@ select {
   font-weight: 700;
 }
 
-.views button[aria-pressed="true"]::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 7px;
-  bottom: 7px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--gold);
-}
-
-/* 側欄分區。標題是一條髮絲線上的小型大寫標籤，不是一行灰字 */
+/* 設定面板裡的分區。標題是一條髮絲線上的小型大寫標籤，不是一行灰字 */
 .side-block {
   margin-bottom: 22px;
   padding-top: 14px;
@@ -714,22 +739,13 @@ select {
 }
 
 /*
- * 面板。桌機貼在搜尋列下方浮著，900 以下同一段 DOM 變成底部抽屜。
- * absolute 不佔流排，所以搜尋框不會被它推窄。
+ * 篩選面板。共用的殼在 `.pop`，這裡只講它自己的寬度與位置：
+ * 貼著搜尋列的左緣往下，最寬 560px。
  */
 .fpanel {
-  position: absolute;
   top: calc(100% + 7px);
   left: 0;
-  z-index: 20;
   width: min(560px, 100%);
-  max-height: 70vh;
-  overflow-y: auto;
-  padding: 14px 16px 12px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--card);
-  box-shadow: 0 10px 26px var(--shadow-ink);
 }
 
 .fgroup + .fgroup {
@@ -1990,38 +2006,75 @@ body.dark .want-bg {
     --panel-pad: 4px 0 0;
   }
 
-  #menuBtn {
-    display: block;
-  }
-
   /*
-   * 側欄變抽屜。z-index 要壓過資訊列，否則抽屜會從資訊列底下滑出來。
-   * 高度從頂部列算起就好，不扣資訊列：抽屜是蓋上去的，不是排在旁邊的。
+   * 三個檢視從頂部列掉到貼底的 bar：圖示在上、小字在下，三等分。
+   * 同一段 DOM，桌機是頂部列裡的一排文字鈕。
+   * 拇指構得到的是下面不是上面，這也是手機把導覽放底部的唯一理由。
    */
-  .sidebar {
+  .views {
     position: fixed;
-    top: var(--topbar-h);
-    left: 0;
-    z-index: 29;
-    height: calc(100vh - var(--topbar-h));
-    border-right: 1px solid var(--line);
-    background: var(--bg);
-    transform: translateX(-100%);
-    transition: transform 0.18s ease;
+    inset: auto 0 0;
+    z-index: 38;
+    gap: 0;
+    margin-right: 0; /* 桌機那條把語言推開的 auto，貼底時不需要 */
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--card);
+    border-top: 1px solid var(--line);
+  }
+
+  .views button {
+    flex: 1;
+    flex-direction: column;
+    gap: 3px;
+    height: var(--tab-h);
+    padding: 0;
+    border-radius: 0;
+    font-size: var(--fs-xs);
+  }
+
+  .views button svg {
+    width: 22px;
+    height: 22px;
   }
 
   /*
-   * 手機的篩選面板從底部升起，跟右欄詳情同一個做法：
-   * 拇指構得到的是下面不是上面，而且貼著搜尋框往下展開會超出畫面。
-   * z-index 壓過側欄抽屜與資訊列，但讓在右欄詳情之下。
+   * 選中的不填底色改用金色。底部 bar 只有三格，
+   * 填一整格會變成一塊大色塊，比內容還搶眼。
    */
-  .fpanel {
+  .views button[aria-pressed="true"] {
+    background: none;
+    color: var(--gold-ink);
+  }
+
+  .views button[aria-pressed="true"]::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 26px;
+    margin-left: -13px;
+    height: 2px;
+    border-radius: 0 0 2px 2px;
+    background: var(--gold);
+  }
+
+  /* 最後一排格子不能被 bar 蓋住 */
+  .content {
+    padding-bottom: calc(var(--tab-h) + env(safe-area-inset-bottom) + 24px);
+  }
+
+  /*
+   * 兩個面板都從底部升起，跟右欄詳情同一個做法：
+   * 拇指構得到的是下面不是上面，而且貼著鈕往下展開會超出畫面。
+   * z-index 壓過檢視 bar 與資訊列，但讓在右欄詳情之下。
+   */
+  .pop {
     position: fixed;
     inset: auto 0 0;
     z-index: 39;
     width: auto;
     max-height: 80vh;
-    padding: 14px 14px 18px;
+    padding: 14px 14px calc(18px + env(safe-area-inset-bottom));
     border: 0;
     border-top: 1px solid var(--line);
     border-radius: 14px 14px 0 0;
@@ -2035,10 +2088,6 @@ body.dark .want-bg {
 
   .ib-title {
     font-size: var(--fs-lg);
-  }
-
-  body.side-open .sidebar {
-    transform: none;
   }
 
   .cols {

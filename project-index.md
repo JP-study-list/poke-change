@@ -12,12 +12,14 @@
 index.html  →  <script type="module" src="./js/main.js">  →  main.js  →  各模組
 ```
 
-`index.html` 103 行，是骨架：頂部列、資訊列、側欄、搜尋列（含篩選漏斗與面板）、
-內容容器、右欄、toast。
+`index.html` 114 行，是骨架：頂部列（標題、三個檢視、語言、齒輪與設定面板）、
+資訊列、搜尋列（含篩選漏斗與面板）、內容容器、右欄、toast。
 所有內容由 `js/ui.js` 在執行時填入。無 build、無 bundler、無 npm。
 
-版面是三欄：側欄、內容、右欄。右欄（`#sheet`）在 1200 以上常駐，
-以下退回彈出，同一段 DOM 兩種形態，繪製函式不需要知道自己在哪。
+版面是兩欄：內容與右欄。**沒有側欄**，導覽在頂部列，900 以下掉成貼底的 bar。
+右欄（`#sheet`）在 1200 以上常駐，以下退回彈出。
+檢視 bar、右欄、篩選面板、設定面板都是同一段 DOM 兩種形態，
+繪製函式不需要知道自己在哪。
 
 **本機啟動**：`python3 -m http.server 8000`（ES modules 不能用 `file://`）
 
@@ -72,7 +74,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 檔案 | 用途 | 備註 |
 | --- | --- | --- |
-| `index.html` | 頁面骨架，103 行 | 側欄要加區塊 → 在 `.sidebar` 內加 `<section class="side-block">`。圖示一律 inline SVG，不用文字符號 |
+| `index.html` | 頁面骨架，114 行 | 設定面板要加區塊 → 在 `#settings` 內加 `<section class="side-block">`。圖示一律 inline SVG，不用文字符號 |
 | `css/style.css` | 全部樣式 | 設計 token 全在 `:root`。**深色不是反色**，`body.dark` 是另一套值。斷點兩個：900px（手機）與 1200px（右欄收起） |
 
 ### 資料層
@@ -108,9 +110,9 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 區塊 | 主要函式 |
 | --- | --- |
-| 版面共用 | `renderChrome` `renderViews` `renderInfoBar` `setSidebar` `toast` `openSheet` `closeSheet` `esc` |
+| 版面共用 | `renderChrome` `renderViews` `renderInfoBar` `setPop` `toast` `openSheet` `closeSheet` `esc` |
 | 右欄 | `renderRailSummary`（沒有詳情可顯示時的預設內容） |
-| 圖鑑 | `renderFilterBar` `renderFilterPanel` `setFilterOpen` `visibleEntries` `renderGrid` `renderDetail` |
+| 圖鑑 | `renderFilterBar` `renderFilterPanel` `visibleEntries` `renderGrid` `renderDetail` |
 | 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` `renderPicker` |
 | 背卡 | `renderBg` `renderCardDetail` |
 
@@ -118,9 +120,10 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 `js/main.js` —— 唯一有狀態、唯一綁事件的檔案。
 
-- **state**：`book` `lang` `view` `filter` `fopen` `query` `openId` `openCard` `draft` `flash` `pick`
-- **篩選面板的開合只走 `ui.setFilterOpen()`**：`state.fopen` 與漏斗的 `aria-expanded`
-  綁在同一個函式裡，兩邊不會講不同的話。點面板外面關掉那一段放在 click 委派最前面，
+- **state**：`book` `lang` `view` `filter` `pop` `query` `openId` `openCard` `draft` `flash` `pick`
+- **浮出來的面板只走 `ui.setPop()`**：`state.pop` 是 `null`／`"filter"`／`"settings"`，
+  兩顆鈕的 `aria-expanded` 與面板的顯示綁在同一個函式裡，兩邊不會講不同的話，
+  也天生擋掉兩片面板同時打開。點外面關掉那一段放在 click 委派最前面，
   因為底下每一段處理完都會 return
 - **右欄一定要重畫**：它是常駐的，`closePanels()` 清掉 state 之後必須
   接 `drawDetail()`，否則桌機會停在剛才那個詳情，關不掉也回不到摘要
@@ -161,6 +164,9 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 加 `<img>` | **一律用 `iconAttrs()` 產生屬性**，自己寫 `src` 就沒有備援鏈 |
 | 改配色、字級、間距 | `css/style.css` 的 `:root`。改了顏色要同步 `js/share.js` 的 `LIGHT`／`DARK`，canvas 吃不到 CSS 變數 |
 | 改篩選面板的分組順序 | `js/ui.js` 的 `FGROUPS` |
+| 改設定面板裡有什麼 | `index.html` 的 `#settings`，內容由 `renderChrome` 填 |
+| 改檢視的圖示 | `js/ui.js` 的 `VIEW_ICONS` |
+| 改手機底部 bar 的高度 | `css/style.css` 的 `--tab-h`，內容區的底部內距吃同一個值 |
 | 改資訊列顯示什麼 | `js/main.js` 的 `draw()`，文字翻好再傳給 `renderInfoBar` |
 | 改右欄寬度或收起的斷點 | `css/style.css` 的 `--rail-w` 與 1200px 那段查詢 |
 | 改介面文字、加語言 | `js/i18n.js`（三語 key 必須一致） |

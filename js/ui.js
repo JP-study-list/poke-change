@@ -51,23 +51,32 @@ export function renderChrome(t, lang, disp = {}) {
   $("#appName").textContent = t("appName");
   $("#subtitle").textContent = t("subtitle");
   $("#q").placeholder = t("search");
-  // 漏斗只有圖示，名字得靠 aria-label 與 title 給
-  $("#filterBtn").setAttribute("aria-label", t("filterBtn"));
-  $("#filterBtn").setAttribute("title", t("filterBtn"));
+  // 只有圖示的鈕，名字得靠 aria-label 與 title 給
+  for (const [sel, key] of [["#filterBtn", "filterBtn"], ["#gearBtn", "settings"]]) {
+    $(sel).setAttribute("aria-label", t(key));
+    $(sel).setAttribute("title", t(key));
+  }
   $("#displayTitle").textContent = t("display");
   $("#dataTitle").textContent = t("data");
 
   /*
-   * 兩個顯示選項用 aria-pressed 表示開關，實際的版面切換靠
+   * 三個顯示選項用 aria-pressed 表示開關，實際的版面切換靠
    * body 的 class，這樣圖鑑與交換表不必各自傳一個旗標下去。
+   * 深淺色原本是頂部列一顆圖示鈕，現在跟另外兩個開關排在一起：
+   * 它也是「畫面要長什麼樣」，不是一個獨立的功能。
    */
-  $("#displayOpts").innerHTML = `
-    <button type="button" data-disp="big" aria-pressed="${!!disp.big}">${esc(
-    t("bigIcons")
-  )}</button>
-    <button type="button" data-disp="names" aria-pressed="${!!disp.names}">${esc(
-    t("showNames")
-  )}</button>`;
+  $("#displayOpts").innerHTML = [
+    ["big", t("bigIcons"), disp.big],
+    ["names", t("showNames"), disp.names],
+    ["dark", t("theme"), disp.dark],
+  ]
+    .map(
+      ([k, label, on]) =>
+        `<button type="button" data-disp="${k}" aria-pressed="${!!on}">${esc(
+          label
+        )}</button>`
+    )
+    .join("");
   $("#localNotice").innerHTML = `<strong>${esc(t("localOnly"))}</strong>${esc(
     t("localHint")
   )}`;
@@ -90,7 +99,18 @@ const LANG_BTNS = (cur) =>
       }">${esc(l.label)}</button>`
   ).join("");
 
-/** 檢視切換 */
+/*
+ * 三個檢視的圖示。手機的底部 bar 只放得下圖示加一行小字，
+ * 光有文字的 bar 認不出來，所以每個檢視都要有自己的形狀。
+ * 圖鑑是格子牆、交換表是兩個對向的箭頭、背卡是一張圖。
+ */
+const VIEW_ICONS = {
+  dex: `<rect x="3.5" y="3.5" width="7" height="7" rx="1.6" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.6" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.6" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.6" />`,
+  trade: `<path d="M4 9h13l-3.5-3.5M20 15H7l3.5 3.5" />`,
+  bg: `<rect x="2.5" y="4.5" width="19" height="15" rx="2.5" /><path d="M2.5 15.5l5-4.5 4 3.5 3.5-3 6.5 5.5" /><circle cx="8.5" cy="9" r="1.6" />`,
+};
+
+/** 檢視切換。桌機在頂部列，900 以下是貼底的 bar，同一段 DOM */
 export function renderViews(view, t) {
   const items = [
     ["dex", t("viewDex")],
@@ -100,17 +120,12 @@ export function renderViews(view, t) {
   $("#views").innerHTML = items
     .map(
       ([k, label]) =>
-        `<button type="button" data-view="${k}" aria-pressed="${
-          k === view
-        }">${esc(label)}</button>`
+        `<button type="button" data-view="${k}" aria-pressed="${k === view}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">${VIEW_ICONS[k]}</svg>
+          <span>${esc(label)}</span>
+        </button>`
     )
     .join("");
-}
-
-/** 側欄開合。手機才有意義，桌機永遠開著 */
-export function setSidebar(open) {
-  document.body.classList.toggle("side-open", open);
-  $("#scrim").hidden = !open;
 }
 
 let toastTimer = null;
@@ -249,15 +264,27 @@ export function renderFilterPanel(filter, lang, t) {
     </div>`;
 }
 
-/**
- * 面板開合。
+/*
+ * 浮出來的面板只有兩個：篩選與設定。
  *
- * 漏斗的 aria-expanded 與面板的顯示狀態綁在一起，
- * 只有這一個函式改得動，不會兩邊講不同的話。
+ * 一次只開一個，所以開合走同一個函式、狀態只有一個字串。
+ * 兩顆鈕的 aria-expanded 跟面板的顯示綁在這裡，不會兩邊講不同的話，
+ * 也天生擋掉兩個下拉同時打開疊在一起。
  */
-export function setFilterOpen(open) {
-  $("#fpanel").hidden = !open;
-  $("#filterBtn").setAttribute("aria-expanded", open ? "true" : "false");
+const POPS = {
+  filter: ["#fpanel", "#filterBtn"],
+  settings: ["#settings", "#gearBtn"],
+};
+
+/** 點在這些東西上面不算「點面板外面」。main.js 判斷要不要關的時候用 */
+export const POP_PARTS = Object.values(POPS).flat().join(",");
+
+export function setPop(open) {
+  for (const [name, [panel, btn]] of Object.entries(POPS)) {
+    const on = name === open;
+    $(panel).hidden = !on;
+    $(btn).setAttribute("aria-expanded", on ? "true" : "false");
+  }
 }
 
 /* ─────────── 右欄摘要 ─────────── */
