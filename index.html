@@ -59,10 +59,30 @@
       </aside>
 
       <main class="content">
+        <!--
+          搜尋列。36 個篩選條件收在漏斗裡，已選的那幾個排在漏斗右邊，
+          沒選就什麼都不長，這一行只有搜尋框。
+
+          面板放在搜尋列裡面，靠 absolute 浮在下方，所以不佔流排、
+          不會把搜尋框推窄；900 以下同一段 DOM 變成底部抽屜。
+        -->
         <div class="searchbar" id="searchbar">
           <input id="q" type="search" autocomplete="off" />
+          <button
+            class="icon-btn fbtn"
+            id="filterBtn"
+            type="button"
+            aria-expanded="false"
+            aria-controls="fpanel"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 5h18l-7 8.5V20l-4-2.5v-4z" />
+            </svg>
+            <span class="fbtn-n" id="filterN" hidden></span>
+          </button>
+          <div class="fpicked" id="fpicked"></div>
+          <div class="fpanel" id="fpanel" hidden></div>
         </div>
-        <div class="chips" id="chips"></div>
         <div id="app"></div>
       </main>
 

@@ -12,7 +12,8 @@
 index.html  →  <script type="module" src="./js/main.js">  →  main.js  →  各模組
 ```
 
-`index.html` 83 行，是骨架：頂部列、資訊列、側欄、內容容器、右欄、toast。
+`index.html` 103 行，是骨架：頂部列、資訊列、側欄、搜尋列（含篩選漏斗與面板）、
+內容容器、右欄、toast。
 所有內容由 `js/ui.js` 在執行時填入。無 build、無 bundler、無 npm。
 
 版面是三欄：側欄、內容、右欄。右欄（`#sheet`）在 1200 以上常駐，
@@ -71,7 +72,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 檔案 | 用途 | 備註 |
 | --- | --- | --- |
-| `index.html` | 頁面骨架，83 行 | 側欄要加區塊 → 在 `.sidebar` 內加 `<section class="side-block">`。圖示一律 inline SVG，不用文字符號 |
+| `index.html` | 頁面骨架，103 行 | 側欄要加區塊 → 在 `.sidebar` 內加 `<section class="side-block">`。圖示一律 inline SVG，不用文字符號 |
 | `css/style.css` | 全部樣式 | 設計 token 全在 `:root`。**深色不是反色**，`body.dark` 是另一套值。斷點兩個：900px（手機）與 1200px（右欄收起） |
 
 ### 資料層
@@ -85,7 +86,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `js/bgevents.js` | `HAND_EVENTS` | 手工維護的 21 張，有三語名、註記、寶可夢清單與本地備援圖。會逐欄覆蓋骨架。其中 30 週年那四張只蓋名稱與日期，清單等活動辦完 |
 | `js/bgseries.js` | `SERIES` `seriesInfo` `seriesOrder` | 23 個收納夾的三語名與顯示順序 |
 | `js/types.js` | `TYPES` `typeInfo` | 18 種屬性的代表色與三語名 |
-| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 103 個 key，必須完全一致 |
+| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 105 個 key，必須完全一致 |
 
 ### 存取層
 
@@ -109,7 +110,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | --- | --- |
 | 版面共用 | `renderChrome` `renderViews` `renderInfoBar` `setSidebar` `toast` `openSheet` `closeSheet` `esc` |
 | 右欄 | `renderRailSummary`（沒有詳情可顯示時的預設內容） |
-| 圖鑑 | `renderChips` `visibleEntries` `renderGrid` `renderDetail` |
+| 圖鑑 | `renderFilterBar` `renderFilterPanel` `setFilterOpen` `visibleEntries` `renderGrid` `renderDetail` |
 | 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` `renderPicker` |
 | 背卡 | `renderBg` `renderCardDetail` |
 
@@ -117,7 +118,10 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 `js/main.js` —— 唯一有狀態、唯一綁事件的檔案。
 
-- **state**：`book` `lang` `view` `filter` `query` `openId` `openCard` `draft` `flash` `pick`
+- **state**：`book` `lang` `view` `filter` `fopen` `query` `openId` `openCard` `draft` `flash` `pick`
+- **篩選面板的開合只走 `ui.setFilterOpen()`**：`state.fopen` 與漏斗的 `aria-expanded`
+  綁在同一個函式裡，兩邊不會講不同的話。點面板外面關掉那一段放在 click 委派最前面，
+  因為底下每一段處理完都會 return
 - **右欄一定要重畫**：它是常駐的，`closePanels()` 清掉 state 之後必須
   接 `drawDetail()`，否則桌機會停在剛才那個詳情，關不掉也回不到摘要
 - **三份清單**：`state.book` 是整包，`cur()` 取目前那一份。畫面與操作一律只碰那一份
@@ -156,7 +160,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改收納夾的名稱或順序 | `js/bgseries.js`；改分類規則是 `tools/build-bg.mjs` 的 `SERIES_RULES` |
 | 加 `<img>` | **一律用 `iconAttrs()` 產生屬性**，自己寫 `src` 就沒有備援鏈 |
 | 改配色、字級、間距 | `css/style.css` 的 `:root`。改了顏色要同步 `js/share.js` 的 `LIGHT`／`DARK`，canvas 吃不到 CSS 變數 |
-| 改篩選 chip 怎麼分排 | `js/ui.js` 的 `CHIP_ROWS` |
+| 改篩選面板的分組順序 | `js/ui.js` 的 `FGROUPS` |
 | 改資訊列顯示什麼 | `js/main.js` 的 `draw()`，文字翻好再傳給 `renderInfoBar` |
 | 改右欄寬度或收起的斷點 | `css/style.css` 的 `--rail-w` 與 1200px 那段查詢 |
 | 改介面文字、加語言 | `js/i18n.js`（三語 key 必須一致） |
@@ -167,7 +171,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改一欄的上限 | `js/store.js` 的 `MAX_ITEMS` |
 | 改清單份數 | `js/store.js` 的 `LIST_COUNT`，分頁樣式在 `css/style.css` 的 `.list-tabs` |
 | 改選寶可夢面板 | `js/ui.js` 的 `renderPicker`，一次最多畫 `PICK_MAX` 筆 |
-| 加篩選條件 | `js/dex.js` 的 `FILTER_GROUPS`，標籤補 `js/i18n.js`，再決定它排在 `CHIP_ROWS` 哪一排 |
+| 加篩選條件 | `js/dex.js` 的 `FILTER_GROUPS`，標籤補 `js/i18n.js`，面板裡的組序在 `js/ui.js` 的 `FGROUPS` |
 | 改手機的欄數 | `css/style.css` 的 `--cell-cols`，900px 以下講死不推算 |
 | 改格子大小的兩段值 | `css/style.css` 的 `--cell-*`，桌機在 `:root`，手機在斷點內 |
 

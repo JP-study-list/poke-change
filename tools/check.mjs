@@ -58,7 +58,8 @@ function installDom() {
   for (const id of [
     "app", "panel", "sheet", "toast", "filters", "views", "langs", "q",
     "appName", "subtitle", "dataTitle", "dataActions",
-    "localNotice", "scrim", "sidebar", "infobar", "chips",
+    "localNotice", "scrim", "sidebar", "infobar",
+    "filterBtn", "filterN", "fpicked", "fpanel",
     "searchbar", "importFile", "listName", "shareBtn",
     "displayTitle", "displayOpts", "trainerCode",
   ]) {
@@ -377,19 +378,41 @@ console.log("\n5. 繪製函式");
     ui.renderChrome(t, "zh", { big: true, names: false })
   );
   run("renderViews", () => ui.renderViews("dex", t));
-  run("renderChips", () => ui.renderChips(dex.emptyFilter(), "zh", t));
-  run("renderChips 有選條件", () => {
+  run("renderFilterBar 沒選條件", () => {
+    ui.renderFilterBar(dex.emptyFilter(), "zh", t);
+    if (els.fpicked.innerHTML !== "") throw new Error("沒選條件就不該有已選那一排");
+    if (!els.filterN.hidden) throw new Error("沒選條件時漏斗上不該有數字");
+  });
+  run("renderFilterBar 有選條件", () => {
     const f = dex.emptyFilter();
     f.type = ["fire", "water"];
     f.gen = ["gen4"];
     f.other = ["bg"];
-    ui.renderChips(f, "zh", t);
+    ui.renderFilterBar(f, "zh", t);
+    // 四個條件四顆，各自帶自己那一組與選項，點了只移除那一個
+    const n = (els.fpicked.innerHTML.match(/data-fdrop/g) || []).length;
+    if (n !== 4) throw new Error(`已選條件應該 4 顆，得到 ${n}`);
+    if (els.filterN.textContent !== "4") {
+      throw new Error(`漏斗上應該是 4，得到 ${els.filterN.textContent}`);
+    }
+  });
+  run("renderFilterPanel", () => ui.renderFilterPanel(dex.emptyFilter(), "zh", t));
+  run("renderFilterPanel 有選條件", () => {
+    const f = dex.emptyFilter();
+    f.kind = ["costume"];
+    f.type = ["fire"];
+    ui.renderFilterPanel(f, "zh", t);
+    // 五組都要在，少一組等於有條件永遠選不到
+    const n = (els.fpanel.innerHTML.match(/class="fgroup"/g) || []).length;
+    if (n !== dex.GROUP_KEYS.length) {
+      throw new Error(`面板應該 ${dex.GROUP_KEYS.length} 組，得到 ${n}`);
+    }
   });
   /*
-   * chip 列的計數。同一組裡的選項加起來要等於這一組全不選的結果，
+   * 篩選面板裡的計數。同一組裡的選項加起來要等於這一組全不選的結果，
    * 算某一組的時候要放掉自己那一組，否則數字會互相扣。
    */
-  run("chip 計數扣掉自己那一組", () => {
+  run("篩選計數扣掉自己那一組", () => {
     const f = dex.emptyFilter();
     f.type = ["fire"];
     const pool = dex.applyFilter(dex.ENTRIES, f, "type");

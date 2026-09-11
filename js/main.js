@@ -25,6 +25,11 @@ const state = {
   lang: DEFAULT_LANG,
   view: "dex", // dex / trade / bg
   filter: emptyFilter(), // 五個群組，組間 AND、組內 OR
+  /*
+   * 篩選面板開著沒。跟篩選本身一樣不寫進偏好，
+   * 重新整理回到收起，免得下次打開先看到一片面板蓋在格子牆上。
+   */
+  fopen: false,
   query: "",
   openId: null, // 詳情面板顯示的條目
   openCard: null, // 詳情面板顯示的背卡
@@ -115,16 +120,17 @@ function draw() {
   ui.renderViews(state.view, t);
 
   /*
-   * 搜尋列與篩選 chip 都只有圖鑑要。背卡有自己的搜尋與範圍切換，
-   * 交換表兩樣都不需要，留著只會佔掉一整條的高度。
+   * 搜尋列只有圖鑑要。背卡有自己的搜尋與範圍切換，交換表兩樣都不需要。
+   * 篩選的漏斗與面板都在這一條裡面，藏起來就一起藏。
    */
   const isDex = state.view === "dex";
   document.querySelector("#searchbar").hidden = !isDex;
-  document.querySelector("#chips").hidden = !isDex;
 
   if (state.view === "dex") {
     const list = ui.visibleEntries(state.filter, state.query);
-    ui.renderChips(state.filter, state.lang, t);
+    ui.renderFilterBar(state.filter, state.lang, t);
+    ui.renderFilterPanel(state.filter, state.lang, t);
+    ui.setFilterOpen(state.fopen);
     ui.renderInfoBar(
       {
         title: t("viewDex"),
@@ -381,6 +387,19 @@ async function doShare(btn) {
 document.addEventListener("click", (ev) => {
   const el = (sel) => ev.target.closest(sel);
 
+  /*
+   * 點面板外面就關掉篩選。
+   *
+   * 放在最前面，因為底下每一段處理完都會 return，
+   * 收在最後就只有「點到空白處」那一種情況執行得到。
+   * 面板裡面與漏斗本身不算外面，連選幾個條件時面板不該關。
+   * 這裡不 return，這一下點到的東西照常處理。
+   */
+  if (state.fopen && !el("#fpanel") && !el("#filterBtn")) {
+    state.fopen = false;
+    ui.setFilterOpen(false);
+  }
+
   // 語言
   const lang = el("[data-lang]");
   if (lang) {
@@ -420,7 +439,31 @@ document.addEventListener("click", (ev) => {
     return;
   }
 
-  // 篩選 chip。同一組可以複選，再點一次取消
+  // 篩選的漏斗
+  if (el("#filterBtn")) {
+    state.fopen = !state.fopen;
+    ui.setFilterOpen(state.fopen);
+    return;
+  }
+
+  // 面板底部的完成鈕。桌機點外面就關了，這顆是給手機抽屜用的
+  if (el("[data-fclose]")) {
+    state.fopen = false;
+    ui.setFilterOpen(false);
+    return;
+  }
+
+  // 搜尋列上的已選條件。點一下只移除那一個
+  const fdrop = el("[data-fdrop]");
+  if (fdrop) {
+    const { group, opt } = fdrop.dataset;
+    state.filter[group] = (state.filter[group] || []).filter((k) => k !== opt);
+    draw();
+    drawDetail();
+    return;
+  }
+
+  // 面板裡的篩選選項。同一組可以複選，再點一次取消
   const fopt = el(".fopt[data-group]");
   if (fopt) {
     const { group, opt } = fopt.dataset;
@@ -691,6 +734,8 @@ document.addEventListener("keydown", (ev) => {
   if (ev.key === "Escape") {
     closePanels();
     ui.setSidebar(false);
+    state.fopen = false;
+    ui.setFilterOpen(false);
   }
 });
 

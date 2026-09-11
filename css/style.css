@@ -65,6 +65,13 @@
   --type-steel: #5a8fa2;
   --type-water: #4d90d5;
 
+  /*
+   * 唯一的陰影顏色。全站只有篩選面板用得到：它浮在格子牆上面，
+   * 靠一條邊框分不出誰在上面。深色底上同一個值看不見，所以做成 token
+   * 讓 body.dark 調濃度，不另外寫一條深色規則。
+   */
+  --shadow-ink: rgba(0, 0, 0, 0.11);
+
   --radius: 10px;
   --side-w: 228px;
   --topbar-h: 52px;
@@ -131,6 +138,7 @@ body.dark {
   --xxl: #5fae83;
   --xxs: #b088e8;
   --bgcard: #6fa8dc;
+  --shadow-ink: rgba(0, 0, 0, 0.55); /* 近黑底上要濃得多才看得出浮起來 */
 }
 
 * {
@@ -613,46 +621,156 @@ select {
 /* ─────────── 篩選 chip ─────────── */
 
 /*
- * 常駐的三排 chip，抄 Bandcamp Discover 的篩選列。
- * 條件一直在畫面上，看得到自己篩了什麼，不必先點開才知道。
+ * 篩選。36 個條件收在搜尋框旁邊那顆漏斗裡，
+ * 已選的留在外面，沒選就整條不長東西。
  */
-.chips {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  margin-bottom: 16px;
+
+/* 漏斗。跟輸入框一樣是圓角膠囊，高度靠 searchbar 的 stretch 對齊 */
+.fbtn {
+  width: auto;
+  height: auto;
+  flex: none;
+  gap: 0;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
 }
 
-.chip-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
+.fbtn:hover {
+  border-color: var(--ink2);
+  background: var(--card);
+}
+
+/* 開著的時候填實，跟底下的面板讀成一組 */
+.fbtn[aria-expanded="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--bg);
+}
+
+/* 選了幾個。排在漏斗右邊，不做角落徽章，那個尺寸的鈕放不下 */
+.fbtn-n {
+  margin-left: 6px;
+  font-size: var(--fs-13);
+  font-variant-numeric: tabular-nums;
 }
 
 /*
- * 屬性 18 個與世代 9 個各自一排橫向捲。
- * 捲出去的那一段不畫捲軸，用邊緣淡出表示「右邊還有」。
+ * 已選條件。塞不下就橫向捲，捲出去的那一段用邊緣淡出表示右邊還有。
+ * flex-basis 給一個下限，窄螢幕排不下就整條掉到第二行，
+ * 不跟搜尋框互相擠成兩個都打不了字的寬度。
  */
-.chip-row.scroll {
-  flex-wrap: nowrap;
+.fpicked {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 260px;
+  min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
 }
 
-.chip-row.scroll::-webkit-scrollbar {
+.fpicked::-webkit-scrollbar {
   display: none;
 }
 
-/* 同一排裡不同組之間的細線。三組併一排時才看得出是三組 */
-.chip-sep {
-  width: 1px;
-  height: 16px;
+/* 空的時候連 gap 都不該佔，否則沒篩選時搜尋框右邊會多一段空白 */
+.fpicked:empty {
+  display: none;
+}
+
+/* 填實表示生效中，帶 ✕ 表示點了會移除 */
+.fsel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   flex: none;
-  margin: 0 3px;
-  background: var(--line);
+  padding: 5px 9px 5px 11px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--bg);
+  font: inherit;
+  font-size: var(--fs-13);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.fsel svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  opacity: 0.6;
+}
+
+.fsel:hover svg {
+  opacity: 1;
+}
+
+/*
+ * 面板。桌機貼在搜尋列下方浮著，900 以下同一段 DOM 變成底部抽屜。
+ * absolute 不佔流排，所以搜尋框不會被它推窄。
+ */
+.fpanel {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+  z-index: 20;
+  width: min(560px, 100%);
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 14px 16px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: 0 10px 26px var(--shadow-ink);
+}
+
+.fgroup + .fgroup {
+  margin-top: 13px;
+}
+
+.fgroup-t {
+  margin-bottom: 7px;
+  color: var(--dim);
+  font: var(--caps);
+  letter-spacing: 0.04em;
+}
+
+.fopts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fpanel-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+  padding-top: 11px;
+  border-top: 1px solid var(--hair);
+}
+
+/* 描邊不填實。全站只有產生分享圖那一顆是實心的 */
+.fdone {
+  padding: 7px 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-13);
+  cursor: pointer;
+}
+
+.fdone:hover {
+  border-color: var(--ink);
 }
 
 .fopt {
@@ -700,8 +818,8 @@ select {
   opacity: 0.65;
 }
 
-/* 屬性的代表色。18 個裡面認顏色比認字快 */
-.fopt .swatch {
+/* 屬性的代表色。面板裡的選項與搜尋列上的已選條件共用 */
+.swatch {
   width: 9px;
   height: 9px;
   border-radius: 50%;
@@ -785,15 +903,17 @@ select {
 /* ─────────── 搜尋與標題 ─────────── */
 
 .searchbar {
+  position: relative; /* 篩選面板的定位基準 */
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: stretch;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 /* 輸入框是凹下去那一階，不是白底加框 */
 .searchbar input {
-  flex: 1;
+  flex: 1 1 200px;
   min-width: 0;
   max-width: 420px;
   padding: 9px 13px;
@@ -1891,18 +2011,21 @@ body.dark .want-bg {
   }
 
   /*
-   * 手機上三排 chip 全部橫向捲。
-   * 第一排九個在 390px 會排成三行，光是篩選就吃掉三分之一個畫面。
+   * 手機的篩選面板從底部升起，跟右欄詳情同一個做法：
+   * 拇指構得到的是下面不是上面，而且貼著搜尋框往下展開會超出畫面。
+   * z-index 壓過側欄抽屜與資訊列，但讓在右欄詳情之下。
    */
-  .chip-row {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
-  }
-
-  .chip-row::-webkit-scrollbar {
-    display: none;
+  .fpanel {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 39;
+    width: auto;
+    max-height: 80vh;
+    padding: 14px 14px 18px;
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -8px 26px var(--shadow-ink);
   }
 
   .infobar {

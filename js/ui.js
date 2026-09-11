@@ -16,7 +16,6 @@ import {
   iconAttrs,
   hasShiny,
   FILTER_GROUPS,
-  GROUP_KEYS,
   applyFilter,
   filterCount,
   search,
@@ -52,6 +51,9 @@ export function renderChrome(t, lang, disp = {}) {
   $("#appName").textContent = t("appName");
   $("#subtitle").textContent = t("subtitle");
   $("#q").placeholder = t("search");
+  // 漏斗只有圖示，名字得靠 aria-label 與 title 給
+  $("#filterBtn").setAttribute("aria-label", t("filterBtn"));
+  $("#filterBtn").setAttribute("title", t("filterBtn"));
   $("#displayTitle").textContent = t("display");
   $("#dataTitle").textContent = t("data");
 
@@ -162,62 +164,100 @@ export function renderInfoBar(info, t) {
 }
 
 /*
- * 篩選的三排。
+ * 篩選。
  *
- * 第一排是選項少的三組，排得下就一起攤開；屬性 18 個與世代 9 個
- * 各自一排橫向捲，就是 Bandcamp 那排 genre 的做法。
- * 36 個選項全部攤平會吃掉半個畫面，全部收進下拉又會失去
- * 「一眼看到自己篩了什麼」這件事，橫向捲是這兩者之間唯一的解。
+ * 36 個條件原本常駐在畫面上，三排就吃掉格子牆上方一大段。
+ * 現在收進搜尋框旁邊的漏斗，但「看不出自己篩了什麼」是收起來的代價，
+ * 所以已選的那幾個留在漏斗外面，各自點一下就移除。
+ *
+ * 面板裡的分組順序：選項少的三組在上面，屬性 18 個與世代 9 個排在下面。
  */
-const CHIP_ROWS = [
-  { groups: ["kind", "rarity", "other"], scroll: false },
-  { groups: ["type"], scroll: true },
-  { groups: ["gen"], scroll: true },
-];
+const FGROUPS = ["kind", "rarity", "other", "type", "gen"];
+
+/** 一個選項的顯示文字與代表色。屬性的名稱來自 types.js，其餘來自語言檔 */
+function optInfo(g, key, lang, t) {
+  const grp = FILTER_GROUPS[g];
+  if (grp.labelOf) return { label: t(grp.labelOf(key)), color: null };
+  const info = typeInfo(key, lang);
+  return { label: info.name, color: info.color };
+}
+
+/* 屬性的代表色。18 個裡面認顏色比認字快 */
+const swatch = (color) =>
+  color ? `<i class="swatch" style="background:${esc(color)}"></i>` : "";
 
 /**
- * 常駐篩選 chip。
+ * 搜尋列右邊那一段：漏斗上的條件數，以及已選條件。
  *
- * 原本篩選藏在一顆按鈕後面的面板裡，關起來之後畫面上只剩一個數字，
- * 看不出篩掉了什麼。現在條件一直在畫面上，點一下就切換。
+ * 已選的每一顆自己帶 ✕，點了只移除那一個；
+ * 「清除全部」不在這裡重複做一顆，用頂部資訊列那顆現成的。
+ */
+export function renderFilterBar(filter, lang, t) {
+  const n = filterCount(filter);
+  const badge = $("#filterN");
+  badge.textContent = n ? String(n) : "";
+  badge.hidden = !n;
+
+  $("#fpicked").innerHTML = FGROUPS.flatMap((g) =>
+    (filter[g] || []).map((key) => {
+      const { label, color } = optInfo(g, key, lang, t);
+      return `<button type="button" class="fsel" data-fdrop data-group="${g}" data-opt="${esc(
+        key
+      )}">
+        ${swatch(color)}${esc(label)}
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+      </button>`;
+    })
+  ).join("");
+}
+
+/**
+ * 漏斗點開的面板。五組各一個小標題，組內攤開不橫捲。
  *
  * 每個選項後面的數字是「扣掉自己這一組之後還剩幾筆」，
  * 不是「這個條件本身有幾筆」。這樣才看得出點下去會剩多少，
  * 而且同一組裡的選項加起來才會等於這一組全不選的結果。
  */
-export function renderChips(filter, lang, t) {
-  const rows = CHIP_ROWS.map((row) => {
-    const parts = row.groups.map((g) => {
-      const grp = FILTER_GROUPS[g];
-      const picked = filter[g] || [];
-      // 這一組的計數基準：其他組都套用，這一組放掉
-      const pool = applyFilter(ENTRIES, filter, g);
+export function renderFilterPanel(filter, lang, t) {
+  const groups = FGROUPS.map((g) => {
+    const grp = FILTER_GROUPS[g];
+    const picked = filter[g] || [];
+    // 這一組的計數基準：其他組都套用，這一組放掉
+    const pool = applyFilter(ENTRIES, filter, g);
 
-      return grp.options
-        .map(([key, pred]) => {
-          const n = pool.filter(pred).length;
-          const info = grp.labelOf ? null : typeInfo(key, lang);
-          const label = info ? info.name : t(grp.labelOf(key));
-          // 屬性帶自己的代表色。18 個裡面認顏色比認字快
-          const dot = info
-            ? `<i class="swatch" style="background:${esc(info.color)}"></i>`
-            : "";
-          return `<button type="button" class="fopt" data-group="${g}" data-opt="${esc(
-            key
-          )}" aria-pressed="${picked.includes(key)}"${n ? "" : " disabled"}>
-            ${dot}${esc(label)}<span class="count">${n}</span>
-          </button>`;
-        })
-        .join("");
-    });
+    const opts = grp.options
+      .map(([key, pred]) => {
+        const n = pool.filter(pred).length;
+        const { label, color } = optInfo(g, key, lang, t);
+        return `<button type="button" class="fopt" data-group="${g}" data-opt="${esc(
+          key
+        )}" aria-pressed="${picked.includes(key)}"${n ? "" : " disabled"}>
+          ${swatch(color)}${esc(label)}<span class="count">${n}</span>
+        </button>`;
+      })
+      .join("");
 
-    // 同一排裡不同組之間插一條細線，不然三組會讀成一組
-    return `<div class="chip-row${row.scroll ? " scroll" : ""}">${parts.join(
-      '<i class="chip-sep"></i>'
-    )}</div>`;
+    return `<div class="fgroup">
+      <p class="fgroup-t">${esc(t(grp.label))}</p>
+      <div class="fopts">${opts}</div>
+    </div>`;
   }).join("");
 
-  $("#chips").innerHTML = rows;
+  $("#fpanel").innerHTML = `${groups}
+    <div class="fpanel-foot">
+      <button type="button" class="fdone" data-fclose>${esc(t("filterDone"))}</button>
+    </div>`;
+}
+
+/**
+ * 面板開合。
+ *
+ * 漏斗的 aria-expanded 與面板的顯示狀態綁在一起，
+ * 只有這一個函式改得動，不會兩邊講不同的話。
+ */
+export function setFilterOpen(open) {
+  $("#fpanel").hidden = !open;
+  $("#filterBtn").setAttribute("aria-expanded", open ? "true" : "false");
 }
 
 /* ─────────── 右欄摘要 ─────────── */
