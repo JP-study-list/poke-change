@@ -42,8 +42,11 @@ const ART_BASE =
 
 /**
  * 有實裝但 PokeMiners 沒有 GO 圖示的寶可夢。
- * 目前只有捷拉奧拉，`pm807.icon.png` 在上游是 404，只能用官方立繪。
+ * `pm807.icon.png` 與 `pm973.icon.png` 在上游都是 404，只能用官方立繪。
  * 哪天上游補上了，重跑 tools/build-dex.mjs 就會自動收錄，這裡可以刪掉。
+ *
+ * 纏紅鶴是背卡帶出來的：嘉年華那兩張背卡的清單只有牠一隻，
+ * 圖鑑沒收就等於那兩張是空的。上游連異色圖都沒有，所以不標異色。
  */
 export const MISSING_ICON = [
   {
@@ -57,6 +60,18 @@ export const MISSING_ICON = [
     cls: "mythic",
     icon: null,
     art: ART_BASE + "807.png",
+  },
+  {
+    id: "d973",
+    dex: 973,
+    zh: "纏紅鶴",
+    ja: "カラミンゴ",
+    en: "Flamigo",
+    kind: "base",
+    types: ["flying", "fighting"],
+    cls: "normal",
+    icon: null,
+    art: ART_BASE + "973.png",
   },
 ];
 

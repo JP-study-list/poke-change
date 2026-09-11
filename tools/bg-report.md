@@ -32,35 +32,11 @@
 
 ## 寶可夢清單
 
-214 張有清單，共 1532 個收集格，來自 Dittobase。
-33 張對不到 Dittobase，清單是空的。
+229 張有清單，共 1656 個收集格，來自 Dittobase。
+其中 31 張靠人工對照才接得上，見下一節。
+8 張對不到 Dittobase。這些不一定是空的，Serebii 對得到的會墊底。
 
-- lc_2026_NPB_belluna
-- lc_2026_NPB_chunichiDragons
-- lc_2026_NPB_hokkaidoFighters
-- lc_2026_NPB_koshienHanshinTigers
-- lc_2026_NPB_kyocera
-- lc_2026_NPB_softbankHawks
-- lc_2026_NPB_yokohamaStadium
-- lc_2026_NPB_zozoMarine
-- lc_2026_jp_red
-- lc_2026_ppk_001
-- lc_CR_2026_001
-- lc_ID_CarFreeDay
-- lc_NFL_cardinals
-- lc_OsakaEvent2025_01
-- lc_OsakaEvent2025_02
-- lc_OsakaEvent2025_03
-- lc_Paris2025_01
-- lc_Paris2025_02
-- lc_TokMun_koto
-- lc_TokMun_minato
-- lc_TokMun_shinagawa
-- lc_carnivalFlamigo_cologne_2026
-- lc_carnivalFlamigo_rio_2026
-- lc_nationalTrust_beltonHouse
-- lc_nationalTrust_whimpole
-- lc_taipeiAmusementPark_2025
+- lc_MLB_tampaBayRays2
 - lc_tpc30th_malaysia
 - lc_tpc30th_philippines
 - lc_tpc30th_singapore
@@ -68,6 +44,62 @@
 - sb_MidAutumn
 - sb_PatternWild
 - sb_WorldSpecial_Blue
+
+### 人工對照 32 筆
+
+兩邊叫同一張卡的叫法不同，字串比對接不上，逐張比對卡面圖確認後指名。
+球場對球隊、地點對活動名、上游拼字有誤都算這一類。
+
+- lc_2026_NPB_belluna → lc-nbp-saitama-seibu-lions
+- lc_2026_NPB_chunichiDragons → lc-nbp-chunichi-dragons
+- lc_2026_NPB_hokkaidoFighters → lc-nbp-hokkaido-nippon-ham-fighters
+- lc_2026_NPB_koshienHanshinTigers → lc-npb-hanshin-tigers-2026
+- lc_2026_NPB_kyocera → lc-nbp-orix-buffaloes
+- lc_2026_NPB_softbankHawks → lc-nbp-softbank-hawks
+- lc_2026_NPB_yokohamaStadium → lc-nbp-yokohama-dena-baystars
+- lc_2026_NPB_zozoMarine → lc-nbp-chiba-lotte-marines
+- lc_OsakaEvent2025_01 → lc-stamp-rally-2025-expo-1
+- lc_OsakaEvent2025_02 → lc-stamp-rally-2025-expo-2
+- lc_OsakaEvent2025_03 → lc-stamp-rally-2025-suita
+- lc_Paris2025_01 → lc-stamp-rally-paris-2025-2
+- lc_Paris2025_02 → lc-stamp-rally-paris-2025
+- lc_TokMun_koto → lc-stamp-rally-2026-tokyo-koto
+- lc_TokMun_minato → lc-stamp-rally-2026-tokyo-minato
+- lc_TokMun_shinagawa → lc-stamp-rally-2026-tokyo-shinagawa
+- lc_carnivalFlamigo_cologne_2026 → lc-stamp-rally-2026-cologne
+- lc_carnivalFlamigo_rio_2026 → lc-stamp-rally-2026-rio-de-janeiro
+- lc_taipeiAmusementPark_2025 → lc-stamp-rally-2025-taipei
+- lc_2026_jp_red → lc-2026-jp-jetred
+- lc_2026_ppk_001 → lc-pokemon-park
+- lc_CR_2026_001 → lc-times-square-2026
+- lc_ID_CarFreeDay → lc-car-free-day-2026-indonesia
+- lc_NFL_cardinals → lc-nfl-arizona-cardinals
+- lc_nationalTrust_beltonHouse → lc-nationaltrust-beltonestate
+- lc_nationalTrust_whimpole → lc-nationaltrust-wimpoleestate
+- lc_GOWA_fukuoka → lc-gowildarea-2024-fukuoka
+- sb_GOWA_fukuoka → sb-gowildarea-2024-global
+- sb_GoFest2025 → sb-go-fest-2025
+- sb_GoFest2025_Eternatus → sb-go-fest-2025-dark-skies
+- lc_MLB_tampaBayRays → lc-mlb-tampa-bay-rays
+- lc_MLB_tampaBayRays2 → （確認沒有對應）
+
+### Serebii 人工對照 4 筆
+
+只影響日期與英文名，不影響寶可夢清單。
+
+- lc_tpc30th_malaysia → pokexcitingmalaysia
+- lc_tpc30th_taiwan → pokexcitingtaiwan
+- lc_tpc30th_singapore → pokexcitingsingapore
+- lc_tpc30th_philippines → pokexcitingphippines
+
+### Serebii 代號衝突 3 筆
+
+兩張卡對到 Serebii 同一筆，兩張都退回用檔名推的暫名。
+Serebii 只給日期與英文名，這裡缺的是那兩樣，不是寶可夢清單。
+
+- gowildareafukuoka：lc_GOWA_fukuoka、sb_GOWA_fukuoka
+- tampabayrays：lc_MLB_tampaBayRays、lc_MLB_tampaBayRays2
+- gofest2024wormhole：sb_GoFest2024_wormhole、sb_GoFest2024_wormhole_moon、sb_GoFest2024_wormhole_sun
 
 ### 對不回條目 id 的寶可夢 0 種
 
@@ -139,17 +171,15 @@ Dittobase 會收進化取得的，手工那批多半沒收。
 | lc_MLB_minnesotaTwins | 2 | 1 | — | Serebii 少 26 |
 | lc_MLB_newyorkMets | 2 | 1 | — | Serebii 少 26 |
 | lc_MLB_sanFranciscoGiants | 2 | 1 | — | Serebii 少 26 |
-| lc_MLB_tampaBayRays | 2 | 1 | — | Serebii 少 26 |
-| lc_MLB_tampaBayRays2 | 2 | 1 | — | Serebii 少 26 |
 | lc_MLB_texasRangers | 2 | 1 | — | Serebii 少 26 |
 | lc_MLB_washingtonNationals | 2 | 1 | — | Serebii 少 26 |
-| lc_Paris2025_01 | 0 | — | 2 | Bulbapedia 多 888/889 |
-| lc_Paris2025_02 | 0 | — | 2 | Bulbapedia 多 888/889 |
-| lc_carnivalFlamigo_cologne_2026 | 0 | 1 | — | Serebii 多 973 |
-| lc_carnivalFlamigo_rio_2026 | 0 | 1 | — | Serebii 多 973 |
+| lc_NFL_cardinals | 2 | 1 | — | Serebii 少 26 |
+| lc_Paris2025_01 | 3 | — | 2 | Bulbapedia 多 888/889；Bulbapedia 少 4/5/6 |
+| lc_Paris2025_02 | 3 | — | 2 | Bulbapedia 多 888/889；Bulbapedia 少 4/5/6 |
 | lc_nagasaki2025 | 23 | — | 2 | Bulbapedia 少 728/729/730/633/634/635/859/860/861/229/359/461/862/908/210/303/282/38/858/760/181 |
 | lc_nationalTrust_angleseyAbbey | 6 | 4 | — | Serebii 少 541/542 |
 | lc_nationalTrust_attinghampark | 6 | 4 | — | Serebii 少 541/542 |
+| lc_nationalTrust_beltonHouse | 6 | 4 | — | Serebii 少 541/542 |
 | lc_nationalTrust_calkeAbbey | 6 | 4 | — | Serebii 少 541/542 |
 | lc_nationalTrust_chirk | 6 | 4 | — | Serebii 少 274/275 |
 | lc_nationalTrust_cliveden | 6 | 4 | — | Serebii 少 188/189 |
@@ -223,8 +253,6 @@ Dittobase 會收進化取得的，手工那批多半沒收。
 | lc_roadtrip2025_valencia | 2 | 1 | — | Serebii 少 26 |
 | sb_Community_2026 | 25 | 2 | 3 | Serebii 少 394/395/811/812/37/38/813/814/815/957/958/959/915/916/633/634/635/996/997/998/816/817/818；Bulbapedia 少 810/811/812/37/38/813/814/815/957/958/959/915/916/633/634/635/996/997/998/816/817/818 |
 | sb_GOWA2025_Global | 10 | 4 | 7 | Serebii 多 861；Serebii 少 249/250/785/786/787/788/800；Bulbapedia 少 488/491/760 |
-| sb_GoFest2024_wormhole_moon | 1 | 10 | — | Serebii 多 793/794/795/796/797/798/799/805/806 |
-| sb_GoFest2024_wormhole_sun | 1 | 10 | — | Serebii 多 793/794/795/796/797/798/799/805/806 |
 | sb_GoFest2026_global | 78 | 0 | — | Serebii 少 144/145/146/243/244/245/249/382/383/384/480/481/482/483/484/643/644/646/716/717/791/792/250/487/377/378/379/380/381/485/486/488/491/638/639/640/649/793/794/795/796/797/798/799/800/805/806/894/895/641/642/645/905/386/785/786/787/788/888/889/376/445/531/15/127/254/248/282/448/181/257/460/65/94/260/18/142/373 |
 | sb_GoFest2026_mewtwo | 1 | 0 | 1 | Serebii 少 150 |
 | sb_GoTour2025_enigma | 32 | 14 | 27 | Serebii 少 510/520/521/526/528/533/534/536/537/552/553/560/570/571/596/598/600/601；Bulbapedia 少 527/528/555/570/571 |
@@ -237,7 +265,7 @@ Dittobase 會收進化取得的，手工那批多半沒收。
 | sb_WorldSpecial_Blue | 0 | — | 1 | Bulbapedia 多 959 |
 | sb_lego_2026 | 2 | 1 | — | Serebii 少 26 |
 
-對過 Serebii 的 193 張，其中 132 張有出入。
+對過 Serebii 的 190 張，其中 128 張有出入。
 對過 Bulbapedia 的 45 張，其中 24 張有出入。
 
 ## 上游只有底層 31 張
@@ -294,7 +322,7 @@ game master 沒有對應樣板，可能是還沒上線或已經下架。
 - sb_PatternWild
 - sb_s24_sep_2026
 
-## Serebii 對不到 47 張
+## Serebii 對不到 50 張
 
 這些沒有日期與英文名稱，用檔名推的暫名頂著。
 
@@ -305,8 +333,11 @@ game master 沒有對應樣板，可能是還沒上線或已經下架。
 - lc_CR_2026_001
 - lc_CherryBlossomFest2025_yeouido
 - lc_CitySafari2025_buenosAires
+- lc_GOWA_fukuoka
 - lc_GoTour2025_losAngeles
 - lc_JejuAirAdv2023
+- lc_MLB_tampaBayRays
+- lc_MLB_tampaBayRays2
 - lc_OsakaEvent2025_01
 - lc_OsakaEvent2025_02
 - lc_OsakaEvent2025_03
@@ -325,12 +356,12 @@ game master 沒有對應樣板，可能是還沒上線或已經下架。
 - lc_stampRally2025_Jeju
 - lc_taipeiAmusementPark_2025
 - lc_taipeiFlowerFestival_2026
-- lc_tpc30th_malaysia
-- lc_tpc30th_philippines
-- lc_tpc30th_singapore
-- lc_tpc30th_taiwan
 - sb_2024_decemberCdRecap
 - sb_9thAnniversary
+- sb_GOWA_fukuoka
+- sb_GoFest2024_wormhole
+- sb_GoFest2024_wormhole_moon
+- sb_GoFest2024_wormhole_sun
 - sb_GoFest2025
 - sb_GoFest2025_Eternatus
 - sb_GoTour2025_black
@@ -346,7 +377,7 @@ game master 沒有對應樣板，可能是還沒上線或已經下架。
 - sb_WorldSpecial_Blue
 - sb_s24_sep_2026
 
-## 缺日期 47 張
+## 缺日期 50 張
 
 - lc_2026_BR_001
 - lc_2026_NPB_yokohamaStadium
@@ -355,8 +386,11 @@ game master 沒有對應樣板，可能是還沒上線或已經下架。
 - lc_CR_2026_001
 - lc_CherryBlossomFest2025_yeouido
 - lc_CitySafari2025_buenosAires
+- lc_GOWA_fukuoka
 - lc_GoTour2025_losAngeles
 - lc_JejuAirAdv2023
+- lc_MLB_tampaBayRays
+- lc_MLB_tampaBayRays2
 - lc_OsakaEvent2025_01
 - lc_OsakaEvent2025_02
 - lc_OsakaEvent2025_03
@@ -375,12 +409,12 @@ game master 沒有對應樣板，可能是還沒上線或已經下架。
 - lc_stampRally2025_Jeju
 - lc_taipeiAmusementPark_2025
 - lc_taipeiFlowerFestival_2026
-- lc_tpc30th_malaysia
-- lc_tpc30th_philippines
-- lc_tpc30th_singapore
-- lc_tpc30th_taiwan
 - sb_2024_decemberCdRecap
 - sb_9thAnniversary
+- sb_GOWA_fukuoka
+- sb_GoFest2024_wormhole
+- sb_GoFest2024_wormhole_moon
+- sb_GoFest2024_wormhole_sun
 - sb_GoFest2025
 - sb_GoFest2025_Eternatus
 - sb_GoTour2025_black

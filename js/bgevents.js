@@ -414,4 +414,74 @@ export const HAND_EVENTS = [
       },
     ],
   },
+
+  /*
+   * 30 週年的亞洲巡迴。這裡只補名稱與日期：Serebii 那邊拼字錯了兩處
+   * （Phippines、Octboer），照抄會直接顯示在畫面上。
+   *
+   * 寶可夢清單留空是因為活動還沒辦，最早的吉隆坡場是 2026-09-12。
+   * 官方只說集滿五個章可以換到帶該地背景的 PokéXciting! 皮卡丘，
+   * 那個裝扮還沒進 game master，圖鑑收不到，硬填會變成猜。
+   * 活動辦完之後重跑 tools/build-bg.mjs，Dittobase 補上就會自己接上。
+   */
+  {
+    id: "pokexciting2026",
+    zh: "PokéXciting！亞洲巡迴",
+    ja: "PokéXciting！アジアツアー",
+    en: "PokéXciting! Asia Tour",
+    cards: [
+      {
+        id: "tpc30th-malaysia",
+        scope: "regional",
+        asset: "lc_tpc30th_malaysia",
+        series: "tpc30th",
+        date: "2026-09-12 ~ 09-13",
+        zh: "PokéXciting 馬來西亞",
+        ja: "PokéXciting マレーシア",
+        en: "PokéXciting! Malaysia",
+        note_zh: "吉隆坡 KLCC 公園，集滿五個章可換帶背卡的皮卡丘",
+        note_ja: "クアラルンプール KLCC 公園、スタンプ 5 個でご当地背景のピカチュウ",
+        note_en: "KLCC Park, Kuala Lumpur. Five stamps for a Pikachu with this background.",
+      },
+      {
+        id: "tpc30th-taiwan",
+        scope: "regional",
+        asset: "lc_tpc30th_taiwan",
+        series: "tpc30th",
+        date: "2026-10-10 ~ 10-11",
+        zh: "PokéXciting 台灣",
+        ja: "PokéXciting 台湾",
+        en: "PokéXciting! Taiwan",
+        note_zh: "台北信義區，集滿五個章可換帶背卡的皮卡丘",
+        note_ja: "台北・信義区、スタンプ 5 個でご当地背景のピカチュウ",
+        note_en: "Xinyi District, Taipei. Five stamps for a Pikachu with this background.",
+      },
+      {
+        id: "tpc30th-singapore",
+        scope: "regional",
+        asset: "lc_tpc30th_singapore",
+        series: "tpc30th",
+        date: "2026-11-07 ~ 11-08",
+        zh: "PokéXciting 新加坡",
+        ja: "PokéXciting シンガポール",
+        en: "PokéXciting! Singapore",
+        note_zh: "新加坡全市，集滿五個章可換帶背卡的皮卡丘",
+        note_ja: "シンガポール全域、スタンプ 5 個でご当地背景のピカチュウ",
+        note_en: "Citywide, Singapore. Five stamps for a Pikachu with this background.",
+      },
+      {
+        id: "tpc30th-philippines",
+        scope: "regional",
+        asset: "lc_tpc30th_philippines",
+        series: "tpc30th",
+        date: "2027-01-23 ~ 01-24",
+        zh: "PokéXciting 菲律賓",
+        ja: "PokéXciting フィリピン",
+        en: "PokéXciting! Philippines",
+        note_zh: "馬尼拉 SM Mall of Asia 周邊，集滿五個章可換帶背卡的皮卡丘",
+        note_ja: "マニラ SM モール・オブ・アジア周辺、スタンプ 5 個でご当地背景のピカチュウ",
+        note_en: "Around SM Mall of Asia, Manila. Five stamps for a Pikachu with this background.",
+      },
+    ],
+  },
 ];

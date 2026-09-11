@@ -4,6 +4,61 @@
 
 ---
 
+## 2026-09-11（五）
+- 類型：修正 / 新增
+- 影響檔案：tools/build-bg.mjs, js/bgdata.js, js/bgevents.js, js/extra.js,
+  tools/bg-report.md, CLAUDE.md, project-index.md
+- 摘要：背卡清單的比對接不上與接錯，一起修掉。收集格 1452 → 1579。
+  - **根因是兩邊對同一張卡的叫法不同**，不是資料不存在。
+    上游寫球場（`lc_2026_NPB_kyocera`），Dittobase 寫球隊
+    （`lc-nbp-orix-buffaloes`）；上游叫都內（`lc_TokMun_koto`），
+    它叫蓋章拉力賽。還有上游把 wimpole 拼成 whimpole、
+    Dittobase 把 npb 拼成 nbp。快取裡有 41 筆從來沒被任何一張卡用到。
+  - **加 `DB_MANUAL` 人工對照 32 筆**，`SEREBII_MANUAL` 4 筆。
+    每一筆都把兩邊的卡面縮成 32×32 逐像素比對確認，雙向都指向對方，
+    次近的差一個數量級。靠名字推會錯：巴黎兩張的編號是交叉的，
+    上游 01 對 Dittobase 的 `-2`；`lc_CR_2026_001` 其實是紐約時代廣場。
+  - **修掉三張掛著別張卡清單的**。`matchByKey` 只防「一張卡對到多筆」，
+    不防「多張卡對到同一筆」，而 `norm` 連數字與 `lc_`／`sb_` 前綴都去掉。
+    `sb_GoFest2025_Eternatus` 拿了 `sb_GoFest2025` 的 6 隻，
+    實際該是 Dark Skies 的 74 隻；`sb_GOWA_fukuoka` 拿了 lc 那張的；
+    `lc_MLB_tampaBayRays2` 拿了第一張的。
+  - **`resolveMatches` 取代直接呼叫 `matchByKey`**，兩張卡搶同一筆就
+    兩張一起退回沒有資料，要哪一張得人工指名。Serebii 也套同一套，
+    因此又揪出 GO Fest 2024 蟲洞三張共用一筆。
+  - **補圖鑑的纏紅鶴**（`js/extra.js`）。上游 `pm973.icon.png` 是 404，
+    跟捷拉奧拉一樣。嘉年華那兩張背卡的清單只有牠，圖鑑沒收就等於空的。
+  - **30 週年那四張補名稱與日期**（`js/bgevents.js`）。Serebii 拼錯了兩處
+    （Phippines、Octboer），照抄會直接顯示在畫面上。
+- 原因：25 張背卡沒有寶可夢清單。原以為要上網逐張找，查下去發現
+  資料本來就在快取裡，是比對規則接不上。
+- 決定：人工對照放 `tools/build-bg.mjs` 不放 `js/bgevents.js`。
+  這是腳本抓得到、只是配不上的資料，寫進手工層等於把可自動更新的
+  東西凍結成手工，下次出新卡又要再補一次。
+- 驗證：
+  - 兩邊 474 張圖全部下載做雙向逐像素比對，不是只看名字。
+    同一張差 0～0.4，不同張差 25 以上，中間沒有灰區。
+  - `vfx: true` 的 14 張圖片對不上，與 CLAUDE.md 記載的特效層一致；
+    唯一 `vfx: false` 卻對不上的正是誤接那張，反過來佐證方法有效。
+  - `lc_2026_ppk_001` 從 Dittobase 接到三隻神鳥，跟既有手工資料
+    逐筆相同，等於多一組對照。
+  - `node tools/check.mjs` 全部通過，收集格 1579。
+  - 起 server 用 DevTools Protocol 實際看過：日本職棒 13 張現在都有
+    收集格，東京都內三張 5/6/6，科隆嘉年華點開是纏紅鶴。
+- 待辦/已知問題：
+  - **還有 11 張沒有清單**。Dittobase、Serebii、Bulbapedia、官方公告
+    都查過沒有。其中 30 週年四張是活動還沒辦（最早的吉隆坡場是 9/12），
+    辦完重跑腳本就會自己接上。其餘七張是 `lc_2026_BR_001`、
+    `lc_busanFireworksFestival_2025`、`lc_MLB_tampaBayRays2`、
+    `sb_MidAutumn`、`sb_PatternWild`、`sb_WorldSpecial_Blue`、
+    `sb_s24_sep_2026`。
+  - **Serebii 對不到的從 47 張變成 50 張**，是防護生效退回了借來的，
+    不是變差。那幾張顯示的是檔名推的暫名。
+  - 30 週年四張的 PokéXciting 皮卡丘裝扮還沒進 game master，
+    圖鑑收不到，所以清單留空而不是填皮卡丘。
+
+---
+
 ## 2026-09-11（四）
 - 類型：新增 / 重構
 - 影響檔案：js/store.js, js/main.js, js/ui.js, js/share.js, js/i18n.js,

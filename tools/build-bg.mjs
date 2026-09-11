@@ -237,6 +237,141 @@ function matchByKey(file, list) {
 }
 
 /**
+ * 上游檔名 → Dittobase 代號的人工對照。
+ *
+ * 兩邊對同一張卡的叫法不同時，字串比對救不了。上游寫球場
+ * （lc_2026_NPB_kyocera），Dittobase 寫球隊（lc-nbp-orix-buffaloes）；
+ * 上游叫都內（lc_TokMun_koto），Dittobase 叫蓋章拉力賽
+ * （lc-stamp-rally-2026-tokyo-koto）。想靠規則通用化只會製造誤配。
+ *
+ * 每一筆都是把兩邊的卡面縮成 32×32 逐像素比對確認過，雙向都指向對方，
+ * 而且次近的差距在一個數量級以上，不是看名字推的。巴黎那兩張的編號
+ * 是交叉的，靠猜必錯。
+ *
+ * null 表示確認 Dittobase 沒有這張，不要讓自動比對硬湊。
+ */
+const DB_MANUAL = new Map([
+  // 日職：上游用球場名，Dittobase 用球隊名
+  ["lc_2026_NPB_belluna", "lc-nbp-saitama-seibu-lions"],
+  ["lc_2026_NPB_chunichiDragons", "lc-nbp-chunichi-dragons"],
+  ["lc_2026_NPB_hokkaidoFighters", "lc-nbp-hokkaido-nippon-ham-fighters"],
+  ["lc_2026_NPB_koshienHanshinTigers", "lc-npb-hanshin-tigers-2026"],
+  ["lc_2026_NPB_kyocera", "lc-nbp-orix-buffaloes"],
+  ["lc_2026_NPB_softbankHawks", "lc-nbp-softbank-hawks"],
+  ["lc_2026_NPB_yokohamaStadium", "lc-nbp-yokohama-dena-baystars"],
+  ["lc_2026_NPB_zozoMarine", "lc-nbp-chiba-lotte-marines"],
+
+  // 蓋章拉力賽：上游用地點，Dittobase 用活動
+  ["lc_OsakaEvent2025_01", "lc-stamp-rally-2025-expo-1"],
+  ["lc_OsakaEvent2025_02", "lc-stamp-rally-2025-expo-2"],
+  ["lc_OsakaEvent2025_03", "lc-stamp-rally-2025-suita"],
+  ["lc_Paris2025_01", "lc-stamp-rally-paris-2025-2"],
+  ["lc_Paris2025_02", "lc-stamp-rally-paris-2025"],
+  ["lc_TokMun_koto", "lc-stamp-rally-2026-tokyo-koto"],
+  ["lc_TokMun_minato", "lc-stamp-rally-2026-tokyo-minato"],
+  ["lc_TokMun_shinagawa", "lc-stamp-rally-2026-tokyo-shinagawa"],
+  ["lc_carnivalFlamigo_cologne_2026", "lc-stamp-rally-2026-cologne"],
+  ["lc_carnivalFlamigo_rio_2026", "lc-stamp-rally-2026-rio-de-janeiro"],
+  ["lc_taipeiAmusementPark_2025", "lc-stamp-rally-2025-taipei"],
+
+  // 叫法差太多，或上游拼字有誤（whimpole 多一個 h）
+  ["lc_2026_jp_red", "lc-2026-jp-jetred"],
+  ["lc_2026_ppk_001", "lc-pokemon-park"],
+  ["lc_CR_2026_001", "lc-times-square-2026"],
+  ["lc_ID_CarFreeDay", "lc-car-free-day-2026-indonesia"],
+  ["lc_NFL_cardinals", "lc-nfl-arizona-cardinals"],
+  ["lc_nationalTrust_beltonHouse", "lc-nationaltrust-beltonestate"],
+  ["lc_nationalTrust_whimpole", "lc-nationaltrust-wimpoleestate"],
+
+  /*
+   * 以下是防搶。自動比對會把清單掛到錯的那張卡上，
+   * 兩邊都指名才鎖得住，只寫一邊沒有用。
+   */
+  ["lc_GOWA_fukuoka", "lc-gowildarea-2024-fukuoka"],
+  ["sb_GOWA_fukuoka", "sb-gowildarea-2024-global"],
+  ["sb_GoFest2025", "sb-go-fest-2025"],
+  ["sb_GoFest2025_Eternatus", "sb-go-fest-2025-dark-skies"],
+  ["lc_MLB_tampaBayRays", "lc-mlb-tampa-bay-rays"],
+  ["lc_MLB_tampaBayRays2", null],
+]);
+
+/**
+ * 上游檔名 → Serebii 代號的人工對照。用途跟 DB_MANUAL 一樣，
+ * 但 Serebii 只給日期與英文名，接上不會多出寶可夢。
+ *
+ * 30 週年這四張上游叫 tpc30th，Serebii 叫 PokéXciting，
+ * norm 會把數字去掉變成 tpcth，兩邊永遠對不上。
+ * 前三張比對過縮圖，菲律賓那張 Serebii 還沒放圖，
+ * 靠名稱與日期對（2027-01-23～24 的馬尼拉場，跟官方公告一致）。
+ */
+const SEREBII_MANUAL = new Map([
+  ["lc_tpc30th_malaysia", "pokexcitingmalaysia"],
+  ["lc_tpc30th_taiwan", "pokexcitingtaiwan"],
+  ["lc_tpc30th_singapore", "pokexcitingsingapore"],
+  ["lc_tpc30th_philippines", "pokexcitingphippines"],
+]);
+
+/**
+ * 決定每張卡要用外部來源的哪一筆。Serebii 與 Dittobase 共用。
+ *
+ * 人工對照優先，其餘走自動比對。自動比對搶不到人工已經指名的代號，
+ * 兩張卡對到同一筆時兩張一起退回沒有資料——寧可缺，
+ * 也不要把別張卡的清單掛上去。
+ *
+ * matchByKey 只防「一張卡對到多筆」，不防「多張卡對到同一筆」。
+ * norm 會去掉數字也去掉 lc_/sb_ 前綴，所以 lc_MLB_tampaBayRays 與
+ * …Rays2、lc_GOWA_fukuoka 與 sb_GOWA_fukuoka 都會撞在一起，
+ * 後面那張就默默拿到前面那張的清單。
+ */
+function resolveMatches(files, list, manual = new Map()) {
+  const bySlug = new Map();
+  for (const item of list) if (!bySlug.has(item.slug)) bySlug.set(item.slug, item);
+  const picked = new Map();
+  const reserved = new Set();
+  const conflicts = [];
+  const staleManual = [];
+
+  for (const file of files) {
+    if (!manual.has(file)) continue;
+    const slug = manual.get(file);
+    if (slug === null) {
+      picked.set(file, null);
+      continue;
+    }
+    const hit = bySlug.get(slug);
+    if (!hit) {
+      staleManual.push(`${file} → ${slug}`);
+      picked.set(file, null);
+      continue;
+    }
+    picked.set(file, hit);
+    reserved.add(slug);
+  }
+
+  const wanted = new Map();
+  for (const file of files) {
+    if (picked.has(file)) continue;
+    const hit = matchByKey(file, list);
+    if (!hit || reserved.has(hit.slug)) {
+      picked.set(file, null);
+      continue;
+    }
+    if (!wanted.has(hit.slug)) wanted.set(hit.slug, []);
+    wanted.get(hit.slug).push(file);
+  }
+  for (const [slug, group] of wanted) {
+    if (group.length === 1) {
+      picked.set(group[0], bySlug.get(slug));
+      continue;
+    }
+    conflicts.push(`${slug}：${group.join("、")}`);
+    for (const file of group) picked.set(file, null);
+  }
+
+  return { picked, conflicts, staleManual };
+}
+
+/**
  * 條目 id。發布後就是使用者紀錄的鍵，不能再改。
  *
  * 規則：去掉前綴，駝峰轉連字號，年份前面也斷開，底線轉連字號，全部小寫。
@@ -487,6 +622,16 @@ const serebiiKeyed = serebii.map((s) => ({ ...s, key: norm(s.slug) }));
 const dbKeyed = db.slugs.map((slug) => ({ slug, key: norm(slug), rows: db.store[slug] || [] }));
 
 // 條目 id 對照表，用來把 Dittobase 的寶可夢代號換成我們的 id
+// 人工對照優先，再自動比對，同一筆代號不讓兩張卡搶
+const { picked: dbPick, conflicts: dbConflicts, staleManual } = resolveMatches(
+  files,
+  dbKeyed,
+  DB_MANUAL
+);
+// Serebii 也會被兩張卡搶，同樣退回。它只給日期與名稱，退回就用檔名推的暫名
+const { picked: serebiiPick, conflicts: serebiiConflicts, staleManual: staleSerebii } =
+  resolveMatches(files, serebiiKeyed, SEREBII_MANUAL);
+
 const ENTRY_KEYS = entryKeyMap();
 const unknownPokemon = new Map();
 
@@ -508,11 +653,11 @@ for (const file of files) {
     id = `${file.slice(0, 2)}-${id}`;
   }
 
-  const hit = matchByKey(file, serebiiKeyed);
+  const hit = serebiiPick.get(file) || null;
   if (!hit) noSerebii.push(file);
 
-  // Dittobase 用同一套比對，拿寶可夢清單
-  const dbHit = matchByKey(file, dbKeyed);
+  // Dittobase 的清單，哪一筆已經由 resolveDitto 決定好
+  const dbHit = dbPick.get(file) || null;
   const pokemon = [];
   for (const row of dbHit?.rows || []) {
     const id = ENTRY_KEYS.get(row.key);
@@ -685,6 +830,7 @@ const noDate = cards.filter((c) => !c.date);
 const byCount = new Map();
 for (const c of cards) byCount.set(c.series, (byCount.get(c.series) || 0) + 1);
 const unnamed = [...byCount.keys()].filter((s) => !seriesInfo(s));
+const manualLinked = [...DB_MANUAL].filter(([file, slug]) => slug && dbPick.get(file));
 
 const report = [
   "# bg-report — 背卡抽取報告",
@@ -700,10 +846,58 @@ const report = [
   `## 寶可夢清單`,
   "",
   `${withList.length} 張有清單，共 ${slotCount} 個收集格，來自 Dittobase。`,
-  `${noDitto.length} 張對不到 Dittobase，清單是空的。`,
+  `其中 ${manualLinked.length} 張靠人工對照才接得上，見下一節。`,
+  `${noDitto.length} 張對不到 Dittobase。這些不一定是空的，Serebii 對得到的會墊底。`,
   "",
   ...noDitto.map((f) => `- ${f}`),
   "",
+  `### 人工對照 ${DB_MANUAL.size} 筆`,
+  "",
+  "兩邊叫同一張卡的叫法不同，字串比對接不上，逐張比對卡面圖確認後指名。",
+  "球場對球隊、地點對活動名、上游拼字有誤都算這一類。",
+  "",
+  ...[...DB_MANUAL].map(([file, slug]) => `- ${file} → ${slug || "（確認沒有對應）"}`),
+  "",
+  `### Serebii 人工對照 ${SEREBII_MANUAL.size} 筆`,
+  "",
+  "只影響日期與英文名，不影響寶可夢清單。",
+  "",
+  ...[...SEREBII_MANUAL].map(([file, slug]) => `- ${file} → ${slug}`),
+  "",
+  ...(staleSerebii.length
+    ? [`Serebii 這邊失效 ${staleSerebii.length} 筆：`, "", ...staleSerebii.map((x) => `- ${x}`), ""]
+    : []),
+  ...(dbConflicts.length
+    ? [
+        `### 代號衝突 ${dbConflicts.length} 筆`,
+        "",
+        "兩張卡對到同一筆，兩張都退回沒有清單，要人工指名哪一張才對。",
+        "",
+        ...dbConflicts.map((x) => `- ${x}`),
+        "",
+      ]
+    : []),
+  ...(serebiiConflicts.length
+    ? [
+        `### Serebii 代號衝突 ${serebiiConflicts.length} 筆`,
+        "",
+        "兩張卡對到 Serebii 同一筆，兩張都退回用檔名推的暫名。",
+        "Serebii 只給日期與英文名，這裡缺的是那兩樣，不是寶可夢清單。",
+        "",
+        ...serebiiConflicts.map((x) => `- ${x}`),
+        "",
+      ]
+    : []),
+  ...(staleManual.length
+    ? [
+        `### 人工對照失效 ${staleManual.length} 筆`,
+        "",
+        "Dittobase 那邊的代號改了或整筆不見了，要重新比對卡面圖確認。",
+        "",
+        ...staleManual.map((x) => `- ${x}`),
+        "",
+      ]
+    : []),
   `### 對不回條目 id 的寶可夢 ${unknownPokemon.size} 種`,
   "",
   "多半是超級進化、極巨化，或是圖鑑還沒收的裝扮。",
