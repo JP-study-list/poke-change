@@ -57,10 +57,10 @@ function installDom() {
   });
   for (const id of [
     "app", "panel", "sheet", "toast", "filters", "views", "langs", "q",
-    "appName", "subtitle", "filterTitle", "dataTitle", "dataActions",
-    "localNotice", "viewTitle", "scrim", "sidebar",
+    "appName", "subtitle", "dataTitle", "dataActions",
+    "localNotice", "scrim", "sidebar", "infobar", "chips",
     "searchbar", "importFile", "listName", "shareBtn",
-    "displayTitle", "displayOpts", "trainerCode", "filterBtn",
+    "displayTitle", "displayOpts", "trainerCode",
   ]) {
     els[id] = mk(id);
   }
@@ -377,17 +377,34 @@ console.log("\n5. 繪製函式");
     ui.renderChrome(t, "zh", { big: true, names: false })
   );
   run("renderViews", () => ui.renderViews("dex", t));
-  run("renderFilterBtn", () => ui.renderFilterBtn(dex.emptyFilter(), t));
-  run("renderFilterPanel", () =>
-    ui.renderFilterPanel(dex.emptyFilter(), "zh", t)
-  );
-  run("renderFilterPanel 有選條件", () => {
+  run("renderChips", () => ui.renderChips(dex.emptyFilter(), "zh", t));
+  run("renderChips 有選條件", () => {
     const f = dex.emptyFilter();
     f.type = ["fire", "water"];
     f.gen = ["gen4"];
     f.other = ["bg"];
-    ui.renderFilterPanel(f, "zh", t);
+    ui.renderChips(f, "zh", t);
   });
+  /*
+   * chip 列的計數。同一組裡的選項加起來要等於這一組全不選的結果，
+   * 算某一組的時候要放掉自己那一組，否則數字會互相扣。
+   */
+  run("chip 計數扣掉自己那一組", () => {
+    const f = dex.emptyFilter();
+    f.type = ["fire"];
+    const pool = dex.applyFilter(dex.ENTRIES, f, "type");
+    const all = dex.applyFilter(dex.ENTRIES, dex.emptyFilter());
+    if (pool.length !== all.length) {
+      throw new Error(`放掉 type 之後應該等於全部 ${all.length}，得到 ${pool.length}`);
+    }
+  });
+  run("renderInfoBar", () =>
+    ui.renderInfoBar({ title: t("viewDex"), stats: [t("itemCount", 12)] }, t)
+  );
+  run("renderInfoBar 有清除鈕", () =>
+    ui.renderInfoBar({ title: t("viewDex"), stats: [], clear: true }, t)
+  );
+  run("renderRailSummary", () => ui.renderRailSummary(book, t));
   run("renderGrid", () =>
     ui.renderGrid(dex.ENTRIES.slice(0, 60), data, "zh", t)
   );

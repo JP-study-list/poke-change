@@ -9,10 +9,14 @@
  */
 
 import { LANGS, DEFAULT_LANG, makeT } from "./i18n.js";
-import { find, fullName, emptyFilter } from "./dex.js";
+import { find, fullName, emptyFilter, filterCount } from "./dex.js";
+import { CARDS as BG_CARDS } from "./backgrounds.js";
 import * as store from "./store.js";
 import * as ui from "./ui.js";
 import { buildShareImage } from "./share.js";
+
+/** 背卡總張數。資訊列要顯示，算一次就好 */
+const CARD_TOTAL = BG_CARDS.length;
 
 /* ─────────── state ─────────── */
 
@@ -24,7 +28,6 @@ const state = {
   query: "",
   openId: null, // 詳情面板顯示的條目
   openCard: null, // 詳情面板顯示的背卡
-  openFilter: false, // 詳情面板顯示篩選
   /*
    * 詳情面板上的條件草稿。按下「加入」才會變成清單裡的一筆，
    * 關掉面板就丟，不進 localStorage。同一隻配不同背卡要各收一筆，
@@ -111,32 +114,71 @@ function draw() {
   ui.renderChrome(t, state.lang, { big: state.big, names: state.names });
   ui.renderViews(state.view, t);
 
+  /*
+   * 搜尋列與篩選 chip 都只有圖鑑要。背卡有自己的搜尋與範圍切換，
+   * 交換表兩樣都不需要，留著只會佔掉一整條的高度。
+   */
   const isDex = state.view === "dex";
   document.querySelector("#searchbar").hidden = !isDex;
+  document.querySelector("#chips").hidden = !isDex;
 
   if (state.view === "dex") {
-    ui.renderFilterBtn(state.filter, t);
     const list = ui.visibleEntries(state.filter, state.query);
-    document.querySelector("#viewTitle").innerHTML = `${t(
-      "viewDex"
-    )}<span class="dim">${t("itemCount", list.length)}</span>`;
+    ui.renderChips(state.filter, state.lang, t);
+    ui.renderInfoBar(
+      {
+        title: t("viewDex"),
+        stats: [t("itemCount", list.length)],
+        clear: filterCount(state.filter) > 0,
+      },
+      t
+    );
     ui.renderGrid(list, cur(), state.lang, t);
   } else if (state.view === "trade") {
-    document.querySelector("#viewTitle").textContent = t("viewTrade");
+    const list = cur();
+    ui.renderInfoBar(
+      {
+        title: t("viewTrade"),
+        stats: [
+          list.name || t("listTab", state.book.active + 1),
+          `${t("colWant")} ${list.want.length}`,
+          `${t("colHave")} ${list.have.length}`,
+        ],
+      },
+      t
+    );
     ui.renderTrade(state.book, state.lang, t, state.code);
   } else {
-    document.querySelector("#viewTitle").textContent = t("viewBg");
+    ui.renderInfoBar(
+      { title: t("viewBg"), stats: [t("bgCount", CARD_TOTAL)] },
+      t
+    );
     ui.renderBg(state.bg, state.lang, t);
   }
+
+  /*
+   * 右欄跟著重畫。它現在是版面的一部分，不是彈出來的東西，
+   * 清單的數字變了就該當場反映，不能等下一次打開詳情才更新。
+   */
+  drawDetail();
 }
 
+/** 右欄現在有沒有東西要顯示。交換表不算，那個檢視自己就是清單 */
+const railHasContent = () =>
+  !!(state.openId || state.openCard || state.pick || state.view !== "trade");
+
 /*
- * 三種東西共用同一個 sheet：條目詳情、背卡詳情、篩選。
- * 一次只會有一種，所以打開任一種之前要把另外兩種清掉。
+ * 右欄一次只顯示一種：條目詳情、背卡詳情、選寶可夢。
+ * 打開任一種之前要把另外兩種清掉。
+ * 篩選已經搬到常駐 chip 列，不再跟這裡搶位置。
+ *
+ * 三種都沒有的時候顯示目前清單摘要，桌機右欄常駐，空著是浪費。
+ * 但交換表例外：那個檢視本身就是清單，再擺一份摘要是同一件事說兩次，
+ * 而且會出現兩顆產生分享圖。那裡整欄收起來，版面讓給格子牆。
  */
 function drawDetail() {
-  if (state.openFilter) ui.renderFilterPanel(state.filter, state.lang, t);
-  else if (state.openId) {
+  document.body.classList.toggle("rail-off", !railHasContent());
+  if (state.openId) {
     ui.renderDetail(
       state.openId,
       cur(),
@@ -149,13 +191,21 @@ function drawDetail() {
     state.flash = null; // 閃一次就好，下一次重畫不該再閃
   } else if (state.openCard) ui.renderCardDetail(state.openCard, state.lang, t);
   else if (state.pick) ui.renderPicker(state.pick, state.lang, t);
+  else if (state.view !== "trade") ui.renderRailSummary(state.book, t);
 }
 
+/*
+ * 關掉右欄正在顯示的那一種。
+ *
+ * 右欄現在是常駐的，清掉 state 之後一定要重畫，
+ * 否則桌機上會停在剛才那個詳情，關不掉也回不到摘要。
+ * 彈出的年代不必這樣做，因為整片消失就等於畫好了。
+ */
 function closePanels() {
   state.openId = state.openCard = null;
-  state.openFilter = false;
   state.draft = state.flash = state.pick = null;
   ui.closeSheet();
+  drawDetail();
 }
 
 function save() {
@@ -370,16 +420,7 @@ document.addEventListener("click", (ev) => {
     return;
   }
 
-  // 開篩選面板
-  if (el("#filterBtn")) {
-    state.openId = state.openCard = null;
-    state.openFilter = true;
-    drawDetail();
-    ui.openSheet();
-    return;
-  }
-
-  // 篩選面板裡的選項。同一組可以複選，再點一次取消
+  // 篩選 chip。同一組可以複選，再點一次取消
   const fopt = el(".fopt[data-group]");
   if (fopt) {
     const { group, opt } = fopt.dataset;
@@ -480,8 +521,10 @@ document.addEventListener("click", (ev) => {
   }
 
   // 分享
-  if (el("#shareBtn")) {
-    doShare(el("#shareBtn"));
+  // 分享圖。交換表與右欄摘要各有一顆，走同一個路徑
+  const shareBtn = el("[data-share]");
+  if (shareBtn) {
+    doShare(shareBtn);
     return;
   }
 
@@ -531,7 +574,6 @@ document.addEventListener("click", (ev) => {
   if (addcell) {
     state.pick = { col: addcell.dataset.addcell, query: "" };
     state.openId = state.openCard = null;
-    state.openFilter = false;
     state.draft = state.flash = null;
     drawDetail();
     ui.openSheet();

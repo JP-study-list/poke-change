@@ -11,18 +11,36 @@
     <!--
       骨架而已。所有內容由 js/ui.js 在執行時填入，
       這裡只保留容器與不會變的結構。
+
+      圖示用 inline SVG 不用文字符號。☰ 與 ◐ 是字，
+      跨平台的字重與基線會飄，也吃不到 currentColor 以外的控制。
     -->
     <header class="topbar">
-      <button class="icon-btn" id="menuBtn" type="button" aria-label="選單">☰</button>
+      <button class="icon-btn" id="menuBtn" type="button" aria-label="選單">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
       <div class="brand">
         <strong id="appName">交換表</strong>
         <span id="subtitle" class="dim"></span>
       </div>
       <div class="top-right">
         <div class="langs" id="langs"></div>
-        <button class="icon-btn" id="themeBtn" type="button" aria-label="深色模式">◐</button>
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="深色模式">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="8" />
+            <path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
       </div>
     </header>
+
+    <!--
+      資訊列。抄 Scryfall 頂部那條：現在在看哪一批、幾筆、篩掉了什麼。
+      原本這些資訊是內容區裡一行 15px 的小標題，沒有地位。
+    -->
+    <div class="infobar" id="infobar"></div>
 
     <div class="scrim" id="scrim" hidden></div>
 
@@ -43,15 +61,18 @@
       <main class="content">
         <div class="searchbar" id="searchbar">
           <input id="q" type="search" autocomplete="off" />
-          <button class="filter-btn" id="filterBtn" type="button"></button>
         </div>
-        <h1 class="view-title" id="viewTitle"></h1>
+        <div class="chips" id="chips"></div>
         <div id="app"></div>
       </main>
-    </div>
 
-    <div class="sheet" id="sheet" aria-hidden="true">
-      <div class="sheet-inner" id="panel"></div>
+      <!--
+        右欄。1200 以上是版面的第三欄，常駐；以下退回原本的底部／側邊彈出。
+        DOM 位置只有一處，兩種形態靠 CSS 切換，繪製函式不必知道自己在哪。
+      -->
+      <aside class="rail" id="sheet" aria-hidden="true">
+        <div class="rail-inner" id="panel"></div>
+      </aside>
     </div>
 
     <div class="toast" id="toast" hidden></div>

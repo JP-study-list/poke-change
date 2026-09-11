@@ -133,71 +133,122 @@ export function closeSheet() {
 
 export const isSheetOpen = () => $("#sheet").classList.contains("is-open");
 
-/* ─────────── 篩選 ─────────── */
+/* ─────────── 資訊列與篩選 ─────────── */
 
 /**
- * 搜尋列旁邊那顆鈕。有選條件時顯示個數，讓人知道畫面被篩過。
+ * 資訊列。頂部列下面那一條，寫「你現在在看哪一批」。
  *
- * 這很重要：篩選面板關起來之後，唯一還看得到「現在有條件」的地方
- * 就是這顆鈕。沒有這個提示就會出現「我的寶可夢怎麼不見了」。
+ * 原本這些資訊是內容區裡一行 15px 的小標題，跟格子裡的名稱一樣大，
+ * 看不出是標題。現在它是一條橫貫版面的列，有固定的位置與地位。
+ *
+ * 文字一律由 main.js 翻好再傳進來，這個檔不決定要顯示哪個 key。
  */
-export function renderFilterBtn(filter, t) {
-  const n = filterCount(filter);
-  const btn = $("#filterBtn");
-  btn.innerHTML = `${esc(t("filterBtn"))}${
-    n ? `<span class="count">${n}</span>` : ""
-  }`;
-  btn.setAttribute("aria-pressed", n > 0);
+export function renderInfoBar(info, t) {
+  const stats = (info.stats || [])
+    .filter(Boolean)
+    .map((s) => `<span class="stat">${esc(s)}</span>`)
+    .join("");
+
+  $("#infobar").innerHTML = `
+    <span class="ib-title">${esc(info.title)}</span>
+    <span class="ib-stats">${stats}</span>
+    ${
+      info.clear
+        ? `<button type="button" class="ib-clear" data-fclear>${esc(
+            t("filterClear")
+          )}</button>`
+        : ""
+    }`;
 }
 
+/*
+ * 篩選的三排。
+ *
+ * 第一排是選項少的三組，排得下就一起攤開；屬性 18 個與世代 9 個
+ * 各自一排橫向捲，就是 Bandcamp 那排 genre 的做法。
+ * 36 個選項全部攤平會吃掉半個畫面，全部收進下拉又會失去
+ * 「一眼看到自己篩了什麼」這件事，橫向捲是這兩者之間唯一的解。
+ */
+const CHIP_ROWS = [
+  { groups: ["kind", "rarity", "other"], scroll: false },
+  { groups: ["type"], scroll: true },
+  { groups: ["gen"], scroll: true },
+];
+
 /**
- * 篩選面板。跟條目詳情共用同一個 sheet。
+ * 常駐篩選 chip。
+ *
+ * 原本篩選藏在一顆按鈕後面的面板裡，關起來之後畫面上只剩一個數字，
+ * 看不出篩掉了什麼。現在條件一直在畫面上，點一下就切換。
  *
  * 每個選項後面的數字是「扣掉自己這一組之後還剩幾筆」，
  * 不是「這個條件本身有幾筆」。這樣才看得出點下去會剩多少，
  * 而且同一組裡的選項加起來才會等於這一組全不選的結果。
  */
-export function renderFilterPanel(filter, lang, t) {
-  const total = applyFilter(ENTRIES, filter).length;
+export function renderChips(filter, lang, t) {
+  const rows = CHIP_ROWS.map((row) => {
+    const parts = row.groups.map((g) => {
+      const grp = FILTER_GROUPS[g];
+      const picked = filter[g] || [];
+      // 這一組的計數基準：其他組都套用，這一組放掉
+      const pool = applyFilter(ENTRIES, filter, g);
 
-  const groups = GROUP_KEYS.map((g) => {
-    const grp = FILTER_GROUPS[g];
-    const picked = filter[g] || [];
-    // 這一組的計數基準：其他組都套用，這一組放掉
-    const pool = applyFilter(ENTRIES, filter, g);
+      return grp.options
+        .map(([key, pred]) => {
+          const n = pool.filter(pred).length;
+          const info = grp.labelOf ? null : typeInfo(key, lang);
+          const label = info ? info.name : t(grp.labelOf(key));
+          // 屬性帶自己的代表色。18 個裡面認顏色比認字快
+          const dot = info
+            ? `<i class="swatch" style="background:${esc(info.color)}"></i>`
+            : "";
+          return `<button type="button" class="fopt" data-group="${g}" data-opt="${esc(
+            key
+          )}" aria-pressed="${picked.includes(key)}"${n ? "" : " disabled"}>
+            ${dot}${esc(label)}<span class="count">${n}</span>
+          </button>`;
+        })
+        .join("");
+    });
 
-    const opts = grp.options
-      .map(([key, pred]) => {
-        const n = pool.filter(pred).length;
-        const info = grp.labelOf ? null : typeInfo(key, lang);
-        const label = info ? info.name : t(grp.labelOf(key));
-        const dot = info
-          ? `<i class="swatch" style="background:${esc(info.color)}"></i>`
-          : "";
-        return `<button type="button" class="fopt" data-group="${g}" data-opt="${esc(
-          key
-        )}" aria-pressed="${picked.includes(key)}"${n ? "" : " disabled"}>
-          ${dot}${esc(label)}<span class="count">${n}</span>
-        </button>`;
-      })
-      .join("");
-
-    return `<section class="fgroup">
-      <p class="fgroup-title">${esc(t(grp.label))}</p>
-      <div class="fopts">${opts}</div>
-    </section>`;
+    // 同一排裡不同組之間插一條細線，不然三組會讀成一組
+    return `<div class="chip-row${row.scroll ? " scroll" : ""}">${parts.join(
+      '<i class="chip-sep"></i>'
+    )}</div>`;
   }).join("");
 
+  $("#chips").innerHTML = rows;
+}
+
+/* ─────────── 右欄摘要 ─────────── */
+
+/**
+ * 右欄沒有東西可顯示時的預設內容：目前這一份清單的摘要。
+ *
+ * 桌機右欄是常駐的，空著就是浪費一整欄。放摘要的好處是
+ * 在圖鑑裡挑寶可夢的時候，隨時看得到自己已經排了幾隻，
+ * 不必切到交換表去確認。分享圖的按鈕也在這裡，跟交換表那顆同一條路徑。
+ */
+export function renderRailSummary(book, t) {
+  const data = book.lists[book.active] || book.lists[0];
+  const total = data.want.length + data.have.length;
+
   $("#panel").innerHTML = `
-    <div class="f-head">
-      <div class="d-name">${esc(t("filterBtn"))}</div>
-      <div class="d-meta">${esc(t("filterHits", total))}</div>
-    </div>
-    ${groups}
-    <button type="button" class="btn-clear" data-fclear${
-      filterCount(filter) ? "" : " disabled"
-    }>${esc(t("filterClear"))}</button>
-    <button class="btn-close" type="button" data-close="1">${esc(t("close"))}</button>`;
+    <div class="rs">
+      <p class="rs-label">${esc(t("viewTrade"))}</p>
+      <p class="rs-name">${esc(data.name || t("listTab", book.active + 1))}</p>
+      <div class="rs-nums">
+        <span class="rs-num want">
+          <i class="dot"></i>${esc(t("colWant"))}<b>${data.want.length}</b>
+        </span>
+        <span class="rs-num have">
+          <i class="dot"></i>${esc(t("colHave"))}<b>${data.have.length}</b>
+        </span>
+      </div>
+      <button type="button" class="btn-share wide" data-share${
+        total ? "" : " disabled"
+      }>${esc(t("share"))}</button>
+    </div>`;
 }
 
 /* ─────────── 圖鑑 ─────────── */
@@ -208,7 +259,27 @@ export function visibleEntries(filter, query) {
 }
 
 /**
+ * 屬性色帶。圖下面那條 3px 的線，雙屬性就兩段。
+ *
+ * types.js 有 18 個代表色，原本圖鑑一個都沒用到，
+ * 1484 隻在畫面上全是同一種白格子。這條線讓整面牆有顏色，
+ * 而且關掉名稱之後它是唯一還認得出屬性的東西。
+ */
+const typeBand = (e) => {
+  const ks = e.types || [];
+  if (!ks.length) return "";
+  return `<span class="band">${ks
+    .map((k) => `<i style="background:${esc(typeInfo(k, "en").color)}"></i>`)
+    .join("")}</span>`;
+};
+
+/**
  * 圖鑑格狀清單。
+ *
+ * 格子不畫框也不鋪白底，圖直接站在畫布上。
+ * 1484 個框線是這個站看起來最像模板的原因：導覽、資料、卡片
+ * 全部是同一種白底圓角盒子，分不出誰是誰。
+ *
  * 左上角的圓點表示已加進哪一欄，兩欄都在就兩個點。
  */
 export function renderGrid(list, data, lang, t) {
@@ -227,8 +298,11 @@ export function renderGrid(list, data, lang, t) {
       ].join("");
       const form = formName(e, lang);
       return `<button class="cell" type="button" data-id="${esc(e.id)}">
-        ${tags ? `<span class="tags">${tags}</span>` : ""}
-        <img ${iconAttrs(e, false)} alt="" loading="lazy" />
+        <span class="shot">
+          ${tags ? `<span class="tags">${tags}</span>` : ""}
+          <img ${iconAttrs(e, false)} alt="" loading="lazy" />
+        </span>
+        ${typeBand(e)}
         <span class="no">#${e.dex}</span>
         <span class="nm">${esc(speciesName(e, lang))}${
         form ? `<span class="form">${esc(form)}</span>` : ""
@@ -547,7 +621,7 @@ export function renderTrade(book, lang, t, code = "") {
         <input id="trainerCode" value="${esc(formatCode(code))}" inputmode="numeric"
                placeholder="${esc(t("friendCodeHint"))}" maxlength="14" />
       </label>
-      <button type="button" class="btn-share" id="shareBtn"${
+      <button type="button" class="btn-share" data-share${
         total ? "" : " disabled"
       }>${esc(t("share"))}</button>
     </div>
@@ -662,6 +736,16 @@ export function renderBg(bg, lang, t) {
     return;
   }
 
+  /*
+   * 每個收納夾一段，段標題是一條髮絲線上的小型大寫標籤。
+   *
+   * 收合的時候不再只剩一行字，而是一排橫向捲的真卡面。
+   * 原本 23 條純文字長條佔滿一整屏卻一張圖都看不到，
+   * 而這個檢視的內容本來就是圖。展開才換成網格一次看完。
+   *
+   * 兩種形態是同一份 DOM 換 class，不是畫兩次。
+   * 畫兩次會讓 240 張圖變成 480 個節點，切換時還要重新載圖。
+   */
   const body = folders
     .map(({ folder, cards, total }) => {
       const open = q ? true : bg.open.has(folder.id);
@@ -671,7 +755,9 @@ export function renderBg(bg, lang, t) {
         <span class="nm">${esc(folderName(folder, lang))}</span>
         <span class="ct">${esc(t("bgCount", q ? `${cards.length}/${total}` : total))}</span>
       </button>
-      <div class="bg-grid"${open ? "" : " hidden"}>${cards.map(bgCard(lang, t)).join("")}</div>
+      <div class="${open ? "bg-grid" : "bg-strip"}">${cards
+        .map(bgCard(lang, t))
+        .join("")}</div>
     </section>`;
     })
     .join("");
@@ -679,16 +765,19 @@ export function renderBg(bg, lang, t) {
   $("#app").innerHTML = `${tools}<div class="bg-folders">${body}</div>`;
 }
 
-/** 一張背卡的方格。收集格是零的不寫張數，寫了只會讓人以為壞掉 */
+/**
+ * 一張背卡。
+ *
+ * 不畫外框也不鋪白底，卡面圖本身就是卡片，名稱與張數在圖下面。
+ * 收集格是零的不寫張數，寫了只會讓人以為壞掉。
+ */
 const bgCard = (lang, t) => (card) =>
   `<button class="bg-card" type="button" data-card="${esc(card.id)}">
     <img ${bgAttrs(card)} alt="" loading="lazy" />
-    <div class="b">
-      <div class="t">${esc(cardName(card, lang))}</div>
-      <div class="s">${esc(
-        card.pokemon.length ? t("bgSlots", card.pokemon.length) : card.date || ""
-      )}</div>
-    </div>
+    <span class="t">${esc(cardName(card, lang))}</span>
+    <span class="s">${esc(
+      card.pokemon.length ? t("bgSlots", card.pokemon.length) : card.date || ""
+    )}</span>
   </button>`;
 
 /** 單張背卡的詳情：列出所有可能帶有它的寶可夢 */

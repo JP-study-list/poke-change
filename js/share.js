@@ -41,13 +41,20 @@ const FOOT_H = 28;
 const CAP_ON = 34;
 const CAP_OFF = 14;
 
+/*
+ * 兩套配色跟 css/style.css 的 :root 與 body.dark 對齊。
+ * 分享圖與網站看起來要是同一個東西，改了 token 這裡就要一起改。
+ *
+ * canvas 沒有 CSS 變數，只能抄一份。順序與命名刻意跟那邊一致，
+ * 對照的時候兩邊可以逐行比。
+ */
 const LIGHT = {
-  bg: "#f5f5f3",
+  bg: "#f2f2ef",
   card: "#ffffff",
-  line: "#e2e0da",
-  ink: "#22201c",
-  dim: "#7d7870",
-  gold: "#b8860b",
+  line: "#dedcd6",
+  ink: "#1b1a17",
+  dim: "#6f6a62",
+  gold: "#8a6508", // 文字用的那一個，不是填色那一個
   want: "#c05621",
   have: "#2f6f4f",
   shiny: "#c94f7c",
@@ -56,12 +63,12 @@ const LIGHT = {
 };
 
 const DARK = {
-  bg: "#16150f",
-  card: "#211f18",
-  line: "#34312a",
-  ink: "#ece9e0",
-  dim: "#96908a",
-  gold: "#d9a520",
+  bg: "#101010",
+  card: "#191919",
+  line: "#2b2b2b",
+  ink: "#e9e7e3",
+  dim: "#8b867e",
+  gold: "#cf9a1a",
   want: "#e08a52",
   have: "#5fae83",
   shiny: "#e87ba3",
