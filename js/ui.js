@@ -326,7 +326,7 @@ function editBlock(col, data, id, e, lang, t, flash) {
  * 條件與背卡是草稿（`draft`），按下加入才會寫進清單，關掉面板就丟。
  * 已經在清單裡的那幾筆列在按鈕下方，各自編輯，互不干擾。
  */
-export function renderDetail(id, data, lang, t, draft = null, flash = null) {
+export function renderDetail(id, data, lang, t, draft = null, flash = null, back = false) {
   const e = find(id);
   if (!e) return;
 
@@ -373,6 +373,13 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null) {
   const form = formName(e, lang);
 
   $("#panel").innerHTML = `
+    ${
+      back
+        ? `<button type="button" class="btn-back" data-pickback="1">${esc(
+            t("back")
+          )}</button>`
+        : ""
+    }
     <div class="d-head">
       <img ${iconAttrs(e, false)} alt="" />
       <div>
@@ -473,11 +480,25 @@ function tradeColumn(col, items, lang, t) {
     .map((it, idx) => ({ it, idx }))
     .filter(({ it }) => find(it.id));
 
-  const body = rows.length
-    ? `<div class="grid">${rows
-        .map(({ it, idx }) => tradeCell(it, col, idx, lang, t))
-        .join("")}</div>`
-    : `<p class="empty">${esc(col === "want" ? t("emptyWant") : t("emptyHave"))}</p>`;
+  /*
+   * 格子牆最後一格永遠是加號，空的時候也在。
+   * 沒有它，空清單只剩一句「到圖鑑點一隻加進來」，
+   * 使用者得先離開交換表才動得了。
+   */
+  const plus = `<button class="cell add-cell" type="button" data-addcell="${col}"
+          aria-label="${esc(col === "want" ? t("addWant") : t("addHave"))}">
+    <span class="plus">+</span>
+  </button>`;
+
+  const body = `<div class="grid">${rows
+    .map(({ it, idx }) => tradeCell(it, col, idx, lang, t))
+    .join("")}${plus}</div>${
+    rows.length
+      ? ""
+      : `<p class="empty">${esc(
+          col === "want" ? t("emptyWant") : t("emptyHave")
+        )}</p>`
+  }`;
 
   return `<section class="col ${col}">
     <div class="col-head">
@@ -492,18 +513,40 @@ function tradeColumn(col, items, lang, t) {
 /**
  * 交換表。
  *
- * 訓練家代碼只是輸入框，畫面上不另外顯示，它的用途是印在分享圖底部。
+ * 三份清單用分頁切換，一次只顯示一份。分頁標籤就是那一份的名稱，
+ * 沒取名才顯示「清單 1」，這樣使用者取了名就看得出哪份是哪份。
+ *
+ * 友情碼只是輸入框，畫面上不另外顯示，它的用途是印在分享圖底部。
  * 收到圖的人可以直接照著加好友，這是圖片唯一需要「讀字」的地方。
+ * 它存在偏好裡，三份清單共用同一組，因為那是使用者的身分。
  */
-export function renderTrade(data, lang, t, code = "") {
+export function renderTrade(book, lang, t, code = "") {
+  const data = book.lists[book.active] || book.lists[0];
   const total = data.want.length + data.have.length;
+
+  const tabs = book.lists
+    .map((l, i) => {
+      const n = l.want.length + l.have.length;
+      return `<button type="button" class="tab" data-list="${i}"
+               aria-pressed="${i === book.active}">
+        ${esc(l.name || t("listTab", i + 1))}<span class="n">${n}</span>
+      </button>`;
+    })
+    .join("");
+
   $("#app").innerHTML = `
+    <div class="list-tabs">${tabs}</div>
     <div class="trade-head">
-      <input id="listName" value="${esc(data.name.want)}"
-             placeholder="${esc(t("listNameHint"))}" maxlength="24" />
-      <input id="trainerCode" value="${esc(formatCode(code))}" inputmode="numeric"
-             placeholder="${esc(t("trainerCodeHint"))}"
-             aria-label="${esc(t("trainerCode"))}" maxlength="14" />
+      <label class="fld">
+        <span>${esc(t("listName"))}</span>
+        <input id="listName" value="${esc(data.name)}"
+               placeholder="${esc(t("listNameHint"))}" maxlength="24" />
+      </label>
+      <label class="fld">
+        <span>${esc(t("friendCode"))}</span>
+        <input id="trainerCode" value="${esc(formatCode(code))}" inputmode="numeric"
+               placeholder="${esc(t("friendCodeHint"))}" maxlength="14" />
+      </label>
       <button type="button" class="btn-share" id="shareBtn"${
         total ? "" : " disabled"
       }>${esc(t("share"))}</button>
@@ -512,6 +555,56 @@ export function renderTrade(data, lang, t, code = "") {
       ${tradeColumn("want", data.want, lang, t)}
       ${tradeColumn("have", data.have, lang, t)}
     </div>`;
+}
+
+/**
+ * 交換表的加號開的選寶可夢面板。
+ *
+ * 這裡的搜尋跟圖鑑檢視是兩回事：不套用圖鑑當下的篩選，
+ * 否則使用者在圖鑑篩了「只看傳說」，從交換表按加號會看到一片空白，
+ * 而且不會知道為什麼。
+ *
+ * 一次最多畫 150 筆。面板很窄，全部一千多筆畫下去只是拖慢開啟，
+ * 沒有人會捲到底，要找特定一隻本來就該打字。
+ */
+const PICK_MAX = 150;
+
+export function renderPicker(pick, lang, t) {
+  const hits = search(ENTRIES, pick.query || "");
+  const shown = hits.slice(0, PICK_MAX);
+
+  const cells = shown
+    .map((e) => {
+      const form = formName(e, lang);
+      return `<button class="cell" type="button" data-id="${esc(e.id)}">
+        <img ${iconAttrs(e, false)} alt="" loading="lazy" />
+        <span class="nm">${esc(speciesName(e, lang))}${
+        form ? `<span class="form">${esc(form)}</span>` : ""
+      }</span>
+      </button>`;
+    })
+    .join("");
+
+  $("#panel").innerHTML = `
+    <div class="f-head">
+      <div class="d-name">${esc(
+        pick.col === "want" ? t("addWant") : t("addHave")
+      )}</div>
+      <div class="d-meta">${esc(t("pickHint"))}</div>
+    </div>
+    <input id="pickQ" class="pick-q" value="${esc(pick.query || "")}"
+           placeholder="${esc(t("search"))}" />
+    ${
+      shown.length
+        ? `<div class="grid pick-grid">${cells}</div>
+           ${
+             hits.length > shown.length
+               ? `<p class="dim">${esc(t("pickMore", PICK_MAX))}</p>`
+               : ""
+           }`
+        : `<p class="empty">${esc(t("empty"))}</p>`
+    }
+    <button class="btn-close" type="button" data-close="1">${esc(t("close"))}</button>`;
 }
 
 /* ─────────── 背卡 ─────────── */

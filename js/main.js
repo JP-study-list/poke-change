@@ -17,7 +17,7 @@ import { buildShareImage } from "./share.js";
 /* ─────────── state ─────────── */
 
 const state = {
-  data: store.emptyData(),
+  book: store.emptyBook(), // 三份清單，外加目前在看第幾份
   lang: DEFAULT_LANG,
   view: "dex", // dex / trade / bg
   filter: emptyFilter(), // 五個群組，組間 AND、組內 OR
@@ -37,12 +37,21 @@ const state = {
    * 跟篩選一樣不寫進偏好，重新整理回到預設，免得下次打開只剩幾張卻不知為何。
    */
   bg: { query: "", scope: "all", open: new Set() },
+  /*
+   * 交換表的加號開的那個選寶可夢面板。
+   * `col` 是從哪一欄按的，`query` 是面板自己的搜尋字，
+   * 跟圖鑑檢視的搜尋與篩選分開，不互相干擾。
+   */
+  pick: null,
   big: false, // 大圖示。預設小圖示，手機一排五隻
   names: true, // 格子下方顯示名稱
   code: "", // 訓練家代碼，只印在分享圖上
 };
 
 let t = makeT(state.lang);
+
+/** 目前在看的那一份清單。畫面與操作一律只碰這一份 */
+const cur = () => store.current(state.book);
 
 /* ─────────── 偏好設定 ─────────── */
 
@@ -111,10 +120,10 @@ function draw() {
     document.querySelector("#viewTitle").innerHTML = `${t(
       "viewDex"
     )}<span class="dim">${t("itemCount", list.length)}</span>`;
-    ui.renderGrid(list, state.data, state.lang, t);
+    ui.renderGrid(list, cur(), state.lang, t);
   } else if (state.view === "trade") {
     document.querySelector("#viewTitle").textContent = t("viewTrade");
-    ui.renderTrade(state.data, state.lang, t, state.code);
+    ui.renderTrade(state.book, state.lang, t, state.code);
   } else {
     document.querySelector("#viewTitle").textContent = t("viewBg");
     ui.renderBg(state.bg, state.lang, t);
@@ -130,25 +139,27 @@ function drawDetail() {
   else if (state.openId) {
     ui.renderDetail(
       state.openId,
-      state.data,
+      cur(),
       state.lang,
       t,
       state.draft,
-      state.flash
+      state.flash,
+      !!state.pick // 從加號進來的話，面板上要有返回鈕回去選別隻
     );
     state.flash = null; // 閃一次就好，下一次重畫不該再閃
   } else if (state.openCard) ui.renderCardDetail(state.openCard, state.lang, t);
+  else if (state.pick) ui.renderPicker(state.pick, state.lang, t);
 }
 
 function closePanels() {
   state.openId = state.openCard = null;
   state.openFilter = false;
-  state.draft = state.flash = null;
+  state.draft = state.flash = state.pick = null;
   ui.closeSheet();
 }
 
 function save() {
-  store.save(state.data, (ok) => {
+  store.save(state.book, (ok) => {
     if (!ok) ui.toast(t("saveFailed"));
   });
 }
@@ -170,7 +181,7 @@ function newDraft(id) {
  * 因為那是手滑按兩次，不是真的想要兩格一模一樣的。
  */
 function addItem(id, col) {
-  const list = state.data[col];
+  const list = cur()[col];
   const d = state.draft || newDraft(id);
 
   const same = list.findIndex(
@@ -199,20 +210,22 @@ function addItem(id, col) {
   item.bg = d.bg || "";
   list.push(item);
   save();
+  // 從加號進來的是「加一隻到這一欄」，加完就該回到交換表看結果
+  if (state.pick) closePanels();
   draw();
   drawDetail();
 }
 
 /** 改某一筆的標記 */
 function setField(col, idx, field, value) {
-  const item = state.data[col][idx];
+  const item = cur()[col][idx];
   if (!item) return;
   item[field] = value;
   save();
 }
 
 function removeItem(col, idx) {
-  state.data[col].splice(idx, 1);
+  cur()[col].splice(idx, 1);
   save();
   draw();
   drawDetail(); // 詳情面板開著時，被刪掉的那一列要跟著消失
@@ -233,7 +246,7 @@ function download(blob, filename) {
 }
 
 function doExport() {
-  const blob = new Blob([store.toJSON(state.data)], {
+  const blob = new Blob([store.toJSON(state.book)], {
     type: "application/json",
   });
   download(blob, store.exportName());
@@ -243,32 +256,49 @@ function doExport() {
 function doImport(file) {
   const reader = new FileReader();
   reader.onload = () => {
-    const data = store.fromJSON(String(reader.result));
-    if (!data) {
+    const got = store.fromJSON(String(reader.result));
+    if (!got) {
       ui.toast(t("importFailed"));
       return;
     }
-    state.data = data;
-    store.flush(state.data);
-    ui.toast(t("imported"));
+    /*
+     * 整包的檔案就整包換掉；舊版匯出的單獨一份只蓋掉目前在看的這一份，
+     * 不能讓一個舊檔案把另外兩份一起清掉。
+     */
+    if (got.kind === "book") {
+      state.book = got.book;
+      ui.toast(t("imported"));
+    } else {
+      state.book.lists[state.book.active] = got.list;
+      ui.toast(t("importedOne"));
+    }
+    store.flush(state.book);
+    closePanels();
     draw();
   };
   reader.onerror = () => ui.toast(t("importFailed"));
   reader.readAsText(file);
 }
 
+/** 只清目前這一份，另外兩份不動 */
 function doReset() {
-  if (!confirm(t("resetConfirm"))) return;
-  store.clear();
-  state.data = store.emptyData();
+  if (!confirm(t("resetConfirm", listLabel(state.book.active)))) return;
+  store.clearList(state.book, state.book.active);
+  store.flush(state.book);
   ui.toast(t("resetDone"));
+  closePanels();
   draw();
+}
+
+/** 分頁上顯示的名字。沒取名就叫「清單 1」，總得有東西可以指 */
+function listLabel(i) {
+  return state.book.lists[i].name || t("listTab", i + 1);
 }
 
 /* ─────────── 分享圖 ─────────── */
 
 async function doShare(btn) {
-  const { want, have } = state.data;
+  const { want, have } = cur();
   if (!want.length && !have.length) {
     ui.toast(t("shareEmpty"));
     return;
@@ -277,8 +307,8 @@ async function doShare(btn) {
   btn.disabled = true;
   btn.textContent = t("sharing");
   try {
-    const blob = await buildShareImage(state.data, {
-      title: state.data.name.want || t("shareTitle"),
+    const blob = await buildShareImage(cur(), {
+      title: cur().name || t("shareTitle"),
       dark: document.body.classList.contains("dark"),
       lang: state.lang,
       names: state.names,
@@ -483,6 +513,39 @@ document.addEventListener("click", (ev) => {
     return;
   }
 
+  // 交換表的清單分頁
+  const tab = el("[data-list]");
+  if (tab) {
+    const i = Number(tab.dataset.list);
+    if (i !== state.book.active) {
+      state.book.active = i;
+      save();
+      closePanels();
+      draw();
+    }
+    return;
+  }
+
+  // 交換表格子牆最後那一格加號
+  const addcell = el("[data-addcell]");
+  if (addcell) {
+    state.pick = { col: addcell.dataset.addcell, query: "" };
+    state.openId = state.openCard = null;
+    state.openFilter = false;
+    state.draft = state.flash = null;
+    drawDetail();
+    ui.openSheet();
+    return;
+  }
+
+  // 從加號選了一隻之後，回去選別隻
+  if (el("[data-pickback]")) {
+    state.openId = null;
+    state.draft = state.flash = null;
+    drawDetail();
+    return;
+  }
+
   // 圖鑑格子
   const cell = el("[data-id]");
   if (cell) {
@@ -500,6 +563,18 @@ document.addEventListener("click", (ev) => {
 
 document.addEventListener("input", (ev) => {
   const el = ev.target;
+
+  if (el.id === "pickQ" && state.pick) {
+    state.pick.query = el.value;
+    drawDetail();
+    // 重畫會換掉輸入框，把游標放回去
+    const box = document.querySelector("#pickQ");
+    if (box) {
+      box.focus();
+      box.setSelectionRange(state.pick.query.length, state.pick.query.length);
+    }
+    return;
+  }
 
   if (el.id === "q") {
     state.query = el.value;
@@ -528,7 +603,7 @@ document.addEventListener("input", (ev) => {
   }
 
   if (el.id === "listName") {
-    state.data.name.want = el.value;
+    cur().name = el.value;
     save();
     return;
   }
@@ -578,12 +653,12 @@ document.addEventListener("keydown", (ev) => {
 });
 
 // 關閉分頁前把還沒送出的變更寫掉
-window.addEventListener("pagehide", () => store.flush(state.data));
+window.addEventListener("pagehide", () => store.flush(state.book));
 
 /* ─────────── 啟動 ─────────── */
 
 loadPref();
 t = makeT(state.lang);
 ui.setLangs(LANGS);
-state.data = store.load();
+state.book = store.load();
 draw();

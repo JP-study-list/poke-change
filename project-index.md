@@ -82,7 +82,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `js/bgevents.js` | `HAND_EVENTS` | 手工維護的 17 張，有三語名、註記、寶可夢清單與本地備援圖。會逐欄覆蓋骨架 |
 | `js/bgseries.js` | `SERIES` `seriesInfo` `seriesOrder` | 23 個收納夾的三語名與顯示順序 |
 | `js/types.js` | `TYPES` `typeInfo` | 18 種屬性的代表色與三語名 |
-| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 100 個 key，必須完全一致 |
+| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 105 個 key，必須完全一致 |
 
 ### 存取層
 
@@ -91,7 +91,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `js/backgrounds.js` | `CARDS` `FOLDERS` `findCard` `bgUrl` `bgAttrs` `bgSources` `cardName` `folderName` `allCards` `entriesOf` `cardsFor` `allBgEntryIds` `totalCardSlots` | 合併骨架與手工資料，240 張背卡 / 23 個收納夾 / 195 個收集格 |
 | `js/imgchain.js` | `imgAttrs` | 圖片備援鏈。dex 與 backgrounds 共用，獨立成檔是為了不讓那兩個檔繞成一圈 |
 | `js/dex.js` | `ENTRIES` `find` `fullName` `speciesName` `formName` `iconAttrs` `hasShiny` `search` `FILTER_GROUPS` `GROUP_KEYS` `emptyFilter` `normalizeFilter` `applyFilter` `filterCount` `goUrl` `artUrl` | 合併 godex 與 extra，1478 個條目。負責名稱組合、搜尋、篩選、圖片備援鏈 |
-| `js/store.js` | `emptyData` `newItem` `normalize` `load` `save` `flush` `clear` `toJSON` `fromJSON` `exportName` `cleanCode` `formatCode` `MAX_ITEMS` `COLUMNS` | localStorage 讀寫。**任何讀進來的資料都不信任**，一律過 `normalize` |
+| `js/store.js` | `emptyList` `emptyBook` `current` `newItem` `normalize` `normalizeList` `load` `save` `flush` `clearList` `toJSON` `fromJSON` `exportName` `cleanCode` `formatCode` `MAX_ITEMS` `COLUMNS` `LIST_COUNT` | localStorage 讀寫。三份清單裝在一個 key 裡，`current()` 取目前那一份。**任何讀進來的資料都不信任**，一律過 `normalize` |
 
 ### 繪製層
 
@@ -106,14 +106,15 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | --- | --- |
 | 版面共用 | `renderChrome` `renderViews` `setSidebar` `toast` `openSheet` `closeSheet` `esc` |
 | 圖鑑 | `renderFilterBtn` `renderFilterPanel` `visibleEntries` `renderGrid` `renderDetail` |
-| 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` |
+| 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` `renderPicker` |
 | 背卡 | `renderBg` `renderCardDetail` |
 
 ### 協調層
 
 `js/main.js` —— 唯一有狀態、唯一綁事件的檔案。
 
-- **state**：`data` `lang` `view` `filter` `query` `openId` `openCard` `draft` `flash`
+- **state**：`book` `lang` `view` `filter` `query` `openId` `openCard` `draft` `flash` `pick`
+- **三份清單**：`state.book` 是整包，`cur()` 取目前那一份。畫面與操作一律只碰那一份
 - **資料流**：使用者操作 → 改 state → `draw()` → `save()`
 - **事件**：單一 `document` 委派（click / input / change / keydown）+ `pagehide`
 - **偏好與清單分開存**：語言與深淺色在 `poke-change/pref`，
@@ -155,6 +156,8 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改交換表格子長相 | `js/ui.js` 的 `tradeCell` + `css/style.css` 的 `.want-cell` |
 | 改詳情面板的順序 | `js/ui.js` 的 `renderDetail`，由上到下就是操作順序 |
 | 改一欄的上限 | `js/store.js` 的 `MAX_ITEMS` |
+| 改清單份數 | `js/store.js` 的 `LIST_COUNT`，分頁樣式在 `css/style.css` 的 `.list-tabs` |
+| 改選寶可夢面板 | `js/ui.js` 的 `renderPicker`，一次最多畫 `PICK_MAX` 筆 |
 | 加篩選條件 | `js/dex.js` 的 `FILTER_GROUPS`，標籤補 `js/i18n.js` |
 | 改手機的欄數 | `css/style.css` 的 `--cell-cols`，900px 以下講死不推算 |
 | 改格子大小的兩段值 | `css/style.css` 的 `--cell-*`，桌機在 `:root`，手機在斷點內 |

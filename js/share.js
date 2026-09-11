@@ -327,7 +327,7 @@ export async function buildShareImage(data, opts) {
     ctx.textBaseline = "middle";
     ctx.textAlign = "left";
 
-    const label = `${t("trainerCode")}  ${codeText}`;
+    const label = `${t("friendCode")}  ${codeText}`;
     const w = ctx.measureText(label).width + 24;
     roundRect(ctx, (W - w) / 2, cy - 15, w, 30, 8);
     ctx.fillStyle = C.card;

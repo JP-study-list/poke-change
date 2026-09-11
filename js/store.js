@@ -14,15 +14,26 @@
  * 改譯名、補裝扮都不會動到既有紀錄，也不需要資料遷移。
  *
  *   {
- *     v: 1,
+ *     v: 2,
+ *     active: 0,                      目前在看第幾份，0 ~ 2
+ *     lists: [ list, list, list ],     三份清單，形狀一模一樣
+ *     updated: 時間戳
+ *   }
+ *
+ *   list = {
+ *     name: "",                        這一份的名稱
  *     want: [ {id, shiny, xxl, xxs, bg}, ... ],   想要的
  *     have: [ {id, shiny, xxl, xxs, bg}, ... ],   可以給的
- *     name: { want: "", have: "" },                     兩欄的標題
- *     updated: 時間戳
  *   }
  *
  * 同一個條目可以出現多次。「異色超夢」與「有東京背卡的超夢」
  * 是兩個獨立的交換目標，不該合併。
+ *
+ * ── v1 怎麼進來的 ──
+ * v1 是單獨一份，want / have / name 直接掛在最外層，
+ * 而且 name 是 { want, have } 兩個欄位，其中 have 從來沒被用過。
+ * 讀到那種形狀就整個包成第一份，另外兩份留空，使用者不必做任何事。
+ * 反過來不行：寫成 v2 之後舊版程式讀這個 key 會看到空清單。
  */
 
 const KEY = "poke-change/v1";
@@ -33,17 +44,25 @@ export const MAX_ITEMS = 200;
 /** 兩欄的欄位名，順序就是畫面由左到右 */
 export const COLUMNS = ["want", "have"];
 
+/** 幾份清單。三份是刻意的上限，不是設定值，多了分頁就擠不下 */
+export const LIST_COUNT = 3;
+
 /* ─────────── 空白資料 ─────────── */
 
-export function emptyData() {
-  return {
-    v: 1,
-    want: [],
-    have: [],
-    name: { want: "", have: "" },
-    updated: 0,
-  };
+/** 一份空白清單 */
+export function emptyList() {
+  return { name: "", want: [], have: [] };
 }
+
+/** 整包空白資料（三份清單） */
+export function emptyBook() {
+  const lists = [];
+  for (let i = 0; i < LIST_COUNT; i++) lists.push(emptyList());
+  return { v: 2, active: 0, lists, updated: 0 };
+}
+
+/** 目前在看的那一份。active 壞掉時退回第一份，不讓畫面空白 */
+export const current = (book) => book.lists[book.active] || book.lists[0];
 
 /** 一筆新的交換項目。預設想要異色，因為交換的價值就在重骰個體值 */
 export function newItem(id, shiny = true) {
@@ -85,22 +104,37 @@ function cleanItem(v) {
   };
 }
 
-function cleanList(v) {
+function cleanItems(v) {
   if (!Array.isArray(v)) return [];
   return v.map(cleanItem).filter(Boolean).slice(0, MAX_ITEMS);
 }
 
-/** 把任意輸入整理成合法的資料結構 */
-export function normalize(raw) {
-  const out = emptyData();
+const cleanName = (v) => (typeof v === "string" ? v.slice(0, 24) : "");
+
+/**
+ * 把任意輸入整理成一份合法的清單。
+ * v1 的名稱是 `{ want, have }`，取 want 那個，另一個從來沒用過。
+ */
+export function normalizeList(raw) {
+  const out = emptyList();
   if (!raw || typeof raw !== "object") return out;
-  for (const col of COLUMNS) out[col] = cleanList(raw[col]);
-  if (raw.name && typeof raw.name === "object") {
-    for (const col of COLUMNS) {
-      const n = raw.name[col];
-      out.name[col] = typeof n === "string" ? n.slice(0, 24) : "";
-    }
-  }
+  for (const col of COLUMNS) out[col] = cleanItems(raw[col]);
+  out.name = cleanName(
+    typeof raw.name === "string" ? raw.name : raw.name && raw.name.want
+  );
+  return out;
+}
+
+/** 把任意輸入整理成整包合法的資料。v1 的單份會變成第一份 */
+export function normalize(raw) {
+  const out = emptyBook();
+  if (!raw || typeof raw !== "object") return out;
+
+  const src = Array.isArray(raw.lists) ? raw.lists : [raw];
+  for (let i = 0; i < LIST_COUNT; i++) out.lists[i] = normalizeList(src[i]);
+
+  const a = Number(raw.active);
+  out.active = Number.isInteger(a) && a >= 0 && a < LIST_COUNT ? a : 0;
   out.updated = Number(raw.updated) || 0;
   return out;
 }
@@ -114,11 +148,11 @@ export function normalize(raw) {
 export function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return emptyData();
+    if (!raw) return emptyBook();
     return normalize(JSON.parse(raw));
   } catch (err) {
     console.warn("[store] 讀取失敗，改用空白資料：", err);
-    return emptyData();
+    return emptyBook();
   }
 }
 
@@ -147,34 +181,50 @@ export function flush(data, onDone) {
   }
 }
 
-/** 清空這台裝置上的紀錄 */
-export function clear() {
-  try {
-    localStorage.removeItem(KEY);
-  } catch (err) {
-    console.warn("[store] 清除失敗：", err);
-  }
+/**
+ * 清空其中一份，另外兩份不動。
+ * 側欄那顆鈕清的是目前這一份，不是整台裝置上的紀錄。
+ */
+export function clearList(book, i) {
+  book.lists[i] = emptyList();
+  return book;
 }
 
 /* ─────────── 匯出與匯入 ─────────── */
 
-/** 匯出成可下載的 JSON 字串 */
-export const toJSON = (data) => JSON.stringify(normalize(data), null, 2);
+/** 匯出成可下載的 JSON 字串。一個檔就是三份清單的全部 */
+export const toJSON = (book) => JSON.stringify(normalize(book), null, 2);
+
+const isEmpty = (list) => !list.want.length && !list.have.length;
 
 /**
  * 匯入。解析失敗回 null，讓呼叫端顯示錯誤而不是把資料洗掉。
- * @returns {object|null}
+ *
+ * 檔案有兩種：這個版本匯出的整包（三份），以及舊版匯出的單獨一份。
+ * 整包就整包換掉，單份只蓋掉目前在看的那一份，另外兩份不該被一個
+ * 舊檔案清掉，所以這裡只負責分辨，要蓋哪裡由呼叫端決定。
+ *
+ * @returns {{kind:"book", book:object}|{kind:"list", list:object}|null}
  */
 export function fromJSON(text) {
+  let parsed;
   try {
-    const parsed = JSON.parse(text);
-    const data = normalize(parsed);
-    // 兩欄都空的多半是選錯檔案，當作失敗比較安全
-    if (!data.want.length && !data.have.length) return null;
-    return data;
+    parsed = JSON.parse(text);
   } catch {
     return null;
   }
+  if (!parsed || typeof parsed !== "object") return null;
+
+  if (Array.isArray(parsed.lists)) {
+    const book = normalize(parsed);
+    // 三份都空的多半是選錯檔案，當作失敗比較安全
+    if (book.lists.every(isEmpty)) return null;
+    return { kind: "book", book };
+  }
+
+  const list = normalizeList(parsed);
+  if (isEmpty(list)) return null;
+  return { kind: "list", list };
 }
 
 /** 匯出用的檔名，帶當地日期。不用 toISOString，那是 UTC 會差一天 */

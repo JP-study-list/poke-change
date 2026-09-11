@@ -794,21 +794,76 @@ body.no-names .cell .no {
 
 /* ─────────── 交換表 ─────────── */
 
+/*
+ * 三份清單的分頁。標籤是清單自己的名字，右邊那個數字是那一份有幾項，
+ * 不然取了名也看不出哪一份是空的。
+ */
+.list-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.tab {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--dim);
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tab[aria-pressed="true"] {
+  border-color: var(--gold);
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.tab .n {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--bg);
+}
+
 .trade-head {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  align-items: center;
+  align-items: flex-end;
   margin-bottom: 16px;
 }
 
-.trade-head input {
+/* 兩個輸入框都帶看得見的標籤。只有提示文字的話，空著時看不出那欄要填什麼 */
+.fld {
   flex: 1;
   min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fld > span {
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.trade-head input {
+  width: 100%;
   padding: 9px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--card);
+  color: inherit;
 }
 
 .btn-share {
@@ -997,6 +1052,66 @@ body.dark .want-bg {
   .want-del {
     opacity: 1;
   }
+}
+
+/*
+ * 格子牆最後那一格加號。高度靠 aspect-ratio 跟旁邊的格子對齊，
+ * 不寫死數字，因為格子大小有大圖示與小圖示兩段。
+ */
+.add-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--cell-img);
+  border-style: dashed;
+  color: var(--dim);
+}
+
+.add-cell:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.add-cell .plus {
+  font-size: 26px;
+  line-height: 1;
+}
+
+/* ─────────── 選寶可夢面板 ─────────── */
+
+.pick-q {
+  width: 100%;
+  margin: 12px 0;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  color: inherit;
+}
+
+/*
+ * 面板很窄，格子跟著窄，一排三隻剛好還看得出是誰。
+ * minmax 的下限要寫 0，1fr 的預設下限是 auto，
+ * 名稱長一點就把格子撐開，整排捲出面板右邊。
+ */
+.pick-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.btn-back {
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--dim);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-back:hover {
+  border-color: var(--gold);
+  color: var(--gold);
 }
 
 /* ─────────── 詳情面板的條件編輯 ─────────── */

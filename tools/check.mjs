@@ -279,28 +279,70 @@ console.log("\n3. 背卡");
 
 console.log("\n4. 儲存往返");
 {
-  const data = store.emptyData();
-  data.want.push({ ...store.newItem("d150"), xxl: true });
-  data.have.push(store.newItem("d25.cHALLOWEEN_2017", false));
-  data.name.want = "測試清單";
-  store.flush(data);
-  const back = store.load();
-  ok("往返後資料不變", JSON.stringify(back.want) === JSON.stringify(data.want));
-  ok("清單名稱保留", back.name.want === "測試清單");
+  const book = store.emptyBook();
+  ok("開場就有三份清單", book.lists.length === store.LIST_COUNT);
 
-  const round = store.fromJSON(store.toJSON(data));
-  ok("匯出匯入往返不變", JSON.stringify(round.have) === JSON.stringify(data.have));
+  const first = store.current(book);
+  first.want.push({ ...store.newItem("d150"), xxl: true });
+  first.have.push(store.newItem("d25.cHALLOWEEN_2017", false));
+  first.name = "測試清單";
+  book.lists[2].want.push(store.newItem("d1"));
+  book.active = 2;
+  store.flush(book);
+
+  const back = store.load();
+  ok("往返後資料不變", JSON.stringify(back.lists) === JSON.stringify(book.lists));
+  ok("清單名稱保留", back.lists[0].name === "測試清單");
+  ok("目前看哪一份會保留", back.active === 2);
+  ok("三份各自獨立", back.lists[1].want.length === 0 && back.lists[2].want.length === 1);
+
+  const round = store.fromJSON(store.toJSON(book));
+  ok("匯出匯入是整包", round && round.kind === "book");
+  ok(
+    "匯出匯入往返不變",
+    JSON.stringify(round.book.lists) === JSON.stringify(book.lists)
+  );
   ok("壞掉的 JSON 回 null", store.fromJSON("{{{") === null);
+  ok("整包三份都空視為失敗", store.fromJSON(store.toJSON(store.emptyBook())) === null);
   ok("空清單的匯入視為失敗", store.fromJSON('{"want":[],"have":[]}') === null);
 
-  const dirty = store.normalize({
-    want: [{ id: "d1", shiny: "yes", bg: "x".repeat(200) }, null, { nope: 1 }],
-    name: { want: 123 },
+  // v1 是單獨一份，want/have 掛在最外層，名稱是 { want, have }
+  const old = store.fromJSON(
+    '{"v":1,"want":[{"id":"d150","shiny":true}],"have":[],"name":{"want":"舊清單","have":""}}'
+  );
+  ok("舊版的單份備份認得出來", old && old.kind === "list");
+  ok("舊版的清單名稱接得上", old.list.name === "舊清單");
+
+  const migrated = store.normalize({
+    v: 1,
+    want: [{ id: "d150", shiny: true }],
+    have: [],
+    name: { want: "舊清單", have: "" },
   });
-  ok("髒資料會被洗乾淨", dirty.want.length === 1 && dirty.want[0].shiny === true);
-  ok("過長字串會截斷", dirty.want[0].bg.length === 40);
-  ok("舊版的備註欄位會被洗掉", !("note" in dirty.want[0]));
-  ok("非字串清單名變空字串", dirty.name.want === "");
+  ok("v1 會變成第一份", migrated.lists[0].want.length === 1);
+  ok("另外兩份是空的", migrated.lists[1].want.length === 0 && migrated.lists[2].want.length === 0);
+  ok("v1 的名稱取 want 那個", migrated.lists[0].name === "舊清單");
+
+  const cleared = store.clearList(store.normalize(migrated), 0);
+  ok("清掉一份不影響另外兩份", cleared.lists.length === store.LIST_COUNT);
+  ok("清掉的那份是空的", !cleared.lists[0].want.length && cleared.lists[0].name === "");
+
+  const dirty = store.normalize({
+    lists: [
+      {
+        want: [{ id: "d1", shiny: "yes", bg: "x".repeat(200) }, null, { nope: 1 }],
+        name: 123,
+      },
+    ],
+    active: 99,
+  });
+  const d0 = dirty.lists[0];
+  ok("髒資料會被洗乾淨", d0.want.length === 1 && d0.want[0].shiny === true);
+  ok("過長字串會截斷", d0.want[0].bg.length === 40);
+  ok("舊版的備註欄位會被洗掉", !("note" in d0.want[0]));
+  ok("非字串清單名變空字串", d0.name === "");
+  ok("壞掉的 active 退回第一份", dirty.active === 0);
+  ok("缺的那幾份會補滿", dirty.lists.length === store.LIST_COUNT);
 
   ok("代碼只留數字", store.cleanCode("4992-3022 0284") === "499230220284");
   ok("代碼最多 12 碼", store.cleanCode("1".repeat(30)).length === 12);
@@ -313,9 +355,13 @@ console.log("\n5. 繪製函式");
 {
   const t = makeT("zh");
   ui.setLangs(LANGS);
-  const data = store.emptyData();
+  const data = store.emptyList();
   data.want.push(store.newItem("d150"));
   data.have.push(store.newItem("d25.xREDS_HAT", false));
+
+  // 交換表拿的是整包，因為它要畫三份清單的分頁
+  const book = store.emptyBook();
+  book.lists[0] = data;
 
   const run = (name, fn) => {
     try {
@@ -346,7 +392,7 @@ console.log("\n5. 繪製函式");
     ui.renderGrid(dex.ENTRIES.slice(0, 60), data, "zh", t)
   );
   run("renderGrid 空清單", () => ui.renderGrid([], data, "zh", t));
-  run("renderTrade", () => ui.renderTrade(data, "zh", t));
+  run("renderTrade", () => ui.renderTrade(book, "zh", t));
   run("renderTrade 帶背卡的格子", () => {
     const withBg = store.normalize({
       v: 1,
@@ -355,10 +401,35 @@ console.log("\n5. 繪製函式");
     });
     ui.renderTrade(withBg, "zh", t);
   });
-  run("renderTrade 帶訓練家代碼", () =>
-    ui.renderTrade(data, "zh", t, "499230220284")
+  run("renderTrade 帶友情碼", () => ui.renderTrade(book, "zh", t, "499230220284"));
+  run("renderTrade 空清單", () => ui.renderTrade(store.emptyBook(), "zh", t));
+  run("renderTrade 三份分頁都在", () => {
+    const many = store.emptyBook();
+    many.lists[1].name = "朋友那份";
+    many.active = 1;
+    ui.renderTrade(many, "zh", t);
+    const n = (els.app.innerHTML.match(/data-list="/g) || []).length;
+    if (n !== store.LIST_COUNT) throw new Error(`分頁有 ${n} 個`);
+    if (!els.app.innerHTML.includes('data-list="1"\n               aria-pressed="true"'))
+      throw new Error("目前這一份沒有標起來");
+  });
+  run("renderTrade 兩欄都有加號", () => {
+    ui.renderTrade(book, "zh", t);
+    const n = (els.app.innerHTML.match(/data-addcell="/g) || []).length;
+    if (n !== 2) throw new Error(`加號有 ${n} 個`);
+  });
+  run("renderPicker", () => ui.renderPicker({ col: "want", query: "" }, "zh", t));
+  run("renderPicker 搜尋", () =>
+    ui.renderPicker({ col: "have", query: "皮卡丘" }, "zh", t)
   );
-  run("renderTrade 空清單", () => ui.renderTrade(store.emptyData(), "zh", t));
+  run("renderPicker 沒有結果", () =>
+    ui.renderPicker({ col: "want", query: "zzzzz" }, "zh", t)
+  );
+  run("renderDetail 從加號進來有返回鈕", () => {
+    ui.renderDetail("d150", data, "zh", t, null, null, true);
+    if (!els.panel.innerHTML.includes("data-pickback"))
+      throw new Error("沒有返回鈕");
+  });
   run("renderBg", () => ui.renderBg(BG_STATE, "zh", t));
   run("renderBg 展開一個收納夾", () =>
     ui.renderBg({ ...BG_STATE, open: new Set(["gofest"]) }, "zh", t)
@@ -386,8 +457,7 @@ console.log("\n5. 繪製函式");
       (x) => bg.cardsFor(x).length >= 2
     );
     const picks = bg.cardsFor(id);
-    const multi = store.normalize({
-      v: 1,
+    const multi = store.normalizeList({
       want: [
         { id, bg: picks[0].card.id },
         { id, bg: picks[1].card.id },
@@ -407,7 +477,7 @@ console.log("\n5. 繪製函式");
       (x) => bg.cardsFor(x).length >= 1
     );
     const card = bg.cardsFor(id)[0].card.id;
-    ui.renderDetail(id, store.emptyData(), "zh", t, {
+    ui.renderDetail(id, store.emptyList(), "zh", t, {
       shiny: false,
       xxl: true,
       xxs: false,
@@ -452,7 +522,7 @@ console.log("\n5. 繪製函式");
     const tl = makeT(l.code);
     run(`三語繪製 ${l.code}`, () => {
       ui.renderGrid(dex.ENTRIES.slice(0, 30), data, l.code, tl);
-      ui.renderTrade(data, l.code, tl);
+      ui.renderTrade(book, l.code, tl);
       ui.renderBg(BG_STATE, l.code, tl);
       ui.renderDetail("d150", data, l.code, tl);
     });
@@ -463,10 +533,10 @@ console.log("\n6. 逸出");
 {
   const evil = '<img src=x onerror=alert(1)>';
   ok("esc 會擋掉標籤", !ui.esc(evil).includes("<img"));
-  const data = store.emptyData();
-  data.want.push(store.newItem("d150"));
-  data.name.want = evil;
-  ui.renderTrade(data, "zh", makeT("zh"));
+  const book = store.emptyBook();
+  book.lists[0].want.push(store.newItem("d150"));
+  book.lists[0].name = evil;
+  ui.renderTrade(book, "zh", makeT("zh"));
   ok("清單名稱不會直接插進 HTML", !els.app.innerHTML.includes("<img src=x"));
 }
 
