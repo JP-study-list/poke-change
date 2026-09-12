@@ -214,11 +214,18 @@ select {
   text-overflow: ellipsis;
 }
 
+/*
+ * 語言與齒輪永遠貼著右緣。
+ *
+ * 靠 margin-left 自己推，不靠別人撐開：手機上三個檢視是 fixed 的，
+ * 離開流排之後頂部列沒有任何東西會長大，這一段就會縮回標題旁邊。
+ */
 .top-right {
   position: relative; /* 設定面板的定位基準 */
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left: auto;
 }
 
 /*
