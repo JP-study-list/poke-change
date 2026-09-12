@@ -82,7 +82,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 檔案 | 匯出 | 用途 |
 | --- | --- | --- |
-| `js/godex.js` | `GODEX` `GODEX_COUNT` | **自動產生，不要手改。** 1433 個條目，含 dex / 型態 / 裝扮 / 三語名 / 屬性 / 稀有度 / 圖檔名 / 有無異色 / IV100 的 `cp20` `cp25` `cp50` |
+| `js/godex.js` | `GODEX` `GODEX_COUNT` | **自動產生，不要手改。** 1431 個條目，含 dex / 型態 / 裝扮 / 三語名 / 屬性 / 稀有度 / 圖檔名 / 有無異色 / IV100 的 `cp20` `cp25` `cp50` |
 | `js/extra.js` | `PIKA_EXTRA` `DB_EXTRA` `ALIAS` `MISSING_ICON` `extraEntries()` | 手動補 godex 缺的 29 筆：22 種 Choggor 的裝扮皮卡丘、5 種只有 Dittobase 有圖的裝扮，以及沒有 GO 圖示的捷拉奧拉與纏紅鶴 |
 | `js/costumes.js` | `COSTUME_NAMES` `costumeName()` | 裝扮的三語譯名。**遊戲內裝扮沒有官方名稱**，只能自己取，這是唯一來源 |
 | `js/bgdata.js` | `BG_CARDS` `BG_CARD_COUNT` | **自動產生，不要手改。** 240 張背卡骨架，含代號、上游檔名、收納夾、英文名、日期、特效層旗標與寶可夢清單 |
@@ -97,7 +97,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | --- | --- | --- |
 | `js/backgrounds.js` | `CARDS` `FOLDERS` `findCard` `bgUrl` `bgAttrs` `bgSources` `cardName` `folderName` `allCards` `entriesOf` `cardsFor` `allBgEntryIds` `totalCardSlots` | 合併骨架與手工資料，240 張背卡 / 23 個收納夾 / 1579 個收集格 |
 | `js/imgchain.js` | `imgAttrs` | 圖片備援鏈。dex 與 backgrounds 共用，獨立成檔是為了不讓那兩個檔繞成一圈 |
-| `js/dex.js` | `ENTRIES` `find` `fullName` `speciesName` `formName` `iconAttrs` `hasShiny` `search` `FILTER_GROUPS` `GROUP_KEYS` `emptyFilter` `normalizeFilter` `applyFilter` `filterCount` `goUrl` `artUrl` | 合併 godex 與 extra，1462 個條目。負責名稱組合、搜尋、篩選、圖片備援鏈 |
+| `js/dex.js` | `ENTRIES` `find` `fullName` `speciesName` `formName` `iconAttrs` `hasShiny` `search` `FILTER_GROUPS` `GROUP_KEYS` `emptyFilter` `normalizeFilter` `applyFilter` `filterCount` `goUrl` `artUrl` | 合併 godex 與 extra，1460 個條目。負責名稱組合、搜尋、篩選、圖片備援鏈 |
 | `js/store.js` | `emptyList` `emptyBook` `current` `newItem` `normalize` `normalizeList` `load` `save` `flush` `clearList` `toJSON` `fromJSON` `exportName` `cleanCode` `formatCode` `MAX_ITEMS` `COLUMNS` `LIST_COUNT` | localStorage 讀寫。三份清單裝在一個 key 裡，`current()` 取目前那一份。**任何讀進來的資料都不信任**，一律過 `normalize` |
 
 ### 繪製層

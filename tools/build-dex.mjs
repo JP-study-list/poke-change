@@ -191,6 +191,21 @@ async function main() {
    * 兩筆都留的話圖鑑會出現兩張長得一模一樣的卡，所以合併成一筆，
    * 保留 id 較短的那個，異色只要有一邊有就算有。
    */
+  /**
+   * 外觀一樣、只有遊戲機制不同的型態代碼。左邊併進右邊。
+   *
+   * 基格爾德的 `COMPLETE_` 前綴代表細胞已經收集滿、可以變成完全體，
+   * 跟不帶前綴的那筆圖檔逐位元組相同、基礎數值也相同，
+   * 留兩筆就是兩張一模一樣的卡掛著兩個不同的 id。跟 `_NOEVOLVE` 同一類。
+   *
+   * 這裡一筆一筆指名，不寫成「去掉 COMPLETE_ 前綴」那種規則：
+   * `COMPLETE` 自己是獨立的形態（完全體），規則化會把它也吃掉。
+   */
+  const SAME_LOOK = {
+    "718|COMPLETE_FIFTY_PERCENT": "FIFTY_PERCENT",
+    "718|COMPLETE_TEN_PERCENT": "TEN_PERCENT",
+  };
+
   const merged = new Map();
   let mergedCount = 0;
   for (const [id, e] of entries) {
@@ -199,6 +214,7 @@ async function main() {
     const codes = [e.form, e.costume]
       .filter(Boolean)
       .map((c) => c.replace("_NOEVOLVE", ""))
+      .map((c) => SAME_LOOK[`${e.dex}|${c}`] || c)
       .sort();
     const key = `${e.dex}|${codes.join("+")}`;
     const kept = merged.get(key);
@@ -386,6 +402,11 @@ async function main() {
     UNREMARKABLE: ["凡作", "ぼんさく", "Unremarkable"],
     COIN_A1: ["寶箱的樣子", "はこのすがた", "Chest Form"],
     NEUTRAL: ["活力滿溢的樣子", "アクティブモード", "Active Mode"],
+    // 基格爾德。語言檔只給了帶 COMPLETE_ 前綴那兩個的中日文，
+    // 而那兩筆因為外觀重複被併掉了，留下來的這三個查不到，要自己指定
+    COMPLETE: ["完全體形態", "パーフェクトフォルム", "Complete Forme"],
+    FIFTY_PERCENT: ["５０％形態", "５０％フォルム", "50% Forme"],
+    TEN_PERCENT: ["１０％形態", "１０％フォルム", "10% Forme"],
   };
   for (let i = 0; i <= 8; i++) {
     const n = String(i).padStart(2, "0");

@@ -202,6 +202,28 @@ console.log("\n2. 圖鑑條目");
     for (const id of ["d705.fHISUIAN", "d706.fHISUIAN"]) {
       ok(`${id} 還沒實裝，不該在圖鑑裡`, !dex.find(id));
     }
+
+    /*
+     * 基格爾德是三筆不是五筆。
+     *
+     * 上游另外給了 COMPLETE_FIFTY_PERCENT 與 COMPLETE_TEN_PERCENT，
+     * 那是細胞收集滿了可以變身的狀態，圖檔跟不帶前綴的逐位元組相同、
+     * 基礎數值也相同。留兩筆就是兩張一模一樣的卡掛著兩個不同的 id。
+     * 合併規則在 build-dex.mjs 的 SAME_LOOK。
+     */
+    {
+      const zy = dex.ENTRIES.filter((e) => e.dex === 718);
+      ok(`基格爾德是 3 筆`, zy.length === 3, `現在是 ${zy.map((e) => e.id).join(", ")}`);
+      for (const id of ["d718.fCOMPLETE_FIFTY_PERCENT", "d718.fCOMPLETE_TEN_PERCENT"]) {
+        ok(`${id} 已經併掉，不該存在`, !dex.find(id));
+      }
+      const named = zy.filter((e) => /[\u4e00-\u9fff]/.test(e.zhForm || ""));
+      ok(
+        "基格爾德三筆都有中文型態名",
+        named.length === 3,
+        `沒有的是 ${zy.filter((e) => !/[\u4e00-\u9fff]/.test(e.zhForm || "")).map((e) => e.zhForm).join(", ")}`
+      );
+    }
   }
 
   const names = new Map();

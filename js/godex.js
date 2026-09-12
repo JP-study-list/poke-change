@@ -23,7 +23,7 @@
  * 裝扮沒有官方名稱，遊戲內只顯示物種名。譯名見 js/costumes.js。
  *
  * 產生時間：2026-09-12
- * 條目數：1433
+ * 條目數：1431
  */
 
 export const GODEX = [
@@ -1206,11 +1206,9 @@ export const GODEX = [
   {"id":"d716", "dex":716,"zh":"哲爾尼亞斯", "ja":"ゼルネアス", "en":"Xerneas", "kind":"base", "types":["fairy"],"cls":"legendary", "cp20":2160,"cp25":2701,"cp50":4275,"icon":"pm716.icon.png", "shinyIcon":"pm716.s.icon.png"},
   {"id":"d716.fNEUTRAL", "dex":716,"form":"NEUTRAL", "zh":"哲爾尼亞斯", "ja":"ゼルネアス", "en":"Xerneas", "zhForm":"活力滿溢的樣子", "jaForm":"アクティブモード", "enForm":"Active Mode", "kind":"form", "types":["fairy"],"cls":"legendary", "cp20":2160,"cp25":2701,"cp50":4275,"icon":"pm716.fNEUTRAL.icon.png", "shinyIcon":"pm716.fNEUTRAL.s.icon.png"},
   {"id":"d717", "dex":717,"zh":"伊裴爾塔爾", "ja":"イベルタル", "en":"Yveltal", "kind":"base", "types":["dark", "flying"],"cls":"legendary", "cp20":2160,"cp25":2701,"cp50":4275,"icon":"pm717.icon.png", "shinyIcon":"pm717.s.icon.png"},
-  {"id":"d718.fCOMPLETE", "dex":718,"form":"COMPLETE", "zh":"基格爾德", "ja":"ジガルデ", "en":"Zygarde", "zhForm":"Complete Forme", "jaForm":"パーフェクトフォルム", "enForm":"Complete Forme", "kind":"form", "types":["dragon", "ground"],"cls":"legendary", "cp20":2126,"cp25":2658,"cp50":4208,"icon":"pm718.fCOMPLETE.icon.png", "shinyIcon":"pm718.fCOMPLETE.s.icon.png"},
-  {"id":"d718.fCOMPLETE_FIFTY_PERCENT", "dex":718,"form":"COMPLETE_FIFTY_PERCENT", "zh":"基格爾德", "ja":"ジガルデ", "en":"Zygarde", "zhForm":"５０％形態", "jaForm":"５０％フォルム", "enForm":"50% Forme", "kind":"form", "types":["dragon", "ground"],"cls":"legendary", "cp20":1948,"cp25":2436,"cp50":3855,"icon":"pm718.fCOMPLETE_FIFTY_PERCENT.icon.png", "shinyIcon":"pm718.fCOMPLETE_FIFTY_PERCENT.s.icon.png"},
-  {"id":"d718.fCOMPLETE_TEN_PERCENT", "dex":718,"form":"COMPLETE_TEN_PERCENT", "zh":"基格爾德", "ja":"ジガルデ", "en":"Zygarde", "zhForm":"１０％形態", "jaForm":"１０％フォルム", "enForm":"10% Forme", "kind":"form", "types":["dragon", "ground"],"cls":"legendary", "cp20":1357,"cp25":1696,"cp50":2685,"icon":"pm718.fCOMPLETE_TEN_PERCENT.icon.png", "shinyIcon":"pm718.fCOMPLETE_TEN_PERCENT.s.icon.png"},
-  {"id":"d718.fFIFTY_PERCENT", "dex":718,"form":"FIFTY_PERCENT", "zh":"基格爾德", "ja":"ジガルデ", "en":"Zygarde", "zhForm":"50% Forme", "jaForm":"５０％フォルム", "enForm":"50% Forme", "kind":"form", "types":["dragon", "ground"],"cls":"legendary", "cp20":1948,"cp25":2436,"cp50":3855,"icon":"pm718.fFIFTY_PERCENT.icon.png", "shinyIcon":"pm718.fFIFTY_PERCENT.s.icon.png"},
-  {"id":"d718.fTEN_PERCENT", "dex":718,"form":"TEN_PERCENT", "zh":"基格爾德", "ja":"ジガルデ", "en":"Zygarde", "zhForm":"10% Forme", "jaForm":"１０％フォルム", "enForm":"10% Forme", "kind":"form", "types":["dragon", "ground"],"cls":"legendary", "cp20":1357,"cp25":1696,"cp50":2685,"icon":"pm718.fTEN_PERCENT.icon.png", "shinyIcon":"pm718.fTEN_PERCENT.s.icon.png"},
+  {"id":"d718.fCOMPLETE", "dex":718,"form":"COMPLETE", "zh":"基格爾德", "ja":"ジガルデ", "en":"Zygarde", "zhForm":"完全體形態", "jaForm":"パーフェクトフォルム", "enForm":"Complete Forme", "kind":"form", "types":["dragon", "ground"],"cls":"legendary", "cp20":2126,"cp25":2658,"cp50":4208,"icon":"pm718.fCOMPLETE.icon.png", "shinyIcon":"pm718.fCOMPLETE.s.icon.png"},
+  {"id":"d718.fFIFTY_PERCENT", "dex":718,"form":"FIFTY_PERCENT", "zh":"基格爾德", "ja":"ジガルデ", "en":"Zygarde", "zhForm":"５０％形態", "jaForm":"５０％フォルム", "enForm":"50% Forme", "kind":"form", "types":["dragon", "ground"],"cls":"legendary", "cp20":1948,"cp25":2436,"cp50":3855,"icon":"pm718.fFIFTY_PERCENT.icon.png", "shinyIcon":"pm718.fFIFTY_PERCENT.s.icon.png"},
+  {"id":"d718.fTEN_PERCENT", "dex":718,"form":"TEN_PERCENT", "zh":"基格爾德", "ja":"ジガルデ", "en":"Zygarde", "zhForm":"１０％形態", "jaForm":"１０％フォルム", "enForm":"10% Forme", "kind":"form", "types":["dragon", "ground"],"cls":"legendary", "cp20":1357,"cp25":1696,"cp50":2685,"icon":"pm718.fTEN_PERCENT.icon.png", "shinyIcon":"pm718.fTEN_PERCENT.s.icon.png"},
   {"id":"d719", "dex":719,"zh":"蒂安希", "ja":"ディアンシー", "en":"Diancie", "kind":"base", "types":["rock", "fairy"],"cls":"mythic", "cp20":1562,"cp25":1953,"cp50":3091,"icon":"pm719.icon.png", "shinyIcon":"pm719.s.icon.png"},
   {"id":"d720", "dex":720,"zh":"胡帕", "ja":"フーパ", "en":"Hoopa", "kind":"base", "types":["psychic", "ghost"],"cls":"mythic", "cp20":1919,"cp25":2399,"cp50":3797,"icon":"pm720.icon.png"},
   {"id":"d720.fCONFINED", "dex":720,"form":"CONFINED", "zh":"胡帕", "ja":"フーパ", "en":"Hoopa", "zhForm":"懲戒胡帕", "jaForm":"いましめられしフーパ", "enForm":"Hoopa Confined", "kind":"form", "types":["psychic", "ghost"],"cls":"mythic", "cp20":1919,"cp25":2399,"cp50":3797,"icon":"pm720.fCONFINED.icon.png"},
