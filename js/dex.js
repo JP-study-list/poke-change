@@ -103,9 +103,44 @@ export function fullName(e, lang) {
 export function iconAttrs(e, shiny) {
   if (!e) return "";
   // 外部來源的裝扮沒有異色圖，一律顯示一般版
-  if (e.art) return imgAttrs([e.art, artUrl(e.dex)]);
+  if (e.art) return imgAttrs([e.art, artUrl(e.dex)]) + zoomAttr(e);
   const main = shiny && e.shinyIcon ? e.shinyIcon : e.icon;
   return imgAttrs([goUrl(main), goUrl(e.icon), artUrl(e.dex)]);
+}
+
+/*
+ * 主體佔畫布 98% 時看起來跟 PokeMiners 那批一樣大。
+ * 那批量過是 96~99%，取中間偏上的整數。
+ */
+const FILL_TARGET = 0.98;
+
+/**
+ * 放大倍率。extra.js 那批圖四周有大量透明留白，
+ * `object-fit: contain` 依畫布縮放，不補這一下就只有別人的四成大。
+ *
+ * 倍率逐張算，因為每張的留白都不一樣（量出來是 37~43%），
+ * 乘同一個數字仍然會差 15 個百分點。
+ * 已經滿版的（`fill: 1`）不輸出，省得每個 `<img>` 都掛一個 1。
+ */
+export function iconZoom(e) {
+  const fill = e && e.fill;
+  if (!fill || fill >= FILL_TARGET) return 1;
+  return Math.round((FILL_TARGET / fill) * 100) / 100;
+}
+
+/**
+ * 主體中心離圖框中心多遠，以圖框邊長為單位。
+ * 放大之後這個偏移也會放大，要靠 translate 抵銷回來。
+ */
+export const iconOffset = (e) => ({ x: (e && e.offX) || 0, y: (e && e.offY) || 0 });
+
+/* CSS 變數形式。備援圖是滿版的，所以換了來源要清掉，見 imgchain.js */
+function zoomAttr(e) {
+  const z = iconZoom(e);
+  if (z <= 1) return "";
+  const { x, y } = iconOffset(e);
+  const pct = (n) => `${Math.round(n * 1000) / 10}%`;
+  return ` style="--iz:${z};--ix:${pct(x)};--iy:${pct(y)}"`;
 }
 
 /** 這個條目有沒有異色可以收 */

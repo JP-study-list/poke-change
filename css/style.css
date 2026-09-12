@@ -1168,6 +1168,30 @@ select {
   display: block;
 }
 
+/*
+ * extra.js 那批圖四周有大量透明留白，`contain` 依畫布縮放，
+ * 不放大回來就只有 PokeMiners 那批的四成大。
+ *
+ * 放大之外還要平移：那批圖的主體不在畫布正中央（偏下約 19%），
+ * 只 scale 的話偏移也跟著放大，腳會壓到底下的名稱。
+ * 三個值都由 dex.js 的 iconAttrs 寫成 CSS 變數，逐張算。
+ *
+ * **順序不能顛倒**：`scale` 寫在前面，translate 的位移才會跟著放大，
+ * 而位移本來就是要抵銷「放大後的偏移」。
+ *
+ * translate 的百分比是相對元素算的，所以元素必須等於圖框：
+ * 這批圖都是正方形畫布，`.cell img` 平常是滿版寬、圖框只有那麼高，
+ * 所以帶倍率的那些收成正方形再置中。交換表那邊改用 margin 達成同一件事。
+ */
+img[style*="--iz"] {
+  transform: scale(var(--iz, 1)) translate(calc(var(--ix, 0px) * -1), calc(var(--iy, 0px) * -1));
+}
+
+.cell img[style*="--iz"] {
+  width: var(--cell-img);
+  margin-inline: auto;
+}
+
 /* 屬性色帶。雙屬性兩段，等寬 */
 .cell .band {
   display: flex;
@@ -1723,11 +1747,17 @@ body.no-names .cell .no {
   background: var(--card);
 }
 
+/*
+ * 留白用 margin 不用 padding，兩者視覺等價（方塊是正方形，
+ * contain 之後圖框一樣大），但 margin 會讓元素本身就等於圖框。
+ * 那批有透明留白的圖要靠 translate 修正偏移，而 translate 的百分比
+ * 是相對元素算的，元素比圖框大就會平移過頭。
+ */
 .want-cell img {
   position: relative;
-  width: 100%;
-  height: 100%;
-  padding: 8%;
+  width: 84%;
+  height: 84%;
+  margin: 8%;
   object-fit: contain;
 }
 
@@ -1737,7 +1767,9 @@ body.no-names .cell .no {
  * 所以沒指定背卡的格子維持原本的大小——那些格子沒有要讓給誰。
  */
 .want-bg + img {
-  padding: 18%;
+  width: 64%;
+  height: 64%;
+  margin: 18%;
 }
 
 /*

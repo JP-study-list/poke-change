@@ -7,6 +7,7 @@
  * 檢查項目：
  *   1. 三語 i18n key 完全一致
  *   1b. 版本號的格式，以及 VERSION.md 與 js/version.js 沒有寫岔
+ *   1c. extra.js 那批圖都有 fill，放大倍率算得出來
  *   2. 圖鑑條目欄位完整、id 不重複
  *   3. 背卡引用的條目都存在
  *   4. 儲存讀取往返後資料不變
@@ -143,6 +144,26 @@ console.log("\n1b. 版本號");
     ok(`md 最新一筆是 ${first[1]}`, first[1] === VERSION, `模組是 ${VERSION}`);
     ok(`md 的日期是 ${first[2]}`, first[2] === VERSION_DATE, `模組是 ${VERSION_DATE}`);
   }
+}
+
+console.log("\n1c. extra 的圖片留白");
+{
+  /*
+   * extra.js 那批圖畫在 256×256 的畫布上、四周是透明留白，
+   * 每一筆都要有量出來的 fill，否則畫面上會退回 1 倍、只有別人的四成大。
+   * 數字對不對是 `tools/measure-icons.mjs` 的事（那個要連外網），
+   * 這裡只確保欄位沒有漏掉、值在合理範圍。
+   */
+  const withArt = dex.ENTRIES.filter((e) => e.art);
+  const noFill = withArt.filter((e) => typeof e.fill !== "number");
+  ok(`外部圖 ${withArt.length} 筆都有 fill`, !noFill.length, noFill.map((e) => e.id).join(","));
+  const bad = withArt.filter((e) => e.fill <= 0 || e.fill > 1);
+  ok("fill 都在 0 到 1 之間", !bad.length, bad.map((e) => e.id).join(","));
+
+  const zoomed = withArt.filter((e) => dex.iconZoom(e) > 1);
+  ok(`${zoomed.length} 筆需要放大`, zoomed.length === withArt.length - 1, "只有曠野地帶那張是滿版的");
+  const over = zoomed.filter((e) => dex.iconZoom(e) > 3);
+  ok("倍率都不超過 3", !over.length, over.map((e) => `${e.id} ${dex.iconZoom(e)}`).join(","));
 }
 
 console.log("\n2. 圖鑑條目");

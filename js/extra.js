@@ -15,6 +15,17 @@
  * 例如 godex 的 `HALLOWEEN_2021_NOEVOLVE` 等於這邊的 `halloween-2021`。
  * 少數命名不同的用 ALIAS 對起來，避免同一個裝扮列兩次。
  *
+ * ── fill / offX / offY 是什麼 ──
+ * 主體佔畫布的比例，以及主體中心離畫布中心多遠，
+ * 都是 `tools/measure-icons.mjs` 量出來的。
+ * PokeMiners 的圖是緊貼裁切的（佔 96~99%），這裡兩個來源都畫在
+ * 256×256 的畫布上、四周全是透明留白（佔 37~43%），
+ * 畫面用 `object-fit: contain` 依畫布縮放，不補這個值就只有別人的四成大。
+ * **每一張的留白都不一樣**，所以逐張記，不要乘同一個數字。
+ * 偏移也要記：主體不在畫布正中央（偏下約 19%），只放大不平移的話
+ * 偏移會跟著放大，腳會壓到格子底下的名稱。
+ * 換圖之後重跑 `node tools/measure-icons.mjs` 就知道哪幾筆要改。
+ *
  * ── 代價 ──
  * 這些圖來自個人專案，沒有異色版本，所以標了異色也是顯示一般圖。
  * 哪天 PokeMiners 補上了，重跑 tools/build-dex.mjs 就會自動接手，
@@ -64,6 +75,9 @@ export const MISSING_ICON = [
     cp50: 3865,
     icon: null,
     art: ART_BASE + "807.png",
+    fill: 0.945,
+    offX: 0.004,
+    offY: 0.013,
   },
   {
     id: "d973",
@@ -79,6 +93,9 @@ export const MISSING_ICON = [
     cp50: 3117,
     icon: null,
     art: ART_BASE + "973.png",
+    fill: 0.924,
+    offX: -0.001,
+    offY: 0,
   },
 ];
 
@@ -91,28 +108,28 @@ export const ALIAS = {
 
 /** godex 沒有的裝扮 */
 export const PIKA_EXTRA = [
-  { id:"anniversary-2026", file:"25-pikachu-anniversary-2026.png", zh:"威洛博士助手", ja:"ウィロー博士の助手", en:"Professor Willow's Assistant" },
-  { id:"baseball-shirt", file:"25-pikachu-baseball-shirt.png", zh:"棒球衫", ja:"ベースボールシャツ", en:"Baseball Shirt" },
-  { id:"dapper-blue", file:"25-pikachu-dapper-blue.png", zh:"紳士藍", ja:"ダッパーブルー", en:"Dapper Blue" },
-  { id:"dapper-red", file:"25-pikachu-dapper-red.png", zh:"紳士紅", ja:"ダッパーレッド", en:"Dapper Red" },
-  { id:"dapper-yellow", file:"25-pikachu-dapper-yellow.png", zh:"紳士黃", ja:"ダッパーイエロー", en:"Dapper Yellow" },
-  { id:"ethans-hat", file:"25-pikachu-ethans-hat.png", zh:"小金帽", ja:"ヒビキの帽子", en:"Ethan's Hat" },
-  { id:"fossil-2026", file:"25-pikachu-fossil-2026.png", zh:"化石", ja:"かせき", en:"Fossil" },
-  { id:"gofest-2022-gracidea-flower", file:"25-pikachu-gofest-2022-gracidea-flower.png", zh:"謝米花", ja:"グラシデアの花", en:"Shaymin Flower" },
-  { id:"gofest-2026-cap-blue", file:"25-pikachu-gofest-2026-cap-blue.png", zh:"神秘隊帽", ja:"ミスティックキャップ", en:"Mystic Cap" },
-  { id:"gofest-2026-cap-red", file:"25-pikachu-gofest-2026-cap-red.png", zh:"勇氣隊帽", ja:"ヴァーラーキャップ", en:"Valor Cap" },
-  { id:"gofest-2026-cap-yellow", file:"25-pikachu-gofest-2026-cap-yellow.png", zh:"直覺隊帽", ja:"インスティンクトキャップ", en:"Instinct Cap" },
-  { id:"gotour-2026-calems-hat", file:"25-pikachu-gotour-2026-calems-hat.png", zh:"卡爾姆帽", ja:"カルムの帽子", en:"Calem's Hat" },
-  { id:"gotour-2026-serenas-hat", file:"25-pikachu-gotour-2026-serenas-hat.png", zh:"莎莉娜帽", ja:"セレナの帽子", en:"Serena's Hat" },
-  { id:"hilbert", file:"25-pikachu-hilbert.png", zh:"小黑帽", ja:"トウヤの帽子", en:"Hilbert's Hat" },
-  { id:"hilda", file:"25-pikachu-hilda.png", zh:"小白帽", ja:"トウコの帽子", en:"Hilda's Hat" },
-  { id:"indonesia-football", file:"25-pikachu-indonesia-football.png", zh:"印尼足球", ja:"インドネシアサッカー", en:"Indonesia Football" },
-  { id:"leafs-hat", file:"25-pikachu-leafs-hat.png", zh:"小綠帽", ja:"グリーンの帽子", en:"Leaf's Hat" },
-  { id:"lyras-hat", file:"25-pikachu-lyras-hat.png", zh:"琴音帽", ja:"コトネの帽子", en:"Lyra's Hat" },
-  { id:"nate", file:"25-pikachu-nate.png", zh:"小南遮陽帽", ja:"キョウヘイのバイザー", en:"Nate's Visor" },
-  { id:"reds-hat", file:"25-pikachu-reds-hat.png", zh:"赤紅帽", ja:"レッドの帽子", en:"Red's Hat" },
-  { id:"rosa", file:"25-pikachu-rosa.png", zh:"小芽遮陽帽", ja:"メイのバイザー", en:"Rosa's Visor" },
-  { id:"visor-2026", file:"25-pikachu-visor-2026.png", zh:"馬拉松", ja:"マラソン", en:"Marathon" },
+  { id:"anniversary-2026", file:"25-pikachu-anniversary-2026.png", zh:"威洛博士助手", ja:"ウィロー博士の助手", en:"Professor Willow's Assistant", fill:0.395, offX:0.053, offY:0.189 },
+  { id:"baseball-shirt", file:"25-pikachu-baseball-shirt.png", zh:"棒球衫", ja:"ベースボールシャツ", en:"Baseball Shirt", fill:0.398, offX:0.066, offY:0.188 },
+  { id:"dapper-blue", file:"25-pikachu-dapper-blue.png", zh:"紳士藍", ja:"ダッパーブルー", en:"Dapper Blue", fill:0.414, offX:0.051, offY:0.18 },
+  { id:"dapper-red", file:"25-pikachu-dapper-red.png", zh:"紳士紅", ja:"ダッパーレッド", en:"Dapper Red", fill:0.414, offX:0.051, offY:0.18 },
+  { id:"dapper-yellow", file:"25-pikachu-dapper-yellow.png", zh:"紳士黃", ja:"ダッパーイエロー", en:"Dapper Yellow", fill:0.414, offX:0.051, offY:0.18 },
+  { id:"ethans-hat", file:"25-pikachu-ethans-hat.png", zh:"小金帽", ja:"ヒビキの帽子", en:"Ethan's Hat", fill:0.43, offX:0.086, offY:0.176 },
+  { id:"fossil-2026", file:"25-pikachu-fossil-2026.png", zh:"化石", ja:"かせき", en:"Fossil", fill:0.387, offX:0.043, offY:0.189 },
+  { id:"gofest-2022-gracidea-flower", file:"25-pikachu-gofest-2022-gracidea-flower.png", zh:"謝米花", ja:"グラシデアの花", en:"Shaymin Flower", fill:0.41, offX:0.072, offY:0.189 },
+  { id:"gofest-2026-cap-blue", file:"25-pikachu-gofest-2026-cap-blue.png", zh:"神秘隊帽", ja:"ミスティックキャップ", en:"Mystic Cap", fill:0.418, offX:0.076, offY:0.178 },
+  { id:"gofest-2026-cap-red", file:"25-pikachu-gofest-2026-cap-red.png", zh:"勇氣隊帽", ja:"ヴァーラーキャップ", en:"Valor Cap", fill:0.426, offX:0.076, offY:0.174 },
+  { id:"gofest-2026-cap-yellow", file:"25-pikachu-gofest-2026-cap-yellow.png", zh:"直覺隊帽", ja:"インスティンクトキャップ", en:"Instinct Cap", fill:0.418, offX:0.076, offY:0.178 },
+  { id:"gotour-2026-calems-hat", file:"25-pikachu-gotour-2026-calems-hat.png", zh:"卡爾姆帽", ja:"カルムの帽子", en:"Calem's Hat", fill:0.422, offX:0.074, offY:0.178 },
+  { id:"gotour-2026-serenas-hat", file:"25-pikachu-gotour-2026-serenas-hat.png", zh:"莎莉娜帽", ja:"セレナの帽子", en:"Serena's Hat", fill:0.406, offX:0.078, offY:0.184 },
+  { id:"hilbert", file:"25-pikachu-hilbert.png", zh:"小黑帽", ja:"トウヤの帽子", en:"Hilbert's Hat", fill:0.402, offX:0.074, offY:0.186 },
+  { id:"hilda", file:"25-pikachu-hilda.png", zh:"小白帽", ja:"トウコの帽子", en:"Hilda's Hat", fill:0.402, offX:0.078, offY:0.186 },
+  { id:"indonesia-football", file:"25-pikachu-indonesia-football.png", zh:"印尼足球", ja:"インドネシアサッカー", en:"Indonesia Football", fill:0.398, offX:0.064, offY:0.188 },
+  { id:"leafs-hat", file:"25-pikachu-leafs-hat.png", zh:"小綠帽", ja:"グリーンの帽子", en:"Leaf's Hat", fill:0.418, offX:0.074, offY:0.197 },
+  { id:"lyras-hat", file:"25-pikachu-lyras-hat.png", zh:"琴音帽", ja:"コトネの帽子", en:"Lyra's Hat", fill:0.422, offX:0.08, offY:0.176 },
+  { id:"nate", file:"25-pikachu-nate.png", zh:"小南遮陽帽", ja:"キョウヘイのバイザー", en:"Nate's Visor", fill:0.402, offX:0.084, offY:0.186 },
+  { id:"reds-hat", file:"25-pikachu-reds-hat.png", zh:"赤紅帽", ja:"レッドの帽子", en:"Red's Hat", fill:0.422, offX:0.08, offY:0.176 },
+  { id:"rosa", file:"25-pikachu-rosa.png", zh:"小芽遮陽帽", ja:"メイのバイザー", en:"Rosa's Visor", fill:0.402, offX:0.084, offY:0.186 },
+  { id:"visor-2026", file:"25-pikachu-visor-2026.png", zh:"馬拉松", ja:"マラソン", en:"Marathon", fill:0.402, offX:0.074, offY:0.186 },
 ];
 
 /**
@@ -129,15 +146,15 @@ export const PIKA_EXTRA = [
  */
 export const DB_EXTRA = [
   { dex: 25, code: "WCS_2026", file: "25-pikachu-wcs-2026.png",
-    zh: "2026 世界錦標賽", ja: "2026世界大会", en: "World Championships 2026" },
+    zh: "2026 世界錦標賽", ja: "2026世界大会", en: "World Championships 2026", fill: 0.422, offX: 0.066, offY: 0.172 },
   { dex: 25, code: "PXP_2026", file: "25-pikachu-pxp-2026.png",
-    zh: "玩偶裝", ja: "きぐるみ", en: "Mascot Suit" },
+    zh: "玩偶裝", ja: "きぐるみ", en: "Mascot Suit", fill: 0.426, offX: 0.057, offY: 0.186 },
   { dex: 132, code: "CAP", file: "132-ditto-cap.png",
-    zh: "白鴨舌帽", ja: "白いキャップ", en: "White Cap" },
+    zh: "白鴨舌帽", ja: "白いキャップ", en: "White Cap", fill: 0.367, offX: -0.004, offY: 0.207 },
   { dex: 132, code: "HAT", file: "132-ditto-hat.png",
-    zh: "金色派對帽", ja: "金のパーティーハット", en: "Gold Party Hat" },
+    zh: "金色派對帽", ja: "金のパーティーハット", en: "Gold Party Hat", fill: 0.367, offX: -0.004, offY: 0.215 },
   { dex: 760, code: "WILDAREA_2025", file: "760-bewear-wildarea-2025.png",
-    zh: "2025 曠野地帶", ja: "2025ワイルドエリア", en: "Wild Area 2025" },
+    zh: "2025 曠野地帶", ja: "2025ワイルドエリア", en: "Wild Area 2025", fill: 1, offX: 0, offY: 0 },
 ];
 
 /** 從 godex 找本體那筆，用來借物種名稱、屬性與稀有度 */
@@ -177,6 +194,9 @@ export function dbExtraEntries() {
         ...cpOf(base),
         icon: null,
         art: LOCAL_EXTRA + c.file,
+        fill: c.fill,
+        offX: c.offX,
+        offY: c.offY,
       },
     ];
   });
@@ -201,6 +221,9 @@ export function pikaExtraEntries() {
     ...cpOf(base),
     icon: null,
     art: REMOTE_BASE + c.file,
+    fill: c.fill,
+    offX: c.offX,
+    offY: c.offY,
   }));
 }
 

@@ -27,6 +27,8 @@ import {
   formName,
   goUrl,
   artUrl,
+  iconZoom,
+  iconOffset,
 } from "./dex.js";
 import { findCard, bgSources } from "./backgrounds.js";
 import { formatCode } from "./store.js";
@@ -108,11 +110,23 @@ async function loadBg(cardId) {
   return null;
 }
 
-/** 依條目取圖，順序跟畫面上的備援鏈一致 */
+/**
+ * 依條目取圖，順序跟畫面上的備援鏈一致。
+ *
+ * 主圖載到的話把放大倍率掛在 img 上（`__zoom`），畫的時候要用。
+ * **退回官方立繪時不掛**，那張是滿版的，沿用倍率會整隻爆出格子，
+ * 跟畫面上 `__imgfb` 換來源要清掉 `--iz` 是同一件事。
+ */
 async function loadSprite(entry, shiny) {
   if (!entry) return null;
   if (entry.art) {
-    return (await loadImage(entry.art)) || (await loadImage(artUrl(entry.dex)));
+    const img = await loadImage(entry.art);
+    if (img) {
+      img.__zoom = iconZoom(entry);
+      img.__off = iconOffset(entry);
+      return img;
+    }
+    return await loadImage(artUrl(entry.dex));
   }
   const main = shiny && entry.shinyIcon ? entry.shinyIcon : entry.icon;
   return (
@@ -140,12 +154,25 @@ function fit(ctx, text, max) {
   return s + "…";
 }
 
-/** 等比縮放置中。GO 圖示不是正方形，不能直接拉滿 */
+/**
+ * 等比縮放置中。GO 圖示不是正方形，不能直接拉滿。
+ *
+ * `__off` 是 extra.js 那批圖的主體離畫布中心多遠（以畫布邊長為單位）。
+ * 放大之後偏移也會放大，所以畫的時候要往反方向挪回來，
+ * 跟畫面上那個 translate 是同一件事。
+ */
 function drawContain(ctx, img, x, y, box, ratio) {
   const k = Math.min((box * ratio) / img.width, (box * ratio) / img.height);
   const w = img.width * k;
   const h = img.height * k;
-  ctx.drawImage(img, x + (box - w) / 2, y + (box - h) / 2, w, h);
+  const off = img.__off || { x: 0, y: 0 };
+  ctx.drawImage(
+    img,
+    x + (box - w) / 2 - off.x * w,
+    y + (box - h) / 2 - off.y * h,
+    w,
+    h
+  );
 }
 
 /** 填滿整格，用在背卡底圖 */
@@ -283,7 +310,17 @@ export async function buildShareImage(data, opts) {
        * 0.64 對得上 CSS 那邊 `.want-bg + img` 的 18% 內距。
        * 沒有背卡的格子維持 0.78，那些格子沒有要讓給誰。
        */
-      if (sprite) drawContain(ctx, sprite, bx, cy, box, bgImg ? 0.64 : 0.78);
+      /*
+       * extra.js 那批圖四周有透明留白，跟畫面上一樣要各自放大回來，
+       * 否則分享圖裡那 26 隻皮卡丘只有別人的四成大。
+       * 倍率在 dex.js，畫面與這裡吃同一個函式，不要各算一份。
+       *
+       * 退回官方立繪時倍率不該套，但這裡的 sprite 可能就是那張立繪，
+       * 分不出來，所以 loadSprite 有拿到主圖才給倍率。
+       */
+      if (sprite) {
+        drawContain(ctx, sprite, bx, cy, box, (bgImg ? 0.64 : 0.78) * (sprite.__zoom || 1));
+      }
 
       /*
        * 異色是星星疊在左上角，跟畫面上的格子一致。

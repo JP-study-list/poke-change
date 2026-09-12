@@ -557,6 +557,23 @@ localStorage 使用者可以手動改，也可能是舊版寫的。
 - **GO 圖示非正方形**且各不相同。畫面一律 `object-fit: contain`、
   canvas 等比縮放，不可假設正方形。
 
+- **`extra.js` 那批圖四周有大量透明留白，而且主體不在正中央**
+  （2026-09-13 修）。PokeMiners 的圖是緊貼裁切的，主體佔畫布 96~99%；
+  Choggor 與 Dittobase 一律畫在 256×256 的畫布上，主體只佔 37~43%、
+  而且偏下約 19%。`contain` 依畫布縮放，所以那 26 筆在圖鑑裡
+  只有別人的四成大。
+  修法是逐張記 `fill`（主體佔畫布多少）與 `offX`／`offY`（中心偏多少），
+  畫面用 `transform: scale() translate()`、canvas 在 `drawContain` 裡
+  換算，兩邊吃 `dex.js` 的同一組函式。
+  **一定要逐張**：每張的留白都不一樣，乘同一個數字仍然會差 15 個百分點。
+  **平移不能省**：只放大的話偏移跟著放大，腳會壓到格子底下的名稱。
+  **`scale` 要寫在 `translate` 前面**，位移才會跟著放大。
+  **translate 的百分比是相對元素算的**，所以帶倍率的圖元素必須等於圖框：
+  圖鑑格子把它收成正方形，交換表的留白改用 margin 而不是 padding。
+  **換備援要清掉**：`__imgfb` 會移除那三個變數，canvas 那邊只在拿到主圖時
+  才掛倍率——官方立繪是滿版的，沿用倍率會整隻爆出格子。
+  數字由 `tools/measure-icons.mjs` 量，**工具不自動改檔**，自己貼進去。
+
 - **本機開發不能用 `file://`**：ES modules 會被 CORS 擋，
   必須 `python3 -m http.server 8000`。
 
@@ -571,6 +588,7 @@ localStorage 使用者可以手動改，也可能是舊版寫的。
 ```
 node tools/check.mjs        # 不連外網
 node tools/check.mjs --net  # 加驗圖片網址，含 240 張背卡逐一驗
+node tools/measure-icons.mjs # 驗 extra.js 的 fill/offX/offY 跟圖片對得上
 ```
 
 涵蓋：三語 i18n key 一致性、版本號格式與兩個檔沒寫岔、條目欄位完整與
@@ -613,6 +631,7 @@ img/extra/            上游沒有的裝扮圖（5 張，進 git）
 tools/build-dex.mjs   產生圖鑑資料
 tools/build-bg.mjs    產生背卡骨架
 tools/check.mjs       自我檢查
+tools/measure-icons.mjs  量 extra.js 那批圖的留白
 project-index.md      檔案索引與依賴關係
 progress.md           開發歷史（給我看的，逐次改動）
 VERSION.md            版本紀錄（給使用者看的，一版一筆）

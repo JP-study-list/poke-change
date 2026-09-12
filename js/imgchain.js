@@ -36,6 +36,11 @@ if (typeof window !== "undefined") {
       img.onerror = null; // 來源用完了，停止重試
       return;
     }
+    /*
+     * 換來源就要把放大倍率清掉。那個倍率是為了補某一張圖的透明留白，
+     * 備援的官方立繪是滿版的，沿用下去會整隻爆出格子。
+     */
+    for (const v of ["--iz", "--ix", "--iy"]) img.style.removeProperty(v);
     const i = rest.indexOf(" ");
     img.dataset.fb = i < 0 ? "" : rest.slice(i + 1);
     img.src = i < 0 ? rest : rest.slice(0, i);
