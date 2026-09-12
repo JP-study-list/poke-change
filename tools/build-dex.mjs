@@ -226,8 +226,20 @@ async function main() {
     const dex = Number(m[1]);
     // form 欄位長得像 PIKACHU_FLYING_5TH_ANNIV，去掉物種前綴只留代碼
     const code = s.form ? String(s.form).replace(`${s.pokemonId}_`, "") : null;
-    settings.set(`${dex}|${code === "NORMAL" ? null : code}`, { dex, s });
-    if (!settings.has(`${dex}|null`)) settings.set(`${dex}|null`, { dex, s });
+    /*
+     * 兩種寫法都收，跟底下的 statsOf 一樣。
+     *
+     * 條目的 form 是從圖檔名抽的，上游有時把物種寫進去（WORMADAM_TRASH），
+     * 有時不寫（HISUIAN）。只收去前綴的那種，含前綴的就會查不到而靜默
+     * 退回本體，屬性看起來很正常其實是別的型態的：結草貴婦的砂土與垃圾
+     * 蓑衣就這樣掛了本體的蟲加草，實際上是蟲加地面與蟲加鋼。
+     */
+    const put = (key) => {
+      if (!settings.has(key)) settings.set(key, { dex, s });
+    };
+    put(`${dex}|${code === "NORMAL" ? null : code}`);
+    if (s.form) put(`${dex}|${s.form}`);
+    put(`${dex}|null`);
   }
 
   /*
@@ -399,6 +411,19 @@ async function main() {
    */
   const HIDDEN_DEX = new Set([493]);
 
+  /**
+   * 有圖但 GO 還沒實裝的**型態**。
+   *
+   * 跟 HIDDEN_DEX 不同，那個藏的是整個圖鑑編號（阿爾宙斯整隻都沒實裝），
+   * 這裡藏的是某一個型態，本體要留著。
+   *
+   * 洗翠黏美兒與黏美龍的圖在上游有，game master 完全沒有它們的設定，
+   * 所以屬性會退回本體的龍、CP 算不出來。2026-11 的 GO Wild Area
+   * 才首次登場，實裝後把這裡刪掉重跑，屬性與 CP 就會帶真實資料回來，
+   * id 不變，使用者既有的紀錄會自己接上。
+   */
+  const HIDDEN_FORMS = new Set(["705|HISUIAN", "706|HISUIAN"]);
+
   /* 4. 組出輸出 */
   const out = [];
   const missing = { name: [], form: new Set(), costume: new Set(), gm: [], stats: [] };
@@ -408,7 +433,11 @@ async function main() {
     const d = a[1].dex - b[1].dex;
     return d || a[0].localeCompare(b[0]);
   })) {
-    if (isTempEvo(e.form) || HIDDEN_DEX.has(e.dex)) {
+    if (
+      isTempEvo(e.form) ||
+      HIDDEN_DEX.has(e.dex) ||
+      HIDDEN_FORMS.has(`${e.dex}|${e.form}`)
+    ) {
       skipped++;
       continue;
     }

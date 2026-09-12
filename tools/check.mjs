@@ -160,17 +160,48 @@ console.log("\n2. 圖鑑條目");
     ok("三個等級要有就三個都有", !half.length, half.slice(0, 3).map((e) => e.id).join(", "));
 
     /*
-     * 沒有 CP 的那幾筆是刻意的：game master 沒給那個型態自己的基礎數值。
-     * 退回本體會算出一個看起來很像真的、其實是別隻的數字，所以寧可空著。
-     * 上游哪天補了，這條會失敗，提醒把名單改掉。
+     * 現在每一筆都有 CP。
+     *
+     * 曾經有兩筆沒有（洗翠黏美兒與黏美龍），因為 game master 沒給它們
+     * 自己的基礎數值，退回本體會算出一個看起來很像真的、其實是別隻的
+     * 數字，所以寧可空著。那兩筆 GO 還沒實裝，已經整批隱藏。
+     *
+     * 這條失敗代表又混進了沒有遊戲資料的型態。它要嘛是新的隱藏對象，
+     * 要嘛該進 build-dex.mjs 的 STATS_SAME_AS，不要直接放它過去。
      */
-    const NO_CP = ["d705.fHISUIAN", "d706.fHISUIAN"];
     const none = dex.ENTRIES.filter((e) => !e.cp20).map((e) => e.id);
-    ok(
-      `沒有 CP 的剛好是那 ${NO_CP.length} 筆`,
-      none.length === NO_CP.length && NO_CP.every((id) => none.includes(id)),
-      `現在是 ${none.join(", ") || "沒有"}`
-    );
+    ok("每一筆都有 IV100 的 CP", none.length === 0, `少了 ${none.join(", ")}`);
+
+    /*
+     * 屬性索引要收得到含物種前綴的型態代碼。
+     *
+     * 條目的 form 是從圖檔名抽的，上游有時寫 WORMADAM_TRASH 有時寫
+     * HISUIAN。索引只收去前綴那種的話，含前綴的會查不到而靜默退回本體，
+     * 屬性看起來正常其實是別的型態的。結草貴婦三種蓑衣曾經全掛本體的
+     * 蟲加草，實際上砂土是蟲加地面、垃圾是蟲加鋼。
+     */
+    const TYPED = {
+      "d413.fWORMADAM_PLANT": ["bug", "grass"],
+      "d413.fWORMADAM_SANDY": ["bug", "ground"],
+      "d413.fWORMADAM_TRASH": ["bug", "steel"],
+    };
+    for (const [id, want] of Object.entries(TYPED)) {
+      const e = dex.find(id);
+      ok(
+        `${id} 的屬性是 ${want.join(" + ")}`,
+        !!e && JSON.stringify(e.types) === JSON.stringify(want),
+        e ? `得到 ${e.types.join(" + ")}` : "查無此條目"
+      );
+    }
+
+    /*
+     * GO 還沒實裝的型態不該出現。上游有圖不等於遊戲裡有。
+     * 2026-11 的 GO Wild Area 實裝後，把 build-dex.mjs 的 HIDDEN_FORMS
+     * 清掉重跑，這兩條要改成驗屬性是鋼加龍。
+     */
+    for (const id of ["d705.fHISUIAN", "d706.fHISUIAN"]) {
+      ok(`${id} 還沒實裝，不該在圖鑑裡`, !dex.find(id));
+    }
   }
 
   const names = new Map();

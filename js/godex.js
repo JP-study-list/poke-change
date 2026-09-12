@@ -23,7 +23,7 @@
  * 裝扮沒有官方名稱，遊戲內只顯示物種名。譯名見 js/costumes.js。
  *
  * 產生時間：2026-09-12
- * 條目數：1435
+ * 條目數：1433
  */
 
 export const GODEX = [
@@ -760,8 +760,8 @@ export const GODEX = [
   {"id":"d412.fBURMY_SANDY", "dex":412,"form":"BURMY_SANDY", "zh":"結草兒", "ja":"ミノムッチ", "en":"Burmy", "zhForm":"砂土蓑衣", "jaForm":"すなちのミノ", "enForm":"Sandy Cloak", "kind":"form", "types":["bug"],"cls":"normal", "cp20":279,"cp25":348,"cp50":552,"icon":"pm412.fBURMY_SANDY.icon.png", "shinyIcon":"pm412.fBURMY_SANDY.s.icon.png"},
   {"id":"d412.fBURMY_TRASH", "dex":412,"form":"BURMY_TRASH", "zh":"結草兒", "ja":"ミノムッチ", "en":"Burmy", "zhForm":"垃圾蓑衣", "jaForm":"ゴミのミノ", "enForm":"Trash Cloak", "kind":"form", "types":["bug"],"cls":"normal", "cp20":279,"cp25":348,"cp50":552,"icon":"pm412.fBURMY_TRASH.icon.png", "shinyIcon":"pm412.fBURMY_TRASH.s.icon.png"},
   {"id":"d413.fWORMADAM_PLANT", "dex":413,"form":"WORMADAM_PLANT", "zh":"結草貴婦", "ja":"ミノマダム", "en":"Wormadam", "zhForm":"草木蓑衣", "jaForm":"くさきのミノ", "enForm":"Plant Cloak", "kind":"form", "types":["bug", "grass"],"cls":"normal", "cp20":1013,"cp25":1267,"cp50":2005,"icon":"pm413.fWORMADAM_PLANT.icon.png", "shinyIcon":"pm413.fWORMADAM_PLANT.s.icon.png"},
-  {"id":"d413.fWORMADAM_SANDY", "dex":413,"form":"WORMADAM_SANDY", "zh":"結草貴婦", "ja":"ミノマダム", "en":"Wormadam", "zhForm":"砂土蓑衣", "jaForm":"すなちのミノ", "enForm":"Sandy Cloak", "kind":"form", "types":["bug", "grass"],"cls":"normal", "cp20":1013,"cp25":1267,"cp50":2005,"icon":"pm413.fWORMADAM_SANDY.icon.png", "shinyIcon":"pm413.fWORMADAM_SANDY.s.icon.png"},
-  {"id":"d413.fWORMADAM_TRASH", "dex":413,"form":"WORMADAM_TRASH", "zh":"結草貴婦", "ja":"ミノマダム", "en":"Wormadam", "zhForm":"垃圾蓑衣", "jaForm":"ゴミのミノ", "enForm":"Trash Cloak", "kind":"form", "types":["bug", "grass"],"cls":"normal", "cp20":910,"cp25":1138,"cp50":1802,"icon":"pm413.fWORMADAM_TRASH.icon.png", "shinyIcon":"pm413.fWORMADAM_TRASH.s.icon.png"},
+  {"id":"d413.fWORMADAM_SANDY", "dex":413,"form":"WORMADAM_SANDY", "zh":"結草貴婦", "ja":"ミノマダム", "en":"Wormadam", "zhForm":"砂土蓑衣", "jaForm":"すなちのミノ", "enForm":"Sandy Cloak", "kind":"form", "types":["bug", "ground"],"cls":"normal", "cp20":1013,"cp25":1267,"cp50":2005,"icon":"pm413.fWORMADAM_SANDY.icon.png", "shinyIcon":"pm413.fWORMADAM_SANDY.s.icon.png"},
+  {"id":"d413.fWORMADAM_TRASH", "dex":413,"form":"WORMADAM_TRASH", "zh":"結草貴婦", "ja":"ミノマダム", "en":"Wormadam", "zhForm":"垃圾蓑衣", "jaForm":"ゴミのミノ", "enForm":"Trash Cloak", "kind":"form", "types":["bug", "steel"],"cls":"normal", "cp20":910,"cp25":1138,"cp50":1802,"icon":"pm413.fWORMADAM_TRASH.icon.png", "shinyIcon":"pm413.fWORMADAM_TRASH.s.icon.png"},
   {"id":"d414", "dex":414,"zh":"紳士蛾", "ja":"ガーメイル", "en":"Mothim", "kind":"base", "types":["bug", "flying"],"cls":"normal", "cp20":1037,"cp25":1297,"cp50":2052,"icon":"pm414.icon.png", "shinyIcon":"pm414.s.icon.png"},
   {"id":"d415", "dex":415,"zh":"三蜜蜂", "ja":"ミツハニー", "en":"Combee", "kind":"base", "types":["bug", "flying"],"cls":"normal", "cp20":282,"cp25":353,"cp50":559,"icon":"pm415.icon.png", "shinyIcon":"pm415.s.icon.png"},
   {"id":"d416", "dex":416,"zh":"蜂女王", "ja":"ビークイン", "en":"Vespiquen", "kind":"base", "types":["bug", "flying"],"cls":"normal", "cp20":1145,"cp25":1432,"cp50":2267,"icon":"pm416.icon.png", "shinyIcon":"pm416.s.icon.png"},
@@ -1176,9 +1176,7 @@ export const GODEX = [
   {"id":"d703", "dex":703,"zh":"小碎鑽", "ja":"メレシー", "en":"Carbink", "kind":"base", "types":["rock", "fairy"],"cls":"normal", "cp20":838,"cp25":1047,"cp50":1658,"icon":"pm703.icon.png", "shinyIcon":"pm703.s.icon.png"},
   {"id":"d704", "dex":704,"zh":"黏黏寶", "ja":"ヌメラ", "en":"Goomy", "kind":"base", "types":["dragon"],"cls":"normal", "cp20":557,"cp25":697,"cp50":1103,"icon":"pm704.icon.png", "shinyIcon":"pm704.s.icon.png"},
   {"id":"d705", "dex":705,"zh":"黏美兒", "ja":"ヌメイル", "en":"Sliggoo", "kind":"base", "types":["dragon"],"cls":"normal", "cp20":1164,"cp25":1455,"cp50":2303,"icon":"pm705.icon.png", "shinyIcon":"pm705.s.icon.png"},
-  {"id":"d705.fHISUIAN", "dex":705,"form":"HISUIAN", "zh":"黏美兒", "ja":"ヌメイル", "en":"Sliggoo", "zhForm":"洗翠的樣子", "jaForm":"ヒスイのすがた", "enForm":"HISUIAN FORM", "kind":"form", "types":["dragon"],"cls":"normal", "icon":"pm705.fHISUIAN.icon.png", "shinyIcon":"pm705.fHISUIAN.s.icon.png"},
   {"id":"d706", "dex":706,"zh":"黏美龍", "ja":"ヌメルゴン", "en":"Goodra", "kind":"base", "types":["dragon"],"cls":"normal", "cp20":2003,"cp25":2504,"cp50":3963,"icon":"pm706.icon.png", "shinyIcon":"pm706.s.icon.png"},
-  {"id":"d706.fHISUIAN", "dex":706,"form":"HISUIAN", "zh":"黏美龍", "ja":"ヌメルゴン", "en":"Goodra", "zhForm":"洗翠的樣子", "jaForm":"ヒスイのすがた", "enForm":"HISUIAN FORM", "kind":"form", "types":["dragon"],"cls":"normal", "icon":"pm706.fHISUIAN.icon.png", "shinyIcon":"pm706.fHISUIAN.s.icon.png"},
   {"id":"d707", "dex":707,"zh":"鑰圈兒", "ja":"クレッフィ", "en":"Klefki", "kind":"base", "types":["steel", "fairy"],"cls":"normal", "cp20":1114,"cp25":1392,"cp50":2204,"icon":"pm707.icon.png", "shinyIcon":"pm707.s.icon.png"},
   {"id":"d708", "dex":708,"zh":"小木靈", "ja":"ボクレー", "en":"Phantump", "kind":"base", "types":["ghost", "grass"],"cls":"normal", "cp20":642,"cp25":802,"cp50":1270,"icon":"pm708.icon.png", "shinyIcon":"pm708.s.icon.png"},
   {"id":"d709", "dex":709,"zh":"朽木妖", "ja":"オーロット", "en":"Trevenant", "kind":"base", "types":["ghost", "grass"],"cls":"normal", "cp20":1462,"cp25":1828,"cp50":2893,"icon":"pm709.icon.png", "shinyIcon":"pm709.s.icon.png"},
