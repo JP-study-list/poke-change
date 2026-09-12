@@ -22,6 +22,8 @@
    * 同一個色既表示「異色」又表示「會刪掉東西」，讀起來是矛盾的。
    */
   --danger: #b3261e;
+  --x-bg: #b3261e; /* 關閉鈕的紅圓。實心填色，跟當文字用的 --danger 分開 */
+  --x-bg-hover: #8f1e18;
 
   /*
    * 中性階分四層，不是兩層。
@@ -132,6 +134,8 @@ body.dark {
   --dim: #8b867e;
   --gold-ink: #cf9a1a; /* 深色底上金色可以更亮，7.5:1 */
   --danger: #e8837c; /* 深色底上要調亮，深紅在近黑上看不出是紅的 */
+  --x-bg: #c8352b; /* 填色不必跟著文字調亮，這個深度在近黑上仍然看得出是紅的，白叉 5.2:1 */
+  --x-bg-hover: #d9453b;
   --want: #e08a52;
   --have: #5fae83;
   --shiny: #e87ba3;
@@ -435,14 +439,69 @@ select {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
   width: min(520px, calc(100% - 48px));
   max-height: min(84vh, 780px);
-  overflow-y: auto;
-  padding: 22px 22px 26px;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 14px;
   box-shadow: 0 18px 44px var(--shadow-ink);
+}
+
+/*
+ * 捲的是這一層不是外殼，所以右上角那顆 X 不會跟著內容捲走。
+ * 上下留的空間由外殼的 max-height 決定，內容多的時候在這裡滑動。
+ */
+.rail-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px 22px 26px;
+}
+
+/*
+ * 關閉鈕。紅色實心圓，浮在彈窗右上角。
+ *
+ * 位置用 absolute 疊在內容上，不佔流排，否則第一行標題要為它讓出一塊。
+ * 內容區右側留了 22px 的 padding，標題不會被壓到。
+ */
+.btn-x {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--x-bg);
+  cursor: pointer;
+}
+
+.btn-x svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.btn-x:hover {
+  background: var(--x-bg-hover);
+}
+
+/*
+ * 彈出形態用右上角的 X，底下那顆文字關閉鈕收起來。
+ * 常駐形態剛好相反，見 1200 那段：在那裡「關閉」的意思是
+ * 收掉這筆詳情回到摘要，不是關掉一片浮出來的東西。
+ */
+.btn-close {
+  display: none;
 }
 
 /*
@@ -476,11 +535,27 @@ select {
     width: auto;
     height: 100%;
     max-height: none;
-    padding: 18px 16px 32px;
     border: 0;
     border-left: 1px solid var(--line);
     border-radius: 0;
     box-shadow: none;
+  }
+
+  body:not(.rail-pop) .rail-scroll {
+    padding: 18px 16px 32px;
+  }
+
+  /*
+   * 常駐欄裡不放紅色的 X。那顆鈕的意思是關掉一片浮出來的東西，
+   * 而這裡關掉的是「這一筆詳情」，關完欄位還在，只是換回清單摘要。
+   * 所以換回底下那顆輕量的文字鈕。
+   */
+  body:not(.rail-pop) .btn-x {
+    display: none;
+  }
+
+  body:not(.rail-pop) .btn-close {
+    display: block;
   }
 
   /* 交換表沒有東西要放進右欄，整欄收起來把寬度讓給格子牆 */
@@ -2168,17 +2243,17 @@ body.dark .want-bg {
     display: none;
   }
 
-  /* 手機從底部升起，不是浮在正中間。拇指構得到的是下面 */
+  /*
+   * 手機也置中（2026-09-12，使用者要求），不再從底部升起。
+   * 只把左右留白縮窄一點，小螢幕上 48px 的留白吃掉太多可用寬度。
+   * 上下仍然留著，內容多的時候在 .rail-scroll 裡滑動。
+   */
   .rail-inner {
-    left: 0;
-    top: auto;
-    bottom: 0;
-    transform: none;
-    width: 100%;
+    width: calc(100% - 28px);
     max-height: 86vh;
-    border: 0;
-    border-top: 1px solid var(--line);
-    border-radius: 14px 14px 0 0;
-    box-shadow: 0 -8px 26px var(--shadow-ink);
+  }
+
+  .rail-scroll {
+    padding: 20px 18px 24px;
   }
 }

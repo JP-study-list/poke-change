@@ -12,7 +12,7 @@
 index.html  →  <script type="module" src="./js/main.js">  →  main.js  →  各模組
 ```
 
-`index.html` 114 行，是骨架：頂部列（標題、三個檢視、語言、齒輪與設定面板）、
+`index.html` 125 行，是骨架：頂部列（標題、三個檢視、語言、齒輪與設定面板）、
 資訊列、搜尋列（含篩選漏斗與面板）、內容容器、右欄、toast。
 所有內容由 `js/ui.js` 在執行時填入。無 build、無 bundler、無 npm。
 

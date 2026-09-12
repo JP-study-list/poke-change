@@ -53,7 +53,11 @@ export function renderChrome(t, lang, disp = {}) {
   $("#subtitle").textContent = t("subtitle");
   $("#q").placeholder = t("search");
   // 只有圖示的鈕，名字得靠 aria-label 與 title 給
-  for (const [sel, key] of [["#filterBtn", "filterBtn"], ["#gearBtn", "settings"]]) {
+  for (const [sel, key] of [
+    ["#filterBtn", "filterBtn"],
+    ["#gearBtn", "settings"],
+    ["#closeX", "close"],
+  ]) {
     $(sel).setAttribute("aria-label", t(key));
     $(sel).setAttribute("title", t(key));
   }

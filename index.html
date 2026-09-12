@@ -98,11 +98,22 @@
       </main>
 
       <!--
-        右欄。1200 以上是版面的第三欄，常駐；以下退回原本的底部／側邊彈出。
+        右欄。1200 以上只有背卡是版面的第三欄，圖鑑與彈出形態都是置中視窗。
         DOM 位置只有一處，兩種形態靠 CSS 切換，繪製函式不必知道自己在哪。
+
+        `.rail-inner` 是不捲的殼，`#panel` 才是捲動區，這樣右上角那顆 X
+        才會一直留在原地。X 寫在骨架裡，三個面板自動都有，
+        繪製函式一個字都不必改。常駐形態用 CSS 換回底下的文字關閉鈕。
       -->
       <aside class="rail" id="sheet" aria-hidden="true">
-        <div class="rail-inner" id="panel"></div>
+        <div class="rail-inner">
+          <button class="btn-x" id="closeX" type="button" data-close="1">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+          <div class="rail-scroll" id="panel"></div>
+        </div>
       </aside>
     </div>
 
