@@ -12,15 +12,15 @@
 index.html  →  <script type="module" src="./js/main.js">  →  main.js  →  各模組
 ```
 
-`index.html` 125 行，是骨架：頂部列（標題、三個檢視、語言、齒輪與設定面板）、
+`index.html` 139 行，是骨架：頂部列（標題、三個檢視、語言、齒輪與設定面板）、
 資訊列、搜尋列（含篩選漏斗與面板）、內容容器、右欄、toast。
 所有內容由 `js/ui.js` 在執行時填入。無 build、無 bundler、無 npm。
 
 版面是兩欄：內容與右欄。**沒有側欄**，導覽在頂部列，900 以下掉成貼底的 bar。
 右欄（`#sheet`）在 1200 以上只有背卡常駐，圖鑑走彈出（`body.rail-pop`），
 1200 以下一律彈出。彈出形態是**置中的視窗**，900 以下改成貼底升起。
-檢視 bar、右欄、篩選面板、設定面板都是同一段 DOM 兩種形態，
-繪製函式不需要知道自己在哪。
+檢視 bar、右欄與篩選面板都是同一段 DOM 兩種形態，繪製函式不需要知道自己在哪。
+設定是置中的彈窗（`.modal`），放在 `<header>` 外面，所有寬度同一種形態。
 
 **本機啟動**：`python3 -m http.server 8000`（ES modules 不能用 `file://`）
 
@@ -75,7 +75,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 檔案 | 用途 | 備註 |
 | --- | --- | --- |
-| `index.html` | 頁面骨架，114 行 | 設定面板要加區塊 → 在 `#settings` 內加 `<section class="side-block">`。圖示一律 inline SVG，不用文字符號 |
+| `index.html` | 頁面骨架，139 行 | 設定面板要加區塊 → 在 `#settings` 的 `.modal-scroll` 內加 `<section class="side-block">`。圖示一律 inline SVG，不用文字符號 |
 | `css/style.css` | 全部樣式 | 設計 token 全在 `:root`。**深色不是反色**，`body.dark` 是另一套值。斷點兩個：900px（手機）與 1200px（右欄收起） |
 
 ### 資料層
@@ -168,7 +168,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改配色、字級、間距 | `css/style.css` 的 `:root`。改了顏色要同步 `js/share.js` 的 `LIGHT`／`DARK`，canvas 吃不到 CSS 變數 |
 | 改篩選面板的分組順序 | `js/ui.js` 的 `FGROUPS` |
 | 改詳情面板顯示哪幾個等級的 CP | `js/ui.js` 的 `CP_LEVELS`，數字要對得上 godex 的欄位名 |
-| 改設定面板裡有什麼 | `index.html` 的 `#settings`，內容由 `renderChrome` 填 |
+| 改設定面板裡有什麼 | `index.html` 的 `#settings` 裡的 `.modal-scroll`，內容由 `renderChrome` 填 |
 | 改檢視的圖示 | `js/ui.js` 的 `VIEW_ICONS` |
 | 改手機底部 bar 的高度 | `css/style.css` 的 `--tab-h`，內容區的底部內距吃同一個值 |
 | 改資訊列顯示什麼 | `js/main.js` 的 `draw()`，文字翻好再傳給 `renderInfoBar` |

@@ -44,21 +44,6 @@
           </svg>
         </button>
 
-        <!--
-          設定。原本這些是左側欄的兩個區塊，側欄拆掉之後整段搬進來。
-          深淺色也在裡面，頂部列不再有那顆半黑半白的圓。
-        -->
-        <div class="pop settings" id="settings" hidden>
-          <section class="side-block">
-            <p class="side-title" id="displayTitle"></p>
-            <div class="toggles" id="displayOpts"></div>
-          </section>
-          <section class="side-block">
-            <p class="side-title" id="dataTitle"></p>
-            <div class="data-actions" id="dataActions"></div>
-            <p class="notice" id="localNotice"></p>
-          </section>
-        </div>
       </div>
     </header>
 
@@ -115,6 +100,35 @@
           <div class="rail-scroll" id="panel"></div>
         </div>
       </aside>
+    </div>
+
+    <!--
+      設定。原本這些是左側欄的兩個區塊，側欄拆掉之後整段搬進來。
+      深淺色也在裡面，頂部列不再有那顆半黑半白的圓。
+
+      **放在 header 外面**：它是置中的彈窗，而 `.topbar` 是 sticky 帶 z-index，
+      會開一個 stacking context，關在裡面的話 fixed 再高也蓋不過右欄的彈窗。
+      結構跟右欄一樣是三層：遮罩、置中的殼、捲動區。
+    -->
+    <div class="modal" id="settings" hidden>
+      <div class="modal-inner">
+        <button class="btn-x" id="settingsX" type="button" data-closepop="1">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+        <div class="modal-scroll">
+          <section class="side-block">
+            <p class="side-title" id="displayTitle"></p>
+            <div class="toggles" id="displayOpts"></div>
+          </section>
+          <section class="side-block">
+            <p class="side-title" id="dataTitle"></p>
+            <div class="data-actions" id="dataActions"></div>
+            <p class="notice" id="localNotice"></p>
+          </section>
+        </div>
+      </div>
     </div>
 
     <div class="toast" id="toast" hidden></div>

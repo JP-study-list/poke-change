@@ -387,11 +387,56 @@ select {
   box-shadow: 0 10px 26px var(--shadow-ink);
 }
 
-/* 設定。貼著齒輪的右緣往下，裡面是原本左側欄那兩個區塊 */
-.settings {
-  top: calc(100% + 4px);
-  right: 0;
-  width: 296px;
+/* ─────────── 置中的彈窗 ─────────── */
+
+/*
+ * 設定用這一套，不再貼著齒輪往下展開（2026-09-12，使用者要求）。
+ * 三層跟右欄一模一樣：遮罩、置中的殼、捲動區。
+ * 視覺值也刻意跟 `.rail-inner` 對齊，兩片浮出來的東西不該長得不一樣。
+ *
+ * 值得注意的是它放在 `<header>` 外面。`.topbar` 是 sticky 帶 z-index，
+ * 會開一個 stacking context，關在裡面的話 fixed 再高也蓋不過右欄。
+ */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.modal[hidden] {
+  display: none;
+}
+
+.modal-inner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  width: min(420px, calc(100% - 28px));
+  max-height: min(84vh, 700px);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 18px 44px var(--shadow-ink);
+}
+
+.modal-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 20px 16px;
+}
+
+.modal-scroll .side-block:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.modal-scroll .side-block:last-child {
+  margin-bottom: 0;
 }
 
 /* 面板裡的第一區不要那條線，最後一區不要留白 */

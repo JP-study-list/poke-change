@@ -411,8 +411,14 @@ document.addEventListener("click", (ev) => {
    * 收在最後就只有「點到空白處」那一種情況執行得到。
    * 兩個面板自己與那兩顆鈕不算外面，連選幾個條件時面板不該關。
    * 這裡不 return，這一下點到的東西照常處理。
+   *
+   * 設定是置中的彈窗，它那片遮罩在 DOM 上就是 `#settings` 自己，
+   * 所以「點在面板裡面」這個判斷擋不掉它，得另外認 target 是不是遮罩本身。
+   * 右上角那顆 X 走 `data-closepop`，不跟右欄的 `data-close` 共用，
+   * 那一顆管的是右欄，按下去會連詳情一起收掉。
    */
-  if (state.pop && !el(ui.POP_PARTS)) {
+  const onScrim = ev.target.id === "settings";
+  if (state.pop && (!el(ui.POP_PARTS) || onScrim || el("[data-closepop]"))) {
     state.pop = null;
     ui.setPop(null);
   }

@@ -4,6 +4,39 @@
 
 ---
 
+## 2026-09-12（十三）
+- 類型：修正
+- 影響檔案：index.html, css/style.css, js/main.js, js/ui.js,
+  tools/check.mjs, CLAUDE.md, project-index.md
+- 摘要：設定也改成置中彈窗，跟右欄的詳情同一種形態。
+  - 原本貼著齒輪往下展開、900 以下貼底，現在所有寬度都是置中，
+    有遮罩、有右上角的紅色 X。
+  - **整段搬出 `<header>`**。`.topbar` 是 sticky 帶 z-index 30，
+    會開一個 stacking context，關在裡面的話 fixed 再高也蓋不過右欄
+    那片 z-index 40 的遮罩。
+  - 三層結構 `.modal` / `.modal-inner` / `.modal-scroll` 跟右欄對齊，
+    視覺值也刻意抄同一套。
+- 原因：使用者要求。
+- 決定：
+  - **X 走 `data-closepop`，不共用右欄的 `data-close`**。那一顆管的是右欄，
+    按下去會連詳情一起收掉。
+  - **遮罩要另外認**。它在 DOM 上就是 `#settings` 自己，
+    「點在面板裡面就不關」這個判斷擋不掉，`main.js` 加認 target 的 id。
+  - **篩選面板沒有跟著改**。它貼著漏斗浮出是刻意的，調整當下的檢視
+    就該貼近觸發點；設定是全站偏好，置中比較合理。使用者也只說了設定。
+- 驗證：
+  - `node tools/check.mjs` 全部通過。DOM stub 補了 `settingsX`。
+  - 起 server 量過 1440 與 390：1440 左右留白各 510、寬 420；
+    390 左右各 14、寬 362，都是置中，遮罩都是 rgba(0,0,0,0.45)。
+  - 四種關閉路徑逐一試過：點面板內不關（對）、點 X 關、點遮罩關、
+    開篩選會把設定關掉（一次只開一個那條規則沒破）。
+    `aria-expanded` 跟著回到 false。
+  - 內容完整：顯示三個開關、資料三個動作，
+    以及那段「資料只存在這台裝置」的警語都還在原位。
+- 待辦/已知問題：（無）
+
+---
+
 ## 2026-09-12（十二）
 - 類型：修正
 - 影響檔案：index.html, css/style.css, js/ui.js, tools/check.mjs,

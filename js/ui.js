@@ -57,6 +57,7 @@ export function renderChrome(t, lang, disp = {}) {
     ["#filterBtn", "filterBtn"],
     ["#gearBtn", "settings"],
     ["#closeX", "close"],
+    ["#settingsX", "close"],
   ]) {
     $(sel).setAttribute("aria-label", t(key));
     $(sel).setAttribute("title", t(key));

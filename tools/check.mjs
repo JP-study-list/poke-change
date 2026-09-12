@@ -59,7 +59,7 @@ function installDom() {
     "app", "panel", "sheet", "toast", "filters", "views", "langs", "q",
     "appName", "subtitle", "dataTitle", "dataActions",
     "localNotice", "infobar",
-    "filterBtn", "filterN", "fpicked", "fpanel", "gearBtn", "settings", "closeX",
+    "filterBtn", "filterN", "fpicked", "fpanel", "gearBtn", "settings", "closeX", "settingsX",
     "searchbar", "importFile", "listName", "shareBtn",
     "displayTitle", "displayOpts", "trainerCode",
   ]) {
