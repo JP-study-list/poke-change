@@ -111,7 +111,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 區塊 | 主要函式 |
 | --- | --- |
 | 版面共用 | `renderChrome` `renderViews` `renderInfoBar` `setPop` `toast` `openSheet` `closeSheet` `esc` |
-| 右欄 | `renderRailSummary`（沒有詳情可顯示時的預設內容） |
+| 右欄 | `renderRailSummary`（背卡沒有詳情可顯示時的預設內容，只有那個檢視用） |
 | 圖鑑 | `renderFilterBar` `renderFilterPanel` `visibleEntries` `renderGrid` `renderDetail` |
 | 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` `renderPicker` |
 | 背卡 | `renderBg` `renderCardDetail` |
@@ -127,6 +127,8 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
   因為底下每一段處理完都會 return
 - **右欄一定要重畫**：它是常駐的，`closePanels()` 清掉 state 之後必須
   接 `drawDetail()`，否則桌機會停在剛才那個詳情，關不掉也回不到摘要
+- **右欄的預設摘要只有背卡擺**：`railHasContent()` 認的是 `state.view === "bg"`。
+  圖鑑與交換表沒點開東西時整欄收起（`body.rail-off`），格子牆吃滿寬度
 - **三份清單**：`state.book` 是整包，`cur()` 取目前那一份。畫面與操作一律只碰那一份
 - **資料流**：使用者操作 → 改 state → `draw()` → `save()`
 - **事件**：單一 `document` 委派（click / input / change / keydown）+ `pagehide`

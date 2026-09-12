@@ -179,18 +179,19 @@ function draw() {
   drawDetail();
 }
 
-/** 右欄現在有沒有東西要顯示。交換表不算，那個檢視自己就是清單 */
+/** 右欄現在有沒有東西要顯示。摘要只有背卡擺，另外兩個檢視要點開才有東西 */
 const railHasContent = () =>
-  !!(state.openId || state.openCard || state.pick || state.view !== "trade");
+  !!(state.openId || state.openCard || state.pick || state.view === "bg");
 
 /*
  * 右欄一次只顯示一種：條目詳情、背卡詳情、選寶可夢。
  * 打開任一種之前要把另外兩種清掉。
  * 篩選與設定是自己浮出來的面板，不跟這裡搶位置。
  *
- * 三種都沒有的時候顯示目前清單摘要，桌機右欄常駐，空著是浪費。
- * 但交換表例外：那個檢視本身就是清單，再擺一份摘要是同一件事說兩次，
- * 而且會出現兩顆產生分享圖。那裡整欄收起來，版面讓給格子牆。
+ * 三種都沒有的時候只有背卡擺目前清單摘要。
+ * 交換表本身就是清單，再擺一份摘要是同一件事說兩次，而且會出現兩顆產生分享圖。
+ * 圖鑑是使用者指定的：圖鑑就是圖鑑，不要在旁邊掛半張交換表。
+ * 那兩個檢視沒點開東西時整欄收起來，版面讓給格子牆。
  */
 function drawDetail() {
   document.body.classList.toggle("rail-off", !railHasContent());
@@ -207,7 +208,7 @@ function drawDetail() {
     state.flash = null; // 閃一次就好，下一次重畫不該再閃
   } else if (state.openCard) ui.renderCardDetail(state.openCard, state.lang, t);
   else if (state.pick) ui.renderPicker(state.pick, state.lang, t);
-  else if (state.view !== "trade") ui.renderRailSummary(state.book, t);
+  else if (state.view === "bg") ui.renderRailSummary(state.book, t);
 }
 
 /*
