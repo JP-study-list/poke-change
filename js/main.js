@@ -9,7 +9,7 @@
  */
 
 import { LANGS, DEFAULT_LANG, makeT } from "./i18n.js";
-import { find, fullName, emptyFilter, filterCount } from "./dex.js";
+import { find, fullName, emptyFilter, filterCount, knownItems } from "./dex.js";
 import { CARDS as BG_CARDS } from "./backgrounds.js";
 import * as store from "./store.js";
 import * as ui from "./ui.js";
@@ -157,8 +157,8 @@ function draw() {
         title: t("viewTrade"),
         stats: [
           list.name || t("listTab", state.book.active + 1),
-          `${t("colWant")} ${list.want.length}`,
-          `${t("colHave")} ${list.have.length}`,
+          `${t("colWant")} ${knownItems(list.want).length}`,
+          `${t("colHave")} ${knownItems(list.have).length}`,
         ],
       },
       t

@@ -494,6 +494,70 @@ console.log("\n5. 繪製函式");
     const n = (els.app.innerHTML.match(/data-addcell="/g) || []).length;
     if (n !== 2) throw new Error(`加號有 ${n} 個`);
   });
+
+  /*
+   * 顯示的筆數一律只算畫得出來的。
+   *
+   * 紀錄裡的 id 不保證還在圖鑑：使用者可以手改 localStorage，圖鑑也會
+   * 拿掉條目（阿爾宙斯現在就是隱藏的）。那些紀錄佔著陣列長度卻畫不出
+   * 格子，直接數就會出現「寫 3 筆只畫得出 1 格」。曾經資訊列、右欄摘要
+   * 與分頁標籤三處都在直接數，所以這裡逐處釘住。
+   */
+  const ghostBook = () =>
+    store.normalize({
+      v: 2,
+      active: 0,
+      lists: [
+        {
+          name: "",
+          want: [{ id: "d150" }, { id: "d9999" }, { id: "d493" }],
+          have: [{ id: "d9999" }],
+        },
+        { name: "", want: [], have: [] },
+        { name: "", want: [], have: [] },
+      ],
+    });
+
+  run("畫不出來的紀錄不會被吃掉", () => {
+    const g = ghostBook();
+    if (g.lists[0].want.length !== 3 || g.lists[0].have.length !== 1) {
+      throw new Error("儲存層不該濾掉查不到的條目");
+    }
+  });
+
+  run("分頁與欄標題只數畫得出來的", () => {
+    ui.renderTrade(ghostBook(), "zh", t);
+    const html = els.app.innerHTML;
+    const tabs = [...html.matchAll(/<span class="n">(\d+)<\/span>/g)].map(
+      (m) => m[1]
+    );
+    if (tabs[0] !== "1") throw new Error(`第一份的分頁數字是 ${tabs[0]}，應該是 1`);
+    if (!html.includes(t("itemCount", 1))) throw new Error("想要那欄不是 1");
+    if (html.includes(t("itemCount", 3))) throw new Error("想要那欄數了畫不出來的");
+    if (!html.includes(t("itemCount", 0))) throw new Error("可以給那欄不是 0");
+  });
+
+  run("右欄摘要只數畫得出來的", () => {
+    ui.renderRailSummary(ghostBook(), t);
+    const html = els.panel.innerHTML;
+    if (!/<b>1<\/b>/.test(html)) throw new Error("想要不是 1");
+    if (/<b>3<\/b>/.test(html)) throw new Error("想要數了畫不出來的");
+    if (!/<b>0<\/b>/.test(html)) throw new Error("可以給不是 0");
+  });
+
+  run("只剩畫不出來的條目時分享鈕是灰的", () => {
+    const g = ghostBook();
+    g.lists[0].want = [{ id: "d9999", shiny: false, xxl: false, xxs: false, bg: "" }];
+    g.lists[0].have = [];
+    ui.renderRailSummary(g, t);
+    if (!els.panel.innerHTML.includes("disabled")) {
+      throw new Error("右欄的分享鈕該是灰的");
+    }
+    ui.renderTrade(g, "zh", t);
+    if (!els.app.innerHTML.includes("disabled")) {
+      throw new Error("交換表的分享鈕該是灰的");
+    }
+  });
   run("renderPicker", () => ui.renderPicker({ col: "want", query: "" }, "zh", t));
   run("renderPicker 搜尋", () =>
     ui.renderPicker({ col: "have", query: "皮卡丘" }, "zh", t)

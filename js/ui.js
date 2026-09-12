@@ -10,6 +10,7 @@
 import {
   ENTRIES,
   find,
+  knownItems,
   fullName,
   speciesName,
   formName,
@@ -298,7 +299,14 @@ export function setPop(open) {
  */
 export function renderRailSummary(book, t) {
   const data = book.lists[book.active] || book.lists[0];
-  const total = data.want.length + data.have.length;
+
+  /*
+   * 數字與分享鈕都算畫得出來的那些，跟欄標題和分享圖同一個判斷。
+   * 未濾的話，清單裡只剩圖鑑已經沒有的條目時，鈕是亮的但產不出圖。
+   */
+  const want = knownItems(data.want).length;
+  const have = knownItems(data.have).length;
+  const total = want + have;
 
   $("#panel").innerHTML = `
     <div class="rs">
@@ -306,10 +314,10 @@ export function renderRailSummary(book, t) {
       <p class="rs-name">${esc(data.name || t("listTab", book.active + 1))}</p>
       <div class="rs-nums">
         <span class="rs-num want">
-          <i class="dot"></i>${esc(t("colWant"))}<b>${data.want.length}</b>
+          <i class="dot"></i>${esc(t("colWant"))}<b>${want}</b>
         </span>
         <span class="rs-num have">
-          <i class="dot"></i>${esc(t("colHave"))}<b>${data.have.length}</b>
+          <i class="dot"></i>${esc(t("colHave"))}<b>${have}</b>
         </span>
       </div>
       <button type="button" class="btn-share wide" data-share${
@@ -686,11 +694,11 @@ function tradeColumn(col, items, lang, t) {
  */
 export function renderTrade(book, lang, t, code = "") {
   const data = book.lists[book.active] || book.lists[0];
-  const total = data.want.length + data.have.length;
+  const total = knownItems(data.want).length + knownItems(data.have).length;
 
   const tabs = book.lists
     .map((l, i) => {
-      const n = l.want.length + l.have.length;
+      const n = knownItems(l.want).length + knownItems(l.have).length;
       return `<button type="button" class="tab" data-list="${i}"
                aria-pressed="${i === book.active}">
         ${esc(l.name || t("listTab", i + 1))}<span class="n">${n}</span>

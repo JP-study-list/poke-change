@@ -20,7 +20,14 @@
  * 手機螢幕是高密度的，用 1 倍畫出來傳過去會糊。
  */
 
-import { find, speciesName, formName, goUrl, artUrl } from "./dex.js";
+import {
+  find,
+  knownItems,
+  speciesName,
+  formName,
+  goUrl,
+  artUrl,
+} from "./dex.js";
 import { findCard, bgSources } from "./backgrounds.js";
 import { formatCode } from "./store.js";
 
@@ -166,10 +173,9 @@ export async function buildShareImage(data, opts) {
    * 圖鑑更新拿掉某個 id 之後就會發生。
    * 空的那一區整段不畫，不留下一塊空白。
    */
-  const known = (list) => list.filter((it) => find(it.id));
   const sections = [
-    { label: t("colWant"), color: C.want, items: known(data.want) },
-    { label: t("colHave"), color: C.have, items: known(data.have) },
+    { label: t("colWant"), color: C.want, items: knownItems(data.want) },
+    { label: t("colHave"), color: C.have, items: knownItems(data.have) },
   ].filter((s) => s.items.length);
 
   if (!sections.length) return null;

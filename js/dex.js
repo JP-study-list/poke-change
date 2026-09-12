@@ -56,6 +56,22 @@ export const find = (id) => INDEX.get(id) || null;
 
 export const ENTRY_COUNT = ENTRIES.length;
 
+/**
+ * 濾掉查不到條目的紀錄。
+ *
+ * 顯示的筆數一律走這裡。紀錄裡的 id 不保證還在圖鑑：使用者可以手改
+ * localStorage，圖鑑也可能拿掉某個條目（阿爾宙斯就是暫時隱藏的）。
+ * 那些紀錄畫不出格子，卻仍然佔著陣列的長度，直接數就會出現
+ * 「寫 3 筆只畫得出 1 格」。
+ *
+ * **只影響顯示，不影響儲存。** 畫不出來的紀錄照樣留在 localStorage 裡，
+ * 條目回來了就自己接上。一欄上限那類管儲存的判斷仍然數原始長度。
+ *
+ * @param {object[]} items 清單裡的項目
+ * @returns {object[]} 畫得出來的那些
+ */
+export const knownItems = (items) => items.filter((it) => find(it.id));
+
 /* ─────────── 名稱 ─────────── */
 
 /** 物種名，不含型態 */
