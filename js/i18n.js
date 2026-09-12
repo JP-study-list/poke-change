@@ -21,7 +21,7 @@ export const DEFAULT_LANG = "zh";
 export const STRINGS = {
   zh: {
     htmlLang: "zh-Hant",
-    appName: "交換所",
+    appName: "寶可夢交換所",
     subtitle: "Pokémon GO 交換清單製作",
     search: "搜尋名稱或圖鑑編號",
     close: "關閉",
@@ -142,7 +142,7 @@ export const STRINGS = {
 
   ja: {
     htmlLang: "ja",
-    appName: "交換所",
+    appName: "ポケモン交換所",
     subtitle: "Pokémon GO 交換リストメーカー",
     search: "名前・図鑑番号で検索",
     close: "閉じる",
@@ -263,7 +263,7 @@ export const STRINGS = {
 
   en: {
     htmlLang: "en",
-    appName: "Trade Post",
+    appName: "Pokémon Trade Post",
     subtitle: "Pokémon GO trade list maker",
     search: "Search by name or dex number",
     close: "Close",
