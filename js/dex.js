@@ -193,15 +193,17 @@ export const FILTER_GROUPS = {
     options: GEN_RANGES.map(([k, a, b]) => [k, (e) => e.dex >= a && e.dex <= b]),
     labelOf: (k) => k,
   },
+  /*
+   * 稀有度只有一個選項（2026-09-12，使用者要求）。
+   *
+   * 傳說、神話與究極異獸在 GO 裡的交換規則是同一套，都要特殊交換，
+   * 分成三個選項對「這隻換不換得動」沒有幫助，只是把一格拆成三格。
+   * 條目的 `cls` 仍然保留 game master 的原貌，之後想分開不必重跑腳本。
+   */
   rarity: {
     label: "grpRarity",
-    options: [
-      ["legendary", (e) => e.cls === "legendary"],
-      ["mythic", (e) => e.cls === "mythic"],
-      ["ultra", (e) => e.cls === "ultra_beast"],
-    ],
-    labelOf: (k) =>
-      ({ legendary: "filterLegendary", mythic: "filterMythic", ultra: "filterUltra" })[k],
+    options: [["legendary", (e) => e.cls !== "normal"]],
+    labelOf: (k) => ({ legendary: "filterLegendary" })[k],
   },
   other: {
     label: "grpOther",

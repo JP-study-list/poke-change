@@ -89,7 +89,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `js/bgevents.js` | `HAND_EVENTS` | 手工維護的 21 張，有三語名、註記、寶可夢清單與本地備援圖。會逐欄覆蓋骨架。其中 30 週年那四張只蓋名稱與日期，清單等活動辦完 |
 | `js/bgseries.js` | `SERIES` `seriesInfo` `seriesOrder` | 23 個收納夾的三語名與顯示順序 |
 | `js/types.js` | `TYPES` `typeInfo` | 18 種屬性的代表色與三語名 |
-| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 106 個 key，必須完全一致 |
+| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 102 個 key，必須完全一致 |
 
 ### 存取層
 

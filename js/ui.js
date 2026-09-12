@@ -398,11 +398,16 @@ export function renderGrid(list, data, lang, t) {
 /* ─────────── 條目詳情 ─────────── */
 
 const KIND_LABEL = { base: "kindBase", form: "kindForm", costume: "kindCostume" };
+/*
+ * 稀有度在畫面上只有兩種說法（2026-09-12，使用者要求）。
+ * 神話與究極異獸都併進傳說，它們在 GO 裡的交換規則是同一套。
+ * 資料層的 `cls` 沒有動，仍然是 game master 的原貌。
+ */
 const CLS_LABEL = {
   normal: "clsNormal",
   legendary: "clsLegendary",
-  mythic: "clsMythic",
-  ultra_beast: "clsUltraBeast",
+  mythic: "clsLegendary",
+  ultra_beast: "clsLegendary",
 };
 
 /**
