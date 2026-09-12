@@ -196,11 +196,15 @@ const railHasContent = () =>
 function drawDetail() {
   document.body.classList.toggle("rail-off", !railHasContent());
   /*
-   * 圖鑑的右欄點了才出現，所以在桌機也走彈出，浮在格子牆上面。
-   * 常駐的話點一隻就把內容區推窄，格子牆從 14 欄掉成 12 欄整片重排。
-   * 背卡的右欄一直都在（沒點卡片時擺清單摘要），不適用。
+   * 點了才出現的右欄在桌機也走彈出，浮在格子牆上面。
+   * 常駐的話點一下就把內容區推窄，格子牆整片重排。
+   * 圖鑑從 14 欄掉成 12 欄，交換表的兩欄也會跟著縮。
+   *
+   * 常駐的只有背卡，因為它沒點卡片時擺清單摘要，那一欄一直有東西。
+   * 所以條件寫成排除背卡，不是列舉另外兩個檢視——
+   * 形態取決於「這個檢視的右欄要不要一直在」，那只有背卡是真的。
    */
-  document.body.classList.toggle("rail-pop", state.view === "dex");
+  document.body.classList.toggle("rail-pop", state.view !== "bg");
   if (state.openId) {
     ui.renderDetail(
       state.openId,
