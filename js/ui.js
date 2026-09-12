@@ -320,6 +320,9 @@ export function renderRailSummary(book, t) {
 
 /* ─────────── 圖鑑 ─────────── */
 
+/** 詳情面板要顯示哪幾個等級的 IV100 CP。欄位名就是 cp + 等級 */
+const CP_LEVELS = [20, 25, 50];
+
 /** 目前條件下要顯示哪些條目 */
 export function visibleEntries(filter, query) {
   return search(applyFilter(ENTRIES, filter), query);
@@ -513,6 +516,24 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
 
   const form = formName(e, lang);
 
+  /*
+   * IV100 的 CP。團體戰前要查的就是這個，所以排在條件上面，不必捲。
+   * 三個等級：20 是團體戰捕捉、25 是天氣加成、50 是練滿。
+   * 沒有 CP 的那幾筆整列不畫——上游缺那個型態的基礎數值，
+   * 擺三個破折號只是佔位子，還會讓人以為是載入失敗。
+   */
+  const cpBlock = e.cp20
+    ? `<p class="d-sect">${esc(t("cpSection"))}</p>
+      <div class="cp-row">
+        ${CP_LEVELS.map(
+          (lv) => `<div class="cp-box">
+            <span class="k">${esc(t("cpLevel", lv))}</span>
+            <span class="v">${e[`cp${lv}`]}</span>
+          </div>`
+        ).join("")}
+      </div>`
+    : "";
+
   $("#panel").innerHTML = `
     ${
       back
@@ -535,6 +556,8 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
         )}</div>
       </div>
     </div>
+
+    ${cpBlock}
 
     <p class="d-sect">${esc(t("condSection"))}</p>
     <div class="marks draft">

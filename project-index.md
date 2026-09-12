@@ -81,14 +81,14 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 檔案 | 匯出 | 用途 |
 | --- | --- | --- |
-| `js/godex.js` | `GODEX` `GODEX_COUNT` | **自動產生，不要手改。** 1455 個條目，含 dex / 型態 / 裝扮 / 三語名 / 屬性 / 稀有度 / 圖檔名 / 有無異色 |
+| `js/godex.js` | `GODEX` `GODEX_COUNT` | **自動產生，不要手改。** 1455 個條目，含 dex / 型態 / 裝扮 / 三語名 / 屬性 / 稀有度 / 圖檔名 / 有無異色 / IV100 的 `cp20` `cp25` `cp50` |
 | `js/extra.js` | `PIKA_EXTRA` `DB_EXTRA` `ALIAS` `MISSING_ICON` `extraEntries()` | 手動補 godex 缺的 29 筆：22 種 Choggor 的裝扮皮卡丘、5 種只有 Dittobase 有圖的裝扮，以及沒有 GO 圖示的捷拉奧拉與纏紅鶴 |
 | `js/costumes.js` | `COSTUME_NAMES` `costumeName()` | 裝扮的三語譯名。**遊戲內裝扮沒有官方名稱**，只能自己取，這是唯一來源 |
 | `js/bgdata.js` | `BG_CARDS` `BG_CARD_COUNT` | **自動產生，不要手改。** 240 張背卡骨架，含代號、上游檔名、收納夾、英文名、日期、特效層旗標與寶可夢清單 |
 | `js/bgevents.js` | `HAND_EVENTS` | 手工維護的 21 張，有三語名、註記、寶可夢清單與本地備援圖。會逐欄覆蓋骨架。其中 30 週年那四張只蓋名稱與日期，清單等活動辦完 |
 | `js/bgseries.js` | `SERIES` `seriesInfo` `seriesOrder` | 23 個收納夾的三語名與顯示順序 |
 | `js/types.js` | `TYPES` `typeInfo` | 18 種屬性的代表色與三語名 |
-| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 105 個 key，必須完全一致 |
+| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 107 個 key，必須完全一致 |
 
 ### 存取層
 
@@ -137,7 +137,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 檔案 | 用途 |
 | --- | --- |
-| `tools/build-dex.mjs` | 從 PokeMiners 產生 `js/godex.js`。`--force` 忽略快取重抓。快取在 `tools/.cache/`（不進 git，約 25 MB） |
+| `tools/build-dex.mjs` | 從 PokeMiners 產生 `js/godex.js`，含 IV100 的三個 CP（倍率取自 game master 的 `PLAYER_LEVEL_SETTINGS`）。`--force` 忽略快取重抓。快取在 `tools/.cache/`（不進 git，約 25 MB） |
 | `tools/build-bg.mjs` | 產生 `js/bgdata.js`。PokeMiners 給代號與圖，Dittobase 給寶可夢清單，Serebii 給日期並墊底，Bulbapedia 只做交叉比對。兩邊叫法不同接不上的走 `DB_MANUAL`／`SEREBII_MANUAL` 人工指名，`resolveMatches` 擋掉兩張卡搶同一筆。另外寫一份 `tools/bg-report.md`。快取在 `tools/.cache/bg/` |
 | `tools/check.mjs` | 自我檢查。i18n key、條目完整性、背卡引用、儲存往返、全部繪製函式、逸出。`--net` 加驗圖片網址 |
 
@@ -164,6 +164,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 加 `<img>` | **一律用 `iconAttrs()` 產生屬性**，自己寫 `src` 就沒有備援鏈 |
 | 改配色、字級、間距 | `css/style.css` 的 `:root`。改了顏色要同步 `js/share.js` 的 `LIGHT`／`DARK`，canvas 吃不到 CSS 變數 |
 | 改篩選面板的分組順序 | `js/ui.js` 的 `FGROUPS` |
+| 改詳情面板顯示哪幾個等級的 CP | `js/ui.js` 的 `CP_LEVELS`，數字要對得上 godex 的欄位名 |
 | 改設定面板裡有什麼 | `index.html` 的 `#settings`，內容由 `renderChrome` 填 |
 | 改檢視的圖示 | `js/ui.js` 的 `VIEW_ICONS` |
 | 改手機底部 bar 的高度 | `css/style.css` 的 `--tab-h`，內容區的底部內距吃同一個值 |

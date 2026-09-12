@@ -97,6 +97,9 @@ export const STRINGS = {
     full: "這一欄已達上限 %s 項",
     dupe: "這一筆已經在清單裡了",
 
+    cpSection: "IV100 CP",
+    cpLevel: "LV %s",
+
     condSection: "條件",
     back: "返回",
     pickHint: "點一隻加進這一欄",
@@ -215,6 +218,9 @@ export const STRINGS = {
     full: "この列は上限の %s 件に達しています",
     dupe: "この組み合わせはすでにリストにあります",
 
+    cpSection: "IV100 CP",
+    cpLevel: "LV %s",
+
     condSection: "条件",
     back: "戻る",
     pickHint: "タップしてこの列に追加",
@@ -332,6 +338,9 @@ export const STRINGS = {
     emptyHave: "Nothing here yet. Use the + button, or pick one from the dex.",
     full: "This column is at its limit of %s items",
     dupe: "That one is already in your list",
+
+    cpSection: "CP at 100% IV",
+    cpLevel: "LV %s",
 
     condSection: "Options",
     back: "Back",

@@ -137,6 +137,42 @@ console.log("\n2. 圖鑑條目");
   ok("id 不重複", !dup.length, dup.slice(0, 5).join(", "));
   ok("欄位完整", !badField.length, badField.slice(0, 5).join(", "));
 
+  /*
+   * IV100 的 CP。三個等級是 build-dex 用 game master 的基礎數值算的，
+   * 這裡驗三件事：定值沒跑掉、三個等級的大小關係、要有就三個都要有。
+   */
+  {
+    const mew = dex.find("d150");
+    ok(
+      "超夢的 IV100 CP 是 2387 / 2984 / 4724",
+      mew && mew.cp20 === 2387 && mew.cp25 === 2984 && mew.cp50 === 4724,
+      mew ? `得到 ${mew.cp20} / ${mew.cp25} / ${mew.cp50}` : "找不到 d150"
+    );
+
+    const bad = dex.ENTRIES.filter(
+      (e) => e.cp20 && !(e.cp20 < e.cp25 && e.cp25 < e.cp50)
+    );
+    ok("CP 隨等級遞增", !bad.length, bad.slice(0, 3).map((e) => e.id).join(", "));
+
+    const half = dex.ENTRIES.filter(
+      (e) => [e.cp20, e.cp25, e.cp50].filter(Boolean).length % 3 !== 0
+    );
+    ok("三個等級要有就三個都有", !half.length, half.slice(0, 3).map((e) => e.id).join(", "));
+
+    /*
+     * 沒有 CP 的那幾筆是刻意的：game master 沒給那個型態自己的基礎數值。
+     * 退回本體會算出一個看起來很像真的、其實是別隻的數字，所以寧可空著。
+     * 上游哪天補了，這條會失敗，提醒把名單改掉。
+     */
+    const NO_CP = ["d382.fPRIMAL", "d383.fPRIMAL", "d705.fHISUIAN", "d706.fHISUIAN"];
+    const none = dex.ENTRIES.filter((e) => !e.cp20).map((e) => e.id);
+    ok(
+      `沒有 CP 的剛好是那 ${NO_CP.length} 筆`,
+      none.length === NO_CP.length && NO_CP.every((id) => none.includes(id)),
+      `現在是 ${none.join(", ") || "沒有"}`
+    );
+  }
+
   const names = new Map();
   const clash = [];
   for (const e of dex.ENTRIES) {

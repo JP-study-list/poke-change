@@ -230,6 +230,73 @@ async function main() {
     if (!settings.has(`${dex}|null`)) settings.set(`${dex}|null`, { dex, s });
   }
 
+  /*
+   * 基礎數值另外建一份索引，不共用上面那個。
+   *
+   * 上面那個查不到會退回本體（`dex|null`），對屬性與稀有度來說沒問題，
+   * 但 CP 不能這樣退：原始回歸與洗翠黏美龍在 game master 裡沒有自己的數值，
+   * 退回本體會得到一個看起來很像真的、其實是別隻的 CP，而且不會有人發現。
+   *
+   * 兩種寫法都收，因為上游有時把物種寫進 form（UNOWN_A），有時不寫（ORIGIN）。
+   */
+  const statsOf = new Map();
+  for (const tpl of gm) {
+    const s = tpl.data && tpl.data.pokemonSettings;
+    const m = String(tpl.templateId).match(/^V(\d+)_POKEMON_/);
+    if (!s || !s.stats || !m) continue;
+    const dex = Number(m[1]);
+    const put = (key) => {
+      if (!statsOf.has(key)) statsOf.set(key, s.stats);
+    };
+    if (s.form) {
+      put(`${dex}|${s.form}`);
+      put(`${dex}|${String(s.form).replace(`${s.pokemonId}_`, "")}`);
+    } else put(`${dex}|`);
+  }
+
+  /**
+   * 型態沒有自己的數值、但實際上就是本體的那幾筆。
+   * 目前只有哲爾尼亞斯，它那兩個樣子在 GO 裡只是外觀。
+   * 這張表要一筆一筆指名，不能寫成「查不到就用本體」，
+   * 那樣原始回歸會拿到蓋歐卡的數字。
+   */
+  const STATS_SAME_AS = { "716|NEUTRAL": "NORMAL" };
+
+  /*
+   * IV100 的 CP。團體戰捕捉是 20 級、天氣加成 25 級、練滿 50 級。
+   * 公式：(攻+15) × √(防+15) × √(耐+15) × 倍率² ÷ 10，無條件捨去，下限 10。
+   * 倍率取自 game master 的 PLAYER_LEVEL_SETTINGS，不要自己抄一份。
+   */
+  const CPM = gm.find((x) => x.data && x.data.playerLevel).data.playerLevel
+    .cpMultiplier;
+  const CP_LEVELS = [20, 25, 50];
+  const ivCp = (st, lv) =>
+    Math.max(
+      10,
+      Math.floor(
+        ((st.baseAttack + 15) *
+          Math.sqrt(st.baseDefense + 15) *
+          Math.sqrt(st.baseStamina + 15) *
+          CPM[lv - 1] ** 2) /
+          10
+      )
+    );
+
+  /**
+   * 一筆條目該用哪一組基礎數值。
+   * 裝扮不改數值，用本體的；真正的型態一定要有自己的，沒有就是沒有。
+   * kind 要從外面傳進來，因為裝扮有時掛在型態代碼上（fFALL_2019）。
+   */
+  const statsFor = (e, kind) => {
+    const base = () => statsOf.get(`${e.dex}|NORMAL`) || statsOf.get(`${e.dex}|`);
+    if (kind === "costume" || !e.form) return base();
+    const own = statsOf.get(`${e.dex}|${e.form}`);
+    if (own) return own;
+    const same = STATS_SAME_AS[`${e.dex}|${e.form}`];
+    if (same) return statsOf.get(`${e.dex}|${same}`);
+    return null;
+  };
+
   const TYPE = (t) => (t ? String(t).replace("POKEMON_TYPE_", "").toLowerCase() : null);
   const CLASS = (c) =>
     !c ? "normal" : String(c).replace("POKEMON_CLASS_", "").toLowerCase();
@@ -322,7 +389,7 @@ async function main() {
 
   /* 4. 組出輸出 */
   const out = [];
-  const missing = { name: [], form: new Set(), costume: new Set(), gm: [] };
+  const missing = { name: [], form: new Set(), costume: new Set(), gm: [], stats: [] };
   let skipped = 0;
 
   for (const [id, e] of [...entries].sort((a, b) => {
@@ -385,6 +452,11 @@ async function main() {
 
     row.types = s ? [TYPE(s.type), TYPE(s.type2)].filter(Boolean) : [];
     row.cls = CLASS(s && s.pokemonClass);
+
+    // IV100 的 CP。查不到自己的數值就三個都不輸出，不借本體的來充數
+    const st = statsFor(e, row.kind);
+    if (st) for (const lv of CP_LEVELS) row[`cp${lv}`] = ivCp(st, lv);
+    else missing.stats.push(id);
     row.icon = iconFile(e, false);
     if (e.shiny) row.shinyIcon = iconFile(e, true);
 
@@ -413,6 +485,9 @@ async function main() {
  * kind      base 一般 / form 型態變化 / costume 裝扮
  * types     屬性，一或兩個
  * cls       normal / legendary / mythic / ultra_beast
+ * cp20/25/50 個體值全滿（15/15/15）在該等級的 CP
+ *           20 是團體戰捕捉、25 是天氣加成、50 是練滿
+ *           game master 沒有那個型態的基礎數值時三個都不輸出
  * icon      GO 圖示檔名
  * shinyIcon 異色圖示檔名，上游沒有異色圖就沒這個欄位
  *
@@ -443,6 +518,7 @@ export const GODEX_COUNT = GODEX.length;
   console.log(`  神話            ${n((r) => r.cls === "mythic")}`);
   console.log(`  究極異獸        ${n((r) => r.cls === "ultra_beast")}`);
   console.log(`  缺屬性          ${n((r) => !r.types.length)}`);
+  console.log(`  有 IV100 CP     ${n((r) => r.cp20)}`);
 
   if (missing.name.length)
     console.log(`  ! 缺物種名 ${[...new Set(missing.name)].join(", ")}`);
@@ -459,6 +535,11 @@ export const GODEX_COUNT = GODEX.length;
     );
   if (missing.gm.length)
     console.log(`  ! 對不到 game master ${missing.gm.length} 筆`);
+  if (missing.stats.length)
+    console.log(
+      `  ! 沒有基礎數值因此沒有 CP ${missing.stats.length} 筆：` +
+        missing.stats.join(", ")
+    );
 }
 
 // process.exit() 會在 Windows 上炸掉，讓 Node 自己收尾

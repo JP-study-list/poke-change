@@ -58,6 +58,10 @@ export const MISSING_ICON = [
     kind: "base",
     types: ["electric"],
     cls: "mythic",
+    // IV100 的 CP。這兩筆沒有本體可抄，數字是照 build-dex 那條公式算的
+    cp20: 1953,
+    cp25: 2442,
+    cp50: 3865,
     icon: null,
     art: ART_BASE + "807.png",
   },
@@ -70,6 +74,9 @@ export const MISSING_ICON = [
     kind: "base",
     types: ["flying", "fighting"],
     cls: "normal",
+    cp20: 1575,
+    cp25: 1969,
+    cp50: 3117,
     icon: null,
     art: ART_BASE + "973.png",
   },
@@ -138,6 +145,15 @@ function speciesOf(dex) {
   return GODEX.find((e) => e.dex === dex && e.kind === "base") || null;
 }
 
+/**
+ * 本體的 IV100 CP。裝扮不改數值，所以直接抄，不在這裡自己維護數字。
+ * 本體沒有 CP（game master 缺基礎數值）時就什麼都不給，不要補 0。
+ */
+function cpOf(base) {
+  if (!base || !base.cp20) return {};
+  return { cp20: base.cp20, cp25: base.cp25, cp50: base.cp50 };
+}
+
 /** DB_EXTRA 轉成條目格式。id 一樣用 x 前綴，代表圖片來自外部 */
 export function dbExtraEntries() {
   return DB_EXTRA.flatMap((c) => {
@@ -157,6 +173,8 @@ export function dbExtraEntries() {
         kind: "costume",
         types: base.types,
         cls: base.cls,
+        // 裝扮不改數值，CP 跟本體一樣
+        ...cpOf(base),
         icon: null,
         art: LOCAL_EXTRA + c.file,
       },
@@ -166,6 +184,7 @@ export function dbExtraEntries() {
 
 /** 轉成跟 godex 一樣的條目格式，id 用 x 前綴標示來源不同 */
 export function pikaExtraEntries() {
+  const base = speciesOf(25);
   return PIKA_EXTRA.map((c) => ({
     id: `d25.x${c.id.toUpperCase().replace(/-/g, "_")}`,
     dex: 25,
@@ -179,6 +198,7 @@ export function pikaExtraEntries() {
     kind: "costume",
     types: ["electric"],
     cls: "normal",
+    ...cpOf(base),
     icon: null,
     art: REMOTE_BASE + c.file,
   }));

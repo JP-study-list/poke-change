@@ -1145,6 +1145,40 @@ body.no-names .cell .no {
   margin-top: 6px;
 }
 
+/*
+ * IV100 的 CP。三個等級一排，凹下去那一階當底，
+ * 數字用等寬數字，三格才對得齊。
+ * 這是查閱用的資訊不是可以按的東西，所以沒有 hover 也沒有邊框。
+ */
+.cp-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.cp-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 4px 8px;
+  border-radius: 9px;
+  background: var(--sunk);
+}
+
+.cp-box .k {
+  font: var(--caps);
+  letter-spacing: 0.04em;
+  color: var(--dim);
+}
+
+.cp-box .v {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
 .type {
   padding: 2px 9px;
   border-radius: 999px;
