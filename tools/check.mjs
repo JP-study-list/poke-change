@@ -164,7 +164,7 @@ console.log("\n2. 圖鑑條目");
      * 退回本體會算出一個看起來很像真的、其實是別隻的數字，所以寧可空著。
      * 上游哪天補了，這條會失敗，提醒把名單改掉。
      */
-    const NO_CP = ["d382.fPRIMAL", "d383.fPRIMAL", "d705.fHISUIAN", "d706.fHISUIAN"];
+    const NO_CP = ["d705.fHISUIAN", "d706.fHISUIAN"];
     const none = dex.ENTRIES.filter((e) => !e.cp20).map((e) => e.id);
     ok(
       `沒有 CP 的剛好是那 ${NO_CP.length} 筆`,

@@ -381,11 +381,23 @@ async function main() {
   }
 
   /**
-   * 超級進化與極巨化是暫時狀態，不是可交換的個體，整批排除。
-   * 玩家交換的是原本那隻，超級進化只是戰鬥中的形態。
+   * 超級進化、極巨化與原始回歸都是暫時狀態，不是可交換的個體，整批排除。
+   * 玩家交換的是原本那隻，那些只是戰鬥中的形態。
+   * 原始回歸是後來才補進這條的：它跟超級進化同一類，
+   * 而且 game master 根本沒給它自己的基礎數值，收進來連 CP 都是空的。
    */
   const isTempEvo = (code) =>
-    !!code && (/^MEGA(_|$)/.test(code) || /GIGANTAMAX|ETERNAMAX/.test(code));
+    !!code &&
+    (/^MEGA(_|$)/.test(code) || /GIGANTAMAX|ETERNAMAX/.test(code) || code === "PRIMAL");
+
+  /**
+   * 暫時不要出現在網站上的圖鑑編號。
+   *
+   * 阿爾宙斯：GO 還沒實裝，上游只有圖。18 個屬性型態的數值完全一樣，
+   * 型態名稱多半還沒有官方譯名，畫面上會出現一整排「Bug-Type form」。
+   * 實裝之後把這裡的編號刪掉、重跑腳本就會回來，id 不會變。
+   */
+  const HIDDEN_DEX = new Set([493]);
 
   /* 4. 組出輸出 */
   const out = [];
@@ -396,7 +408,7 @@ async function main() {
     const d = a[1].dex - b[1].dex;
     return d || a[0].localeCompare(b[0]);
   })) {
-    if (isTempEvo(e.form)) {
+    if (isTempEvo(e.form) || HIDDEN_DEX.has(e.dex)) {
       skipped++;
       continue;
     }
@@ -462,7 +474,7 @@ async function main() {
 
     out.push(row);
   }
-  console.log(`  排除超級進化與極巨化 ${skipped} 筆`);
+  console.log(`  排除暫時狀態與暫時隱藏的 ${skipped} 筆`);
 
   /* 5. 寫檔 */
   const body = out
