@@ -195,6 +195,12 @@ const railHasContent = () =>
  */
 function drawDetail() {
   document.body.classList.toggle("rail-off", !railHasContent());
+  /*
+   * 圖鑑的右欄點了才出現，所以在桌機也走彈出，浮在格子牆上面。
+   * 常駐的話點一隻就把內容區推窄，格子牆從 14 欄掉成 12 欄整片重排。
+   * 背卡的右欄一直都在（沒點卡片時擺清單摘要），不適用。
+   */
+  document.body.classList.toggle("rail-pop", state.view === "dex");
   if (state.openId) {
     ui.renderDetail(
       state.openId,

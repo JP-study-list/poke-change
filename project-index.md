@@ -17,7 +17,8 @@ index.html  →  <script type="module" src="./js/main.js">  →  main.js  →  �
 所有內容由 `js/ui.js` 在執行時填入。無 build、無 bundler、無 npm。
 
 版面是兩欄：內容與右欄。**沒有側欄**，導覽在頂部列，900 以下掉成貼底的 bar。
-右欄（`#sheet`）在 1200 以上常駐，以下退回彈出。
+右欄（`#sheet`）在 1200 以上只有背卡常駐，圖鑑走彈出（`body.rail-pop`），
+1200 以下一律彈出。
 檢視 bar、右欄、篩選面板、設定面板都是同一段 DOM 兩種形態，
 繪製函式不需要知道自己在哪。
 

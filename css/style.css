@@ -433,8 +433,15 @@ select {
   border-left: 1px solid var(--line);
 }
 
+/*
+ * 常駐那一種只給「右欄一直在」的檢視。
+ *
+ * `body.rail-pop` 是圖鑑，它的右欄點了才出現，所以留在上面那套彈出形態：
+ * fixed 脫離流排，浮在格子牆上面，格子牆的欄數不會因為點一隻而重排。
+ * 沒有這個區隔的話，圖鑑點下去整片會從 14 欄掉成 12 欄。
+ */
 @media (min-width: 1200px) {
-  .rail {
+  body:not(.rail-pop) .rail {
     position: sticky;
     top: calc(var(--topbar-h) + var(--bar-h));
     inset: auto;
@@ -446,7 +453,7 @@ select {
     background: none;
   }
 
-  .rail-inner {
+  body:not(.rail-pop) .rail-inner {
     position: static;
     width: auto;
     height: 100%;
@@ -455,7 +462,7 @@ select {
   }
 
   /* 交換表沒有東西要放進右欄，整欄收起來把寬度讓給格子牆 */
-  body.rail-off .rail {
+  body.rail-off:not(.rail-pop) .rail {
     display: none;
   }
 }
