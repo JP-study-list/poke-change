@@ -1719,16 +1719,26 @@ body.no-names .cell .no {
   object-fit: contain;
 }
 
+/*
+ * 有背卡的格子裡寶可夢縮小，背卡才露得出來。
+ * 選擇器認的是相鄰的底圖那一層（`bgLayer` 畫在 `<img>` 前面），
+ * 所以沒指定背卡的格子維持原本的大小——那些格子沒有要讓給誰。
+ */
+.want-bg + img {
+  padding: 18%;
+}
+
+/*
+ * 背卡底圖不套濾鏡，直接顯示（2026-09-12，使用者要求）。
+ * 原本壓到 0.5（深色 0.42）是為了讓寶可夢站得出來，
+ * 代價是背卡認不出來——而背卡是這個專案的差異化，看不清等於沒有。
+ * 改成讓寶可夢縮小去讓出空間，見下面那條。
+ */
 .want-bg {
   position: absolute;
   inset: 0;
   background-size: cover;
   background-position: center;
-  opacity: 0.5;
-}
-
-body.dark .want-bg {
-  opacity: 0.42;
 }
 
 /* 異色的星星。疊在左上角，不佔版面 */

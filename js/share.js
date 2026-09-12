@@ -275,12 +275,15 @@ export async function buildShareImage(data, opts) {
         ctx.fillStyle = C.card;
         ctx.fill();
         ctx.clip();
-        ctx.globalAlpha = dark ? 0.42 : 0.5;
         drawCover(ctx, bgImg, bx, cy, box);
-        ctx.globalAlpha = 1;
         ctx.restore();
       }
-      if (sprite) drawContain(ctx, sprite, bx, cy, box, 0.78);
+      /*
+       * 背卡底圖不套濾鏡（跟畫面上一致），改成讓寶可夢縮小讓出空間。
+       * 0.64 對得上 CSS 那邊 `.want-bg + img` 的 18% 內距。
+       * 沒有背卡的格子維持 0.78，那些格子沒有要讓給誰。
+       */
+      if (sprite) drawContain(ctx, sprite, bx, cy, box, bgImg ? 0.64 : 0.78);
 
       /*
        * 異色是星星疊在左上角，跟畫面上的格子一致。
