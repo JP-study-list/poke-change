@@ -6,6 +6,7 @@
  *
  * 檢查項目：
  *   1. 三語 i18n key 完全一致
+ *   1b. 版本號的格式，以及 VERSION.md 與 js/version.js 沒有寫岔
  *   2. 圖鑑條目欄位完整、id 不重複
  *   3. 背卡引用的條目都存在
  *   4. 儲存讀取往返後資料不變
@@ -13,6 +14,8 @@
  *
  * 圖片網址不在這裡驗，那要連外網。需要時跑 --net。
  */
+
+import { readFile } from "node:fs/promises";
 
 const NET = process.argv.includes("--net");
 
@@ -61,7 +64,7 @@ function installDom() {
     "localNotice", "infobar",
     "filterBtn", "filterN", "fpicked", "fpanel", "gearBtn", "settings", "closeX", "settingsX",
     "searchbar", "importFile", "listName", "shareBtn",
-    "displayTitle", "displayOpts", "trainerCode",
+    "displayTitle", "displayOpts", "trainerCode", "verLine",
   ]) {
     els[id] = mk(id);
   }
@@ -120,6 +123,26 @@ console.log("\n1. i18n");
     );
   }
   ok("LANGS 都有字典", LANGS.every((l) => STRINGS[l.code]));
+}
+
+console.log("\n1b. 版本號");
+{
+  const { VERSION, VERSION_DATE } = await import("../js/version.js");
+  ok("號碼是 x.xx.xx", /^\d+\.\d{2}\.\d{2}$/.test(VERSION), VERSION);
+  ok("日期是 YYYY-MM-DD", /^\d{4}-\d{2}-\d{2}$/.test(VERSION_DATE), VERSION_DATE);
+
+  /*
+   * VERSION.md 是給人看的，js/version.js 是畫面認的，兩邊寫不一樣的話
+   * 網站會顯示一個紀錄裡查不到的號碼。所以在這裡釘住：
+   * md 最上面那個小節的號碼與日期，必須等於模組匯出的值。
+   */
+  const md = await readFile(new URL("../VERSION.md", import.meta.url), "utf8");
+  const first = md.match(/^## (\S+) — (\S+)$/m);
+  ok("VERSION.md 有版本小節", !!first);
+  if (first) {
+    ok(`md 最新一筆是 ${first[1]}`, first[1] === VERSION, `模組是 ${VERSION}`);
+    ok(`md 的日期是 ${first[2]}`, first[2] === VERSION_DATE, `模組是 ${VERSION_DATE}`);
+  }
 }
 
 console.log("\n2. 圖鑑條目");

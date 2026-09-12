@@ -34,6 +34,7 @@ import {
   folderName,
 } from "./backgrounds.js";
 import { MAX_ITEMS, formatCode } from "./store.js";
+import { VERSION, VERSION_DATE } from "./version.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -92,6 +93,9 @@ export function renderChrome(t, lang, disp = {}) {
     <button type="button" data-act="export">${esc(t("export"))}</button>
     <button type="button" data-act="import">${esc(t("import"))}</button>
     <button type="button" class="danger" data-act="reset">${esc(t("reset"))}</button>`;
+
+  // 版本號。只有標籤翻譯，號碼與日期三語共用同一個寫法
+  $("#verLine").textContent = `${t("version")} ${VERSION} · ${VERSION_DATE}`;
 }
 
 let LANG_LIST = [];

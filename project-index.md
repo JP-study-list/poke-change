@@ -12,7 +12,7 @@
 index.html  →  <script type="module" src="./js/main.js">  →  main.js  →  各模組
 ```
 
-`index.html` 139 行，是骨架：頂部列（標題、三個檢視、語言、齒輪與設定面板）、
+`index.html` 144 行，是骨架：頂部列（標題、三個檢視、語言、齒輪與設定面板）、
 資訊列、搜尋列（含篩選漏斗與面板）、內容容器、右欄、toast。
 所有內容由 `js/ui.js` 在執行時填入。無 build、無 bundler、無 npm。
 
@@ -37,7 +37,8 @@ main.js ──┬─► i18n.js      語言字典 + makeT()
           └─► ui.js ─────┬─► dex.js
                          ├─► types.js        屬性顏色
                          ├─► backgrounds.js  背卡查詢
-                         └─► store.js        MAX_ITEMS
+                         ├─► store.js        MAX_ITEMS
+                         └─► version.js      設定面板底下那行版本號
 
 dex.js ──┬─► godex.js       自動產生的圖鑑資料
          ├─► extra.js       手動補的條目
@@ -75,7 +76,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 檔案 | 用途 | 備註 |
 | --- | --- | --- |
-| `index.html` | 頁面骨架，139 行 | 設定面板要加區塊 → 在 `#settings` 的 `.modal-scroll` 內加 `<section class="side-block">`。圖示一律 inline SVG，不用文字符號 |
+| `index.html` | 頁面骨架，144 行 | 設定面板要加區塊 → 在 `#settings` 的 `.modal-scroll` 內加 `<section class="side-block">`。圖示一律 inline SVG，不用文字符號 |
 | `css/style.css` | 全部樣式 | 設計 token 全在 `:root`。**深色不是反色**，`body.dark` 是另一套值。斷點兩個：900px（手機）與 1200px（右欄收起） |
 
 ### 資料層
@@ -89,7 +90,8 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `js/bgevents.js` | `HAND_EVENTS` | 手工維護的 21 張，有三語名、註記、寶可夢清單與本地備援圖。會逐欄覆蓋骨架。其中 30 週年那四張只蓋名稱與日期，清單等活動辦完 |
 | `js/bgseries.js` | `SERIES` `seriesInfo` `seriesOrder` | 23 個收納夾的三語名與顯示順序 |
 | `js/types.js` | `TYPES` `typeInfo` | 18 種屬性的代表色與三語名 |
-| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 102 個 key，必須完全一致 |
+| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 103 個 key，必須完全一致 |
+| `js/version.js` | `VERSION` `VERSION_DATE` | 版本號。**畫面唯一認的值**，`VERSION.md` 是給人看的紀錄，兩邊必須一致，`check.mjs` 會驗 |
 
 ### 存取層
 
@@ -144,7 +146,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | --- | --- |
 | `tools/build-dex.mjs` | 從 PokeMiners 產生 `js/godex.js`，含 IV100 的三個 CP（倍率取自 game master 的 `PLAYER_LEVEL_SETTINGS`）。`--force` 忽略快取重抓。快取在 `tools/.cache/`（不進 git，約 25 MB） |
 | `tools/build-bg.mjs` | 產生 `js/bgdata.js`。PokeMiners 給代號與圖，Dittobase 給寶可夢清單，Serebii 給日期並墊底，Bulbapedia 只做交叉比對。兩邊叫法不同接不上的走 `DB_MANUAL`／`SEREBII_MANUAL` 人工指名，`resolveMatches` 擋掉兩張卡搶同一筆。另外寫一份 `tools/bg-report.md`。快取在 `tools/.cache/bg/` |
-| `tools/check.mjs` | 自我檢查。i18n key、條目完整性、背卡引用、儲存往返、全部繪製函式、逸出。`--net` 加驗圖片網址 |
+| `tools/check.mjs` | 自我檢查。i18n key、版本號兩個檔沒寫岔、條目完整性、背卡引用、儲存往返、全部繪製函式、逸出。`--net` 加驗圖片網址 |
 
 ### 資源
 
@@ -176,6 +178,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改資訊列顯示什麼 | `js/main.js` 的 `draw()`，文字翻好再傳給 `renderInfoBar` |
 | 改右欄寬度或收起的斷點 | `css/style.css` 的 `--rail-w` 與 1200px 那段查詢 |
 | 改介面文字、加語言 | `js/i18n.js`（三語 key 必須一致） |
+| 升版 | `js/version.js` 的兩個常數 + `VERSION.md` 補一筆，兩邊號碼與日期要一樣 |
 | 改屬性配色 | `js/types.js` |
 | 改分享圖版面 | `js/share.js` 上方的尺寸常數（`CELL` `COLS` `NAME_H`） |
 | 改交換表格子長相 | `js/ui.js` 的 `tradeCell` + `css/style.css` 的 `.want-cell` |

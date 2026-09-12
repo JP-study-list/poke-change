@@ -1066,6 +1066,18 @@ select {
   color: var(--dim);
 }
 
+/*
+ * 設定面板最底下的版本號。它是註腳不是設定項，所以不給區塊的邊框與標題，
+ * 只有一條上緣的髮絲線把它跟資料那一區分開。
+ */
+.ver {
+  margin: 18px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-sm);
+  color: var(--dim);
+}
+
 .notice strong {
   display: block;
   color: var(--ink);

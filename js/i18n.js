@@ -133,6 +133,8 @@ export const STRINGS = {
     localHint:
       "沒有帳號也沒有雲端。換裝置、清除瀏覽資料，或長時間沒開啟本站，紀錄都會消失。重要的清單請按「匯出備份」存成檔案。",
     saveFailed: "儲存失敗，瀏覽器可能停用了網站資料",
+
+    version: "版本",
   },
 
   ja: {
@@ -249,6 +251,8 @@ export const STRINGS = {
     localHint:
       "アカウントもクラウドもありません。端末を変える、閲覧データを消す、長期間アクセスしないと記録は消えます。大事なリストは書き出して保存してください。",
     saveFailed: "保存に失敗しました。ブラウザの設定をご確認ください",
+
+    version: "バージョン",
   },
 
   en: {
@@ -365,6 +369,8 @@ export const STRINGS = {
     localHint:
       "No account, no cloud. Switching devices, clearing site data, or not visiting for a long time will lose your lists. Export a backup for anything you care about.",
     saveFailed: "Could not save. Your browser may be blocking site data.",
+
+    version: "Version",
   },
 };
 
