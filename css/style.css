@@ -765,14 +765,33 @@ select {
   cursor: pointer;
 }
 
-.toggles button::before {
-  content: "";
-  width: 15px;
-  height: 15px;
+/*
+ * 圖示本身就是開關（2026-09-14，使用者要求）。
+ *
+ * 原本是一個方框打勾，三項長得一模一樣，得讀字才知道在開什麼。
+ * 現在每一項有自己的圖示：關著是線條加淡框，開著整顆填金、圖示轉白。
+ * 深色模式那一項連圖都換（太陽↔月亮），圖示在 `js/ui.js` 的 `DISP_ICONS`。
+ */
+.toggles .ic {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
   flex: none;
   border: 1.5px solid var(--line);
-  border-radius: 5px;
+  border-radius: 50%;
   background: var(--card);
+  color: var(--dim);
+}
+
+.toggles .ic svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .toggles button:hover {
@@ -783,15 +802,11 @@ select {
   color: var(--ink);
 }
 
-/*
- * 打勾是 inline SVG 的 data URI，不是文字符號也不是兩層漸層。
- * 漸層畫的勾在不同縮放比例下線寬會飄，SVG 不會。
- */
-.toggles button[aria-pressed="true"]::before {
-  border-color: var(--gold);
-  background: var(--gold)
-    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-6"/></svg>')
-    center / 13px 13px no-repeat;
+/* 填實金色是「這一項開著」，跟全站其他 aria-pressed 的鈕同一種語彙 */
+.toggles button[aria-pressed="true"] .ic {
+  border-color: transparent;
+  background: var(--gold);
+  color: #fff;
 }
 
 /* 右欄裡的標題區。選寶可夢面板也用這個 */

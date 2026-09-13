@@ -79,9 +79,11 @@ export function renderChrome(t, lang, disp = {}) {
   ]
     .map(
       ([k, label, on]) =>
-        `<button type="button" data-disp="${k}" aria-pressed="${!!on}">${esc(
-          label
-        )}</button>`
+        `<button type="button" data-disp="${k}" aria-pressed="${!!on}">
+          <span class="ic" aria-hidden="true">
+            <svg viewBox="0 0 24 24">${dispIcon(k, !!on)}</svg>
+          </span>${esc(label)}
+        </button>`
     )
     .join("");
   $("#localNotice").innerHTML = `<strong>${esc(t("localOnly"))}</strong>${esc(
@@ -119,6 +121,26 @@ const VIEW_ICONS = {
   trade: `<path d="M4 9h13l-3.5-3.5M20 15H7l3.5 3.5" />`,
   bg: `<rect x="2.5" y="4.5" width="19" height="15" rx="2.5" /><path d="M2.5 15.5l5-4.5 4 3.5 3.5-3 6.5 5.5" /><circle cx="8.5" cy="9" r="1.6" />`,
 };
+
+/*
+ * 設定面板那三個顯示選項的圖示（2026-09-14，使用者要求）。
+ *
+ * 圖示本身就是開關：關著是線條加淡框，開著填成金色。原本只有一個
+ * 方框打勾，三項長得一模一樣，得靠讀字才知道自己在開什麼。
+ *
+ * 深色模式的圖示**跟著狀態換**，太陽與月亮：那一項的兩個狀態各自
+ * 有公認的樣子，只換顏色等於浪費了這件事。另外兩項沒有這種對照，
+ * 硬要換只會變成兩個都看不懂的圖。
+ */
+const DISP_ICONS = {
+  big: `<rect x="2.8" y="4" width="11.4" height="11.4" rx="2.6" /><rect x="16.2" y="13.6" width="5" height="5" rx="1.4" />`,
+  names: `<rect x="4.5" y="3.2" width="15" height="9.6" rx="2.2" /><path d="M4.5 16.8h15M7.5 20.4h9" />`,
+  darkOn: `<path d="M20 14.2A8.2 8.2 0 0 1 9.8 4 7.2 7.2 0 1 0 20 14.2z" />`,
+  darkOff: `<circle cx="12" cy="12" r="4" /><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6" />`,
+};
+
+const dispIcon = (k, on) =>
+  k === "dark" ? (on ? DISP_ICONS.darkOn : DISP_ICONS.darkOff) : DISP_ICONS[k];
 
 /** 檢視切換。桌機在頂部列，900 以下是貼底的 bar，同一段 DOM */
 export function renderViews(view, t) {

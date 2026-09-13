@@ -510,6 +510,24 @@ console.log("\n5. 繪製函式");
   run("renderChrome 帶顯示選項", () =>
     ui.renderChrome(t, "zh", { big: true, names: false })
   );
+  // 三個顯示選項各自有圖示，深色那一項的圖還會跟著開關換（太陽↔月亮）
+  run("renderChrome 顯示選項的圖示", () => {
+    ui.renderChrome(t, "zh", { big: false, names: false, dark: false });
+    const off = els.displayOpts.innerHTML;
+    const n = (off.match(/<svg/g) || []).length;
+    if (n !== 3) throw new Error(`三項應該各一個圖示，得到 ${n} 個`);
+    if (off.includes("::before") || !off.includes('class="ic"'))
+      throw new Error("圖示沒有包在徽章裡");
+
+    ui.renderChrome(t, "zh", { big: false, names: false, dark: true });
+    const on = els.displayOpts.innerHTML;
+    if (on === off) throw new Error("開了深色之後圖示應該換一個");
+    // 太陽有光芒（好幾段 path），月亮只有一條弧線
+    const rays = (s) => (s.match(/M12 2\.6v2\.2/g) || []).length;
+    if (rays(off) !== 1 || rays(on) !== 0)
+      throw new Error("深色關著要是太陽、開著要是月亮");
+  });
+
   run("renderViews", () => ui.renderViews("dex", t));
   run("renderFilterBar 沒選條件", () => {
     ui.renderFilterBar(dex.emptyFilter(), "zh", t);
