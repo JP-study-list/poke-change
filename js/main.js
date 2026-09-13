@@ -9,7 +9,7 @@
  */
 
 import { LANGS, DEFAULT_LANG, makeT } from "./i18n.js";
-import { find, fullName, emptyFilter, filterCount, knownItems } from "./dex.js";
+import { emptyFilter, filterCount, knownItems } from "./dex.js";
 import { CARDS as BG_CARDS } from "./backgrounds.js";
 import * as store from "./store.js";
 import * as ui from "./ui.js";
@@ -243,10 +243,15 @@ function save() {
 
 /* ─────────── 操作 ─────────── */
 
-/** 面板上那份條件草稿。沒有異色可收的條目不預設勾異色，不然會出現收不到的需求 */
-function newDraft(id) {
-  const e = find(id);
-  return { shiny: !!(e && e.shinyIcon), xxl: false, xxs: false, bg: "" };
+/**
+ * 面板上那份條件草稿。
+ *
+ * 四個條件一律從「沒有」開始。異色曾經在有異色圖時預設勾起來，
+ * 但大多數交換談的是一般色，預設勾著等於每次都要先取消；
+ * 而且詳情面板上方那張圖現在跟著這個值走，一開就是異色會看錯是哪一隻。
+ */
+function newDraft() {
+  return { shiny: false, xxl: false, xxs: false, bg: "" };
 }
 
 /**
@@ -259,7 +264,7 @@ function newDraft(id) {
  */
 function addItem(id, col) {
   const list = cur()[col];
-  const d = state.draft || newDraft(id);
+  const d = state.draft || newDraft();
 
   const same = list.findIndex(
     (x) =>
@@ -649,7 +654,7 @@ document.addEventListener("click", (ev) => {
   if (cell) {
     state.openId = cell.dataset.id;
     state.openCard = null;
-    state.draft = newDraft(state.openId);
+    state.draft = newDraft();
     // 從交換表點進來就指出是哪一筆，圖鑑點進來沒有對應的筆數就不閃
     state.flash = cell.dataset.col
       ? { col: cell.dataset.col, idx: Number(cell.dataset.idx) }

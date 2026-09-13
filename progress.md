@@ -4,6 +4,37 @@
 
 ---
 
+## 2026-09-13（四）
+- 類型：修正
+- 影響檔案：js/ui.js, js/main.js, tools/check.mjs, js/version.js,
+  VERSION.md, CLAUDE.md
+- 摘要：詳情面板上方那張圖改成跟著草稿的異色走，異色預設不勾。版本升 1.00.03。
+- 原因：使用者指出點了異色沒有任何反應，而且預設就勾著。
+- 查證：
+  - 開關本來就有作用（`state.draft.shiny` 有翻，`drawDetail()` 也重畫了），
+    問題在 `renderDetail` 的 `<img>` 寫死 `iconAttrs(e, false)`，
+    整個面板重畫完仍然是一般色的圖。不是事件沒接上。
+  - 預設值在 `main.js` 的 `newDraft()`，原本是 `!!e.shinyIcon`，
+    所以 1410 個有異色的條目一打開就勾著。
+- 決定：
+  - **上方那張圖吃草稿的 `shiny`**。異色鈕只在 `hasShiny(e)` 時才畫，
+    所以 `d.shiny` 為真就一定有 `shinyIcon`，不會挑到不存在的圖。
+  - **預設改成四個條件都不勾**。原本的註解說「沒有異色可收的就不預設勾」，
+    立意是省一次點擊，但常見情形是一般色；而且圖現在會跟著變，
+    一打開就是異色反而會看錯是哪一隻。
+  - `newDraft()` 不再需要 `id`，順手把參數與兩個呼叫點清掉，
+    連帶清掉 `main.js` 兩個已經沒人用的 import（`find` 是這次變成沒用的，
+    `fullName` 早就沒用了）。
+- 驗證：
+  - `node tools/check.mjs` 全部通過，新增一條「勾異色會換成異色圖」，
+    驗預設是 `icon`、勾了變 `s.icon`。
+  - CDP 實跑（關快取）：超夢預設 `aria-pressed="false"` 顯示 `pm150.icon.png`，
+    點異色變 `pm150.s.icon.png` 且 `naturalWidth > 0`（圖真的載到，不是破圖），
+    再點一次回到一般色，加進想要之後 localStorage 存的是 `shiny: false`。
+- 待辦/已知問題：（無）
+
+---
+
 ## 2026-09-13（三）
 - 類型：修正
 - 影響檔案：css/style.css, js/ui.js, js/version.js, VERSION.md,

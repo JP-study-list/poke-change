@@ -490,6 +490,8 @@ function editBlock(col, data, id, e, lang, t, flash) {
  *
  * 由上到下就是操作順序：確認是哪一隻 → 選條件 → 選背卡 → 加進某一欄。
  * 條件與背卡是草稿（`draft`），按下加入才會寫進清單，關掉面板就丟。
+ * 上方那張圖跟著草稿的異色走：勾起來就換成異色圖，這樣不必加進清單
+ * 也看得出自己要的是哪一種。異色預設不勾，大多數交換談的是一般色。
  * 已經在清單裡的那幾筆列在按鈕下方，各自編輯，互不干擾。
  */
 export function renderDetail(id, data, lang, t, draft = null, flash = null, back = false) {
@@ -497,7 +499,7 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
   if (!e) return;
 
   // 沒有草稿（例如自我檢查直接呼叫）就當場開一份，繪製不依賴 main.js 的狀態
-  const d = draft || { shiny: hasShiny(e), xxl: false, xxs: false, bg: "" };
+  const d = draft || { shiny: false, xxl: false, xxs: false, bg: "" };
 
   const types = e.types
     .map((ty) => {
@@ -565,7 +567,7 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
         : ""
     }
     <div class="d-head">
-      <img ${iconAttrs(e, false)} alt="" />
+      <img ${iconAttrs(e, d.shiny)} alt="" />
       <div>
         <div class="d-name">${esc(speciesName(e, lang))}</div>
         ${form ? `<div class="d-form">${esc(form)}</div>` : ""}

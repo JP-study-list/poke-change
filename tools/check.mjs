@@ -731,6 +731,26 @@ console.log("\n5. 繪製函式");
       throw new Error("還沒加進清單就不該出現編輯區");
   });
 
+  // 上方那張圖要跟著草稿的異色走，不然勾了異色畫面上沒有任何反應
+  run("renderDetail 勾異色會換成異色圖", () => {
+    const e = dex.ENTRIES.find((x) => x.shinyIcon && x.icon !== x.shinyIcon);
+    const head = () =>
+      els.panel.innerHTML.slice(0, els.panel.innerHTML.indexOf("</div>"));
+
+    ui.renderDetail(e.id, store.emptyList(), "zh", t);
+    if (!head().includes(e.icon)) throw new Error("預設沒有顯示一般色的圖");
+    if (head().includes(e.shinyIcon))
+      throw new Error("沒有勾異色卻顯示了異色圖");
+
+    ui.renderDetail(e.id, store.emptyList(), "zh", t, {
+      shiny: true,
+      xxl: false,
+      xxs: false,
+      bg: "",
+    });
+    if (!head().includes(e.shinyIcon)) throw new Error("勾了異色沒有換圖");
+  });
+
   // 每個條目的詳情都畫一次，比只抽樣可靠
   let detailErr = null;
   for (const e of dex.ENTRIES) {
