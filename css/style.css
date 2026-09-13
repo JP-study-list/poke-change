@@ -2126,18 +2126,25 @@ body.no-names .cell .no {
 }
 
 /*
- * 多選時把整個彈窗放寬，一排五隻。
+ * 多選時把整個彈窗放寬，一排五隻。**只在桌機**。
  *
  * 520 是「常駐右欄」時代留下的寬度。單選一次只挑一隻，三欄夠用；
  * 多選要一次挑二十隻，三欄得捲七排才看得完，捲動本身就變成瓶頸。
- * class 由 main.js 跟著多選模式切換，手機那段的寬度仍然蓋過這裡。
+ *
+ * 一定要關在 min-width 裡：手機那段是 `.rail-inner`（0,1,0），
+ * 特異性低於 `body.pick-wide .rail-inner`（0,2,1），寫在外面會反過來
+ * 把手機的留白從 28 撐回 48。手機本來就吃滿寬度、本來就一排五隻
+ * （`.grid` 吃 --cell-cols），所以按下多選只該讓那顆鈕變色，
+ * 版面一個像素都不要動。
  */
-body.pick-wide .rail-inner {
-  width: min(720px, calc(100% - 48px));
-}
+@media (min-width: 901px) {
+  body.pick-wide .rail-inner {
+    width: min(720px, calc(100% - 48px));
+  }
 
-body.pick-wide .pick-grid {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  body.pick-wide .pick-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
 }
 
 .btn-back {
@@ -2598,14 +2605,6 @@ body.pick-wide .pick-grid {
   .rail-inner {
     width: calc(100% - 28px);
     max-height: 86vh;
-  }
-
-  /*
-   * 多選在手機上不放寬也不加欄。寬度本來就吃滿，
-   * 五欄在 430 的螢幕上每格只剩 66px，名稱擠成兩行還看不清是誰。
-   */
-  body.pick-wide .pick-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .rail-scroll {
