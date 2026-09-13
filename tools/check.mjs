@@ -64,7 +64,7 @@ function installDom() {
     "appName", "subtitle", "dataTitle", "dataActions",
     "localNotice", "infobar",
     "filterBtn", "filterN", "fpicked", "fpanel", "gearBtn", "settings", "closeX", "settingsX",
-    "searchbar", "importFile", "listName", "shareBtn",
+    "searchbar", "importFile", "listName", "shareBtn", "pickFoot",
     "displayTitle", "displayOpts", "trainerCode", "verLine",
   ]) {
     els[id] = mk(id);
@@ -662,6 +662,50 @@ console.log("\n5. 繪製函式");
   run("renderPicker 沒有結果", () =>
     ui.renderPicker({ col: "want", query: "zzzzz" }, "zh", t)
   );
+  // 面板自己的篩選。跟圖鑑那份是兩回事，套下去要真的少掉幾筆
+  run("renderPicker 套篩選", () => {
+    const f = dex.emptyFilter();
+    f.type = ["fire"];
+    ui.renderPicker({ col: "want", query: "", open: true, filter: f }, "zh", t);
+    const html = els.panel.innerHTML;
+    // 五組都要畫得出來，少一組等於有條件永遠選不到
+    const n = (html.match(/class="fgroup"/g) || []).length;
+    if (n !== dex.GROUP_KEYS.length)
+      throw new Error(`篩選表應該 ${dex.GROUP_KEYS.length} 組，得到 ${n}`);
+    // 選項與 chip 都要帶自己的 dataset，跟圖鑑那份分開
+    if (!html.includes("data-pgroup=") || !html.includes("data-pdrop"))
+      throw new Error("面板的篩選用了圖鑑那一組 dataset，會互相干擾");
+    if (html.includes('data-group="type"'))
+      throw new Error("面板裡出現圖鑑的 data-group，點了會改到圖鑑的篩選");
+
+    const cells = (html.match(/data-pickcell/g) || []).length;
+    const all = dex.applyFilter(dex.ENTRIES, f).length;
+    if (!cells || cells > all)
+      throw new Error(`篩選沒有套用：畫了 ${cells} 格，符合的只有 ${all} 筆`);
+  });
+
+  // 多選：選起來的要標出來，底部動作列要數得對
+  run("renderPicker 多選", () => {
+    const ids = dex.ENTRIES.slice(0, 3).map((e) => e.id);
+    ui.renderPicker(
+      { col: "want", query: "", multi: true, sel: ids.slice(0, 2) },
+      "zh",
+      t
+    );
+    const html = els.panel.innerHTML;
+    const on = (html.match(/class="cell picked"/g) || []).length;
+    if (on !== 2) throw new Error(`選起來的應該 2 格，得到 ${on}`);
+    if (els.pickFoot.hidden) throw new Error("多選時底部動作列要出現");
+    if (!els.pickFoot.innerHTML.includes("data-addmulti"))
+      throw new Error("底部沒有加入鈕");
+
+    // 單選要完全回到原本的樣子，底部那條不留在畫面上
+    ui.renderPicker({ col: "want", query: "" }, "zh", t);
+    if (!els.pickFoot.hidden) throw new Error("單選時底部動作列沒有收掉");
+    if (els.panel.innerHTML.includes("cell picked"))
+      throw new Error("單選時不該有選取狀態");
+  });
+
   run("renderDetail 從加號進來有返回鈕", () => {
     ui.renderDetail("d150", data, "zh", t, null, null, true);
     if (!els.panel.innerHTML.includes("data-pickback"))

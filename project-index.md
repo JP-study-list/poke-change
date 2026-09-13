@@ -12,7 +12,7 @@
 index.html  →  <script type="module" src="./js/main.js">  →  main.js  →  各模組
 ```
 
-`index.html` 144 行，是骨架：頂部列（標題、三個檢視、語言、齒輪與設定面板）、
+`index.html` 是骨架：頂部列（標題、三個檢視、語言、齒輪與設定面板）、
 資訊列、搜尋列（含篩選漏斗與面板）、內容容器、右欄、toast。
 所有內容由 `js/ui.js` 在執行時填入。無 build、無 bundler、無 npm。
 
@@ -76,7 +76,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 檔案 | 用途 | 備註 |
 | --- | --- | --- |
-| `index.html` | 頁面骨架，144 行 | 設定面板要加區塊 → 在 `#settings` 的 `.modal-scroll` 內加 `<section class="side-block">`。圖示一律 inline SVG，不用文字符號 |
+| `index.html` | 頁面骨架，149 行 | 設定面板要加區塊 → 在 `#settings` 的 `.modal-scroll` 內加 `<section class="side-block">`。圖示一律 inline SVG，不用文字符號 |
 | `css/style.css` | 全部樣式 | 設計 token 全在 `:root`。**深色不是反色**，`body.dark` 是另一套值。斷點兩個：900px（手機）與 1200px（右欄收起） |
 
 ### 資料層
@@ -90,7 +90,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `js/bgevents.js` | `HAND_EVENTS` | 手工維護的 21 張，有三語名、註記、寶可夢清單與本地備援圖。會逐欄覆蓋骨架。其中 30 週年那四張只蓋名稱與日期，清單等活動辦完 |
 | `js/bgseries.js` | `SERIES` `seriesInfo` `seriesOrder` | 23 個收納夾的三語名與顯示順序 |
 | `js/types.js` | `TYPES` `typeInfo` | 18 種屬性的代表色與三語名 |
-| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 103 個 key，必須完全一致 |
+| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 109 個 key，必須完全一致 |
 | `js/version.js` | `VERSION` `VERSION_DATE` | 版本號。**畫面唯一認的值**，`VERSION.md` 是給人看的紀錄，兩邊必須一致，`check.mjs` 會驗 |
 
 ### 存取層
@@ -113,17 +113,20 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 區塊 | 主要函式 |
 | --- | --- |
-| 版面共用 | `renderChrome` `renderViews` `renderInfoBar` `setPop` `toast` `openSheet` `closeSheet` `esc` |
+| 版面共用 | `renderChrome` `renderViews` `renderInfoBar` `setPop` `railFoot` `toast` `openSheet` `closeSheet` `esc` |
 | 右欄 | `renderRailSummary`（背卡沒有詳情可顯示時的預設內容，只有那個檢視用） |
 | 圖鑑 | `renderFilterBar` `renderFilterPanel` `visibleEntries` `renderGrid` `renderDetail` |
-| 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` `renderPicker` |
+| 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` `renderPicker` `renderPickFoot` |
 | 背卡 | `renderBg` `renderCardDetail` |
 
 ### 協調層
 
 `js/main.js` —— 唯一有狀態、唯一綁事件的檔案。
 
-- **state**：`book` `lang` `view` `filter` `pop` `query` `openId` `openCard` `draft` `flash` `pick`
+- **state**：`book` `lang` `view` `filter` `pop` `query` `openId` `openCard` `draft` `flash`
+  `pick` `pickFilter` `pickMulti`
+- **選寶可夢面板的篩選與多選模式放在 `pick` 外面**：`state.pick` 關一次面板就沒了，
+  而那兩個要記到下一次按加號。也不跟圖鑑的 `filter` 共用，兩邊在做的事不一樣
 - **浮出來的面板只走 `ui.setPop()`**：`state.pop` 是 `null`／`"filter"`／`"settings"`，
   兩顆鈕的 `aria-expanded` 與面板的顯示綁在同一個函式裡，兩邊不會講不同的話，
   也天生擋掉兩片面板同時打開。點外面關掉那一段放在 click 委派最前面，
@@ -188,7 +191,8 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改詳情面板的順序 | `js/ui.js` 的 `renderDetail`，由上到下就是操作順序 |
 | 改一欄的上限 | `js/store.js` 的 `MAX_ITEMS` |
 | 改清單份數 | `js/store.js` 的 `LIST_COUNT`，分頁樣式在 `css/style.css` 的 `.list-tabs` |
-| 改選寶可夢面板 | `js/ui.js` 的 `renderPicker`，一次最多畫 `PICK_MAX` 筆 |
+| 改選寶可夢面板 | `js/ui.js` 的 `renderPicker`，一次最多畫 `PICK_MAX` 筆。多選的底部動作列是 `renderPickFoot`，殼在 `index.html` 的 `#pickFoot` |
+| 改那個面板的篩選 | 跟圖鑑同一組 `FILTER_GROUPS`，HTML 走共用的 `pickedChips` / `filterGroups`，dataset 前綴由 `FATTR` 給 |
 | 加篩選條件 | `js/dex.js` 的 `FILTER_GROUPS`，標籤補 `js/i18n.js`，面板裡的組序在 `js/ui.js` 的 `FGROUPS` |
 | 改手機的欄數 | `css/style.css` 的 `--cell-cols`，900px 以下講死不推算 |
 | 改格子大小的兩段值 | `css/style.css` 的 `--cell-*`，桌機在 `:root`，手機在斷點內 |

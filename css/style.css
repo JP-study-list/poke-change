@@ -1913,6 +1913,199 @@ body.no-names .cell .no {
 
 /* ─────────── 選寶可夢面板 ─────────── */
 
+/*
+ * 標題與右邊兩顆工具鈕。漏斗跟圖鑑那顆是同一個東西，
+ * 只是這裡的面板沒有搜尋列可以掛，所以排在標題旁邊。
+ */
+.pick-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  /* 右上角那顆紅色 X 疊在這一行上面，標題不能鋪到底 */
+  padding-right: 34px;
+}
+
+.pick-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+.pick-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-13);
+  cursor: pointer;
+}
+
+.pick-btn.wide {
+  padding: 0 13px;
+}
+
+.pick-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.pick-btn:hover {
+  border-color: var(--ink);
+}
+
+/* 填實表示生效中，跟已選條件那排同一種語彙 */
+.pick-btn[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.pick-n {
+  font-size: var(--fs-12);
+  font-weight: 600;
+}
+
+/*
+ * 已選條件。跟圖鑑那排同一顆 chip，但這裡是直向的面板，
+ * 排不下就換行，不橫捲——面板裡再開一條橫捲會捲到不知道自己在哪。
+ */
+.pick-picked {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+/*
+ * 篩選表。排在流排裡，展開就把格子牆往下推。
+ *
+ * 不做成浮出來的面板：這一層本身就是捲動容器，浮層會被裁掉；
+ * 而且這裡是直向清單，展開不像搜尋列那樣會把誰擠窄。
+ */
+.pick-f {
+  margin-bottom: 14px;
+  padding: 14px 14px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.pick-f .fgroup + .fgroup {
+  margin-top: 12px;
+}
+
+.pick-f .fpanel-foot {
+  margin-top: 12px;
+}
+
+/* 靠左，另一顆「完成」仍然靠右。只有完成時它自己還是在右邊 */
+.fclear {
+  margin-right: auto;
+  padding: 7px 4px;
+  border: 0;
+  background: none;
+  color: var(--dim);
+  font: inherit;
+  font-size: var(--fs-13);
+  cursor: pointer;
+}
+
+.fclear:hover {
+  color: var(--ink);
+}
+
+/* 選起來的格子。邊框填實，右上角補一個勾，不是只有顏色差一點 */
+.cell.picked {
+  border-color: var(--ink);
+  background: var(--card);
+}
+
+/*
+ * 勾。沒選的不畫，只在滑鼠移過去時淡淡提示一下。
+ * 150 格全掛一個灰圈就是 150 個雜訊，跟手機不放刪除鈕同一個理由：
+ * 常駐的提示在滿版的格子牆上會變成整面的點。
+ */
+.pick-tick {
+  opacity: 0;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--card);
+}
+
+.pick-tick svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cell.picked .pick-tick {
+  opacity: 1;
+  border-color: var(--ink);
+  background: var(--ink);
+}
+
+@media (hover: hover) {
+  .cell:hover .pick-tick {
+    opacity: 1;
+  }
+}
+
+.cell.picked .pick-tick svg {
+  stroke: var(--bg);
+}
+
+/*
+ * 多選的動作列。在捲動區外面，所以選完不必捲到底才按得到。
+ * 只有多選時才有內容，其餘面板一律 hidden。
+ */
+.pick-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 22px;
+  border-top: 1px solid var(--line);
+}
+
+.pick-add {
+  padding: 9px 18px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--bg);
+  font: inherit;
+  font-size: var(--fs-13);
+  cursor: pointer;
+}
+
+.pick-add:disabled {
+  border-color: var(--line);
+  background: none;
+  color: var(--dim);
+  cursor: default;
+}
+
 .pick-q {
   width: 100%;
   margin: 12px 0;
@@ -1930,6 +2123,21 @@ body.no-names .cell .no {
  */
 .pick-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/*
+ * 多選時把整個彈窗放寬，一排五隻。
+ *
+ * 520 是「常駐右欄」時代留下的寬度。單選一次只挑一隻，三欄夠用；
+ * 多選要一次挑二十隻，三欄得捲七排才看得完，捲動本身就變成瓶頸。
+ * class 由 main.js 跟著多選模式切換，手機那段的寬度仍然蓋過這裡。
+ */
+body.pick-wide .rail-inner {
+  width: min(720px, calc(100% - 48px));
+}
+
+body.pick-wide .pick-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .btn-back {
@@ -2390,6 +2598,14 @@ body.no-names .cell .no {
   .rail-inner {
     width: calc(100% - 28px);
     max-height: 86vh;
+  }
+
+  /*
+   * 多選在手機上不放寬也不加欄。寬度本來就吃滿，
+   * 五欄在 430 的螢幕上每格只剩 66px，名稱擠成兩行還看不清是誰。
+   */
+  body.pick-wide .pick-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .rail-scroll {

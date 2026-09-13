@@ -49,9 +49,20 @@ const state = {
   /*
    * 交換表的加號開的那個選寶可夢面板。
    * `col` 是從哪一欄按的，`query` 是面板自己的搜尋字，
-   * 跟圖鑑檢視的搜尋與篩選分開，不互相干擾。
+   * `open` 是篩選表展開了沒，`sel` 是多選模式下選起來的那些 id。
+   * 關掉面板就整個丟掉。
    */
   pick: null,
+  /*
+   * 那個面板的篩選與多選模式。**刻意放在 pick 外面**：
+   * pick 關一次就沒了，而這兩個要記到下一次按加號，
+   * 不然每加一批都要重篩一次。跟篩選一樣不寫進偏好，重整回到預設。
+   *
+   * 也刻意不跟圖鑑的 `filter` 共用：兩邊在做的事不一樣，
+   * 在圖鑑篩了只看傳說，按加號看到一片空白是找不出原因的。
+   */
+  pickFilter: emptyFilter(),
+  pickMulti: false,
   big: false, // 大圖示。預設小圖示，手機一排五隻
   names: true, // 格子下方顯示名稱
   code: "", // 訓練家代碼，只印在分享圖上
@@ -205,6 +216,19 @@ function drawDetail() {
    * 形態取決於「這個檢視的右欄要不要一直在」，那只有背卡是真的。
    */
   document.body.classList.toggle("rail-pop", state.view !== "bg");
+  /*
+   * 底部動作列在捲動區外面，換內容不會把它一起換掉，
+   * 所以每次重畫先清乾淨，要用的那個面板自己再填回去。
+   */
+  ui.railFoot("");
+  /*
+   * 多選時把彈窗放寬成一排五隻。三欄挑二十隻要捲七排，捲動本身就是瓶頸。
+   * 切在 body 上是因為寬度寫在 .rail-inner，那一層沒有自己的狀態。
+   */
+  document.body.classList.toggle(
+    "pick-wide",
+    !!(state.pick && state.pickMulti)
+  );
   if (state.openId) {
     ui.renderDetail(
       state.openId,
@@ -217,7 +241,13 @@ function drawDetail() {
     );
     state.flash = null; // 閃一次就好，下一次重畫不該再閃
   } else if (state.openCard) ui.renderCardDetail(state.openCard, state.lang, t);
-  else if (state.pick) ui.renderPicker(state.pick, state.lang, t);
+  else if (state.pick) {
+    ui.renderPicker(
+      { ...state.pick, filter: state.pickFilter, multi: state.pickMulti },
+      state.lang,
+      t
+    );
+  }
   else if (state.view === "bg") ui.renderRailSummary(state.book, t);
 }
 
@@ -296,6 +326,55 @@ function addItem(id, col) {
   if (state.pick) closePanels();
   draw();
   drawDetail();
+}
+
+/**
+ * 多選模式一次加進某一欄。
+ *
+ * 條件一律不帶（一般色、無背卡）。逐隻配背卡是單選那條路在做的事，
+ * 這裡要的是快——選二十隻按一下，回去再挑要改的那幾隻。
+ *
+ * 三件事會讓某一隻加不進去，都不擋整批：
+ * 完全相同的那一筆已經在清單裡（跟單選同一條規則）、那一欄滿了、
+ * 以及 id 在圖鑑裡已經不存在。結果用一則 toast 講完，不逐隻跳。
+ */
+function addMany(col, ids) {
+  const list = cur()[col];
+  let added = 0;
+  let dupe = 0;
+  let full = false;
+
+  for (const id of ids) {
+    if (list.length >= store.MAX_ITEMS) {
+      full = true;
+      break;
+    }
+    const same = list.some(
+      (x) => x.id === id && !x.bg && !x.shiny && !x.xxl && !x.xxs
+    );
+    if (same) {
+      dupe++;
+      continue;
+    }
+    const item = store.newItem(id, false);
+    item.xxl = item.xxs = false;
+    item.bg = "";
+    list.push(item);
+    added++;
+  }
+
+  if (added) save();
+
+  const msg = [
+    added ? t("pickAdded", added) : "",
+    dupe ? t("pickDupe", dupe) : "",
+    full ? t("full", store.MAX_ITEMS) : "",
+  ].filter(Boolean);
+  if (msg.length) ui.toast(msg.join(" · "));
+
+  // 加完回交換表看結果，跟單選一樣。篩選留著，下次按加號還在
+  closePanels();
+  draw();
 }
 
 /** 改某一筆的標記 */
@@ -633,11 +712,67 @@ document.addEventListener("click", (ev) => {
   // 交換表格子牆最後那一格加號
   const addcell = el("[data-addcell]");
   if (addcell) {
-    state.pick = { col: addcell.dataset.addcell, query: "" };
+    state.pick = { col: addcell.dataset.addcell, query: "", open: false, sel: [] };
     state.openId = state.openCard = null;
     state.draft = state.flash = null;
     drawDetail();
     ui.openSheet();
+    return;
+  }
+
+  /*
+   * 選寶可夢面板自己的漏斗。展開的是排在流排裡的一段，不是浮出來的面板，
+   * 所以不走 state.pop——那個字串管的是頂部列的漏斗與齒輪，
+   * 混用會變成「在這裡點篩選就把設定面板關掉」。
+   * 底下那顆「完成」共用同一個屬性，點了就是收起來。
+   */
+  if (el("[data-pickfilter]") && state.pick) {
+    state.pick.open = !state.pick.open;
+    drawDetail();
+    return;
+  }
+
+  // 單選與多選切換。換模式就把選起來的清掉，免得看不見的選取被一起加進去
+  if (el("[data-pickmulti]") && state.pick) {
+    state.pickMulti = !state.pickMulti;
+    state.pick.sel = [];
+    drawDetail();
+    return;
+  }
+
+  // 面板裡的篩選選項。同一組可以複選，再點一次取消
+  const popt = el(".fopt[data-pgroup]");
+  if (popt) {
+    const { pgroup, popt: key } = popt.dataset;
+    const picked = state.pickFilter[pgroup] || [];
+    const i = picked.indexOf(key);
+    if (i >= 0) picked.splice(i, 1);
+    else picked.push(key);
+    state.pickFilter[pgroup] = picked;
+    drawDetail(); // 計數跟著變，整片要重畫
+    return;
+  }
+
+  // 面板上的已選條件。點一下只移除那一個
+  const pdrop = el("[data-pdrop]");
+  if (pdrop) {
+    const { pgroup, popt: key } = pdrop.dataset;
+    state.pickFilter[pgroup] = (state.pickFilter[pgroup] || []).filter(
+      (k) => k !== key
+    );
+    drawDetail();
+    return;
+  }
+
+  if (el("[data-pclear]")) {
+    state.pickFilter = emptyFilter();
+    drawDetail();
+    return;
+  }
+
+  // 多選模式下，底部那顆一次加進整批
+  if (el("[data-addmulti]") && state.pick) {
+    addMany(state.pick.col, state.pick.sel);
     return;
   }
 
@@ -652,6 +787,25 @@ document.addEventListener("click", (ev) => {
   // 圖鑑格子
   const cell = el("[data-id]");
   if (cell) {
+    /*
+     * 多選模式下，選寶可夢面板的格子是勾選不是開詳情。
+     * 只認那個面板自己的格子，交換表與圖鑑的格子照舊開詳情。
+     */
+    if (state.pick && state.pickMulti && cell.dataset.pickcell) {
+      const id = cell.dataset.id;
+      const i = state.pick.sel.indexOf(id);
+      if (i >= 0) state.pick.sel.splice(i, 1);
+      else state.pick.sel.push(id);
+      /*
+       * 只改那一格與底部的數字，不走 drawDetail()。
+       * 整片重畫會把捲動位置歸零，選到第七排點一下就彈回最上面，
+       * 而「一次選很多隻」正是要一路往下選。
+       */
+      cell.classList.toggle("picked", i < 0);
+      cell.setAttribute("aria-pressed", String(i < 0));
+      ui.renderPickFoot(state.pick.sel.length, t);
+      return;
+    }
     state.openId = cell.dataset.id;
     state.openCard = null;
     state.draft = newDraft();

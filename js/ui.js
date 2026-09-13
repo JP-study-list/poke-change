@@ -211,6 +211,68 @@ function optInfo(g, key, lang, t) {
 const swatch = (color) =>
   color ? `<i class="swatch" style="background:${esc(color)}"></i>` : "";
 
+/*
+ * 篩選的兩塊 HTML（已選條件、五組選項）由圖鑑的搜尋列與選寶可夢面板共用。
+ *
+ * 差別只在「點下去要改哪一份篩選」，所以 dataset 的名字由呼叫端給。
+ * 兩邊用同一組名字的話 main.js 的委派會兩邊都接到，
+ * 在選寶可夢面板裡篩一下，圖鑑的格子牆也跟著變。
+ */
+const FATTR = {
+  dex: { drop: "fdrop", group: "group", opt: "opt" },
+  pick: { drop: "pdrop", group: "pgroup", opt: "popt" },
+};
+
+/** 已選條件。每一顆自己帶 ✕，點了只移除那一個 */
+function pickedChips(filter, lang, t, a) {
+  return FGROUPS.flatMap((g) =>
+    (filter[g] || []).map((key) => {
+      const { label, color } = optInfo(g, key, lang, t);
+      return `<button type="button" class="fsel" data-${a.drop} data-${
+        a.group
+      }="${g}" data-${a.opt}="${esc(key)}">
+        ${swatch(color)}${esc(label)}
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+      </button>`;
+    })
+  ).join("");
+}
+
+/**
+ * 五組選項。
+ *
+ * 每個選項後面的數字是「扣掉自己這一組之後還剩幾筆」，
+ * 不是「這個條件本身有幾筆」。這樣才看得出點下去會剩多少，
+ * 而且同一組裡的選項加起來才會等於這一組全不選的結果。
+ */
+function filterGroups(filter, lang, t, a) {
+  return FGROUPS.map((g) => {
+    const grp = FILTER_GROUPS[g];
+    const picked = filter[g] || [];
+    // 這一組的計數基準：其他組都套用，這一組放掉
+    const pool = applyFilter(ENTRIES, filter, g);
+
+    const opts = grp.options
+      .map(([key, pred]) => {
+        const n = pool.filter(pred).length;
+        const { label, color } = optInfo(g, key, lang, t);
+        return `<button type="button" class="fopt" data-${a.group}="${g}" data-${
+          a.opt
+        }="${esc(key)}" aria-pressed="${picked.includes(key)}"${
+          n ? "" : " disabled"
+        }>
+          ${swatch(color)}${esc(label)}<span class="count">${n}</span>
+        </button>`;
+      })
+      .join("");
+
+    return `<div class="fgroup">
+      <p class="fgroup-t">${esc(t(grp.label))}</p>
+      <div class="fopts">${opts}</div>
+    </div>`;
+  }).join("");
+}
+
 /**
  * 搜尋列右邊那一段：漏斗上的條件數，以及已選條件。
  *
@@ -223,52 +285,12 @@ export function renderFilterBar(filter, lang, t) {
   badge.textContent = n ? String(n) : "";
   badge.hidden = !n;
 
-  $("#fpicked").innerHTML = FGROUPS.flatMap((g) =>
-    (filter[g] || []).map((key) => {
-      const { label, color } = optInfo(g, key, lang, t);
-      return `<button type="button" class="fsel" data-fdrop data-group="${g}" data-opt="${esc(
-        key
-      )}">
-        ${swatch(color)}${esc(label)}
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-      </button>`;
-    })
-  ).join("");
+  $("#fpicked").innerHTML = pickedChips(filter, lang, t, FATTR.dex);
 }
 
-/**
- * 漏斗點開的面板。五組各一個小標題，組內攤開不橫捲。
- *
- * 每個選項後面的數字是「扣掉自己這一組之後還剩幾筆」，
- * 不是「這個條件本身有幾筆」。這樣才看得出點下去會剩多少，
- * 而且同一組裡的選項加起來才會等於這一組全不選的結果。
- */
+/** 漏斗點開的面板。五組各一個小標題，組內攤開不橫捲 */
 export function renderFilterPanel(filter, lang, t) {
-  const groups = FGROUPS.map((g) => {
-    const grp = FILTER_GROUPS[g];
-    const picked = filter[g] || [];
-    // 這一組的計數基準：其他組都套用，這一組放掉
-    const pool = applyFilter(ENTRIES, filter, g);
-
-    const opts = grp.options
-      .map(([key, pred]) => {
-        const n = pool.filter(pred).length;
-        const { label, color } = optInfo(g, key, lang, t);
-        return `<button type="button" class="fopt" data-group="${g}" data-opt="${esc(
-          key
-        )}" aria-pressed="${picked.includes(key)}"${n ? "" : " disabled"}>
-          ${swatch(color)}${esc(label)}<span class="count">${n}</span>
-        </button>`;
-      })
-      .join("");
-
-    return `<div class="fgroup">
-      <p class="fgroup-t">${esc(t(grp.label))}</p>
-      <div class="fopts">${opts}</div>
-    </div>`;
-  }).join("");
-
-  $("#fpanel").innerHTML = `${groups}
+  $("#fpanel").innerHTML = `${filterGroups(filter, lang, t, FATTR.dex)}
     <div class="fpanel-foot">
       <button type="button" class="fdone" data-fclose>${esc(t("filterDone"))}</button>
     </div>`;
@@ -750,24 +772,50 @@ export function renderTrade(book, lang, t, code = "") {
 /**
  * 交換表的加號開的選寶可夢面板。
  *
- * 這裡的搜尋跟圖鑑檢視是兩回事：不套用圖鑑當下的篩選，
- * 否則使用者在圖鑑篩了「只看傳說」，從交換表按加號會看到一片空白，
- * 而且不會知道為什麼。
+ * 這裡的篩選與搜尋跟圖鑑檢視是兩份：在圖鑑篩了「只看傳說」，
+ * 從交換表按加號不該看到一片空白，而且不會知道為什麼。
+ * 反過來也一樣，這裡篩完不該把圖鑑的格子牆也換掉。
  *
  * 一次最多畫 150 筆。面板很窄，全部一千多筆畫下去只是拖慢開啟，
  * 沒有人會捲到底，要找特定一隻本來就該打字。
  */
 const PICK_MAX = 150;
 
+/**
+ * 面板有兩種模式。
+ *
+ * 單選：點一隻就切到詳情，可以配背卡與條件，跟原本一樣。
+ * 多選：點一隻是選起來，底下那顆鈕一次全加，條件一律不帶——
+ * 逐隻配背卡本來就得一隻一隻來，那是單選那條路在做的事。
+ *
+ * 篩選收在漏斗裡，但已選條件留在外面，跟圖鑑同一條規則：
+ * 只留一個數字的話，使用者看不出自己篩掉了什麼。
+ */
 export function renderPicker(pick, lang, t) {
-  const hits = search(ENTRIES, pick.query || "");
+  const filter = pick.filter || {};
+  const multi = !!pick.multi;
+  const sel = new Set(pick.sel || []);
+
+  const hits = search(applyFilter(ENTRIES, filter), pick.query || "");
   const shown = hits.slice(0, PICK_MAX);
+  const n = filterCount(filter);
 
   const cells = shown
     .map((e) => {
       const form = formName(e, lang);
-      return `<button class="cell" type="button" data-id="${esc(e.id)}">
+      const on = multi && sel.has(e.id);
+      return `<button class="cell${on ? " picked" : ""}" type="button"
+              data-id="${esc(e.id)}" data-pickcell="1"${
+        multi ? ` aria-pressed="${on}"` : ""
+      }>
         <img ${iconAttrs(e, false)} alt="" loading="lazy" />
+        ${
+          multi
+            ? `<span class="pick-tick" aria-hidden="true">
+                 <svg viewBox="0 0 24 24"><path d="M5 13l4.5 4.5L19 7.5" /></svg>
+               </span>`
+            : ""
+        }
         <span class="nm">${esc(speciesName(e, lang))}${
         form ? `<span class="form">${esc(form)}</span>` : ""
       }</span>
@@ -775,15 +823,55 @@ export function renderPicker(pick, lang, t) {
     })
     .join("");
 
+  const chips = pickedChips(filter, lang, t, FATTR.pick);
+
   $("#panel").innerHTML = `
-    <div class="f-head">
-      <div class="d-name">${esc(
-        pick.col === "want" ? t("addWant") : t("addHave")
-      )}</div>
-      <div class="d-meta">${esc(t("pickHint"))}</div>
+    <div class="pick-head">
+      <div>
+        <div class="d-name">${esc(
+          pick.col === "want" ? t("addWant") : t("addHave")
+        )}</div>
+        <div class="d-meta">${esc(multi ? t("pickHintMulti") : t("pickHint"))}</div>
+      </div>
+      <div class="pick-tools">
+        <button type="button" class="pick-btn" data-pickfilter
+                aria-pressed="${!!pick.open}" title="${esc(t("filterBtn"))}"
+                aria-label="${esc(t("filterBtn"))}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 5h18l-7 8v6l-4 2v-8z" />
+          </svg>
+          ${n ? `<span class="pick-n">${n}</span>` : ""}
+        </button>
+        <button type="button" class="pick-btn wide" data-pickmulti
+                aria-pressed="${multi}">${esc(t("pickMulti"))}</button>
+      </div>
     </div>
+
     <input id="pickQ" class="pick-q" value="${esc(pick.query || "")}"
            placeholder="${esc(t("search"))}" />
+
+    ${chips ? `<div class="pick-picked">${chips}</div>` : ""}
+
+    ${
+      pick.open
+        ? `<div class="pick-f">
+            ${filterGroups(filter, lang, t, FATTR.pick)}
+            <div class="fpanel-foot">
+              ${
+                n
+                  ? `<button type="button" class="fclear" data-pclear>${esc(
+                      t("filterClear")
+                    )}</button>`
+                  : ""
+              }
+              <button type="button" class="fdone" data-pickfilter>${esc(
+                t("filterDone")
+              )}</button>
+            </div>
+          </div>`
+        : ""
+    }
+
     ${
       shown.length
         ? `<div class="grid pick-grid">${cells}</div>
@@ -795,6 +883,43 @@ export function renderPicker(pick, lang, t) {
         : `<p class="empty">${esc(t("empty"))}</p>`
     }
     <button class="btn-close" type="button" data-close="1">${esc(t("close"))}</button>`;
+
+  /*
+   * 多選的動作列貼在面板底部，不排在格子牆後面。
+   * 選完要捲到最底才按得到「加入」的話，一次加很多隻反而更累。
+   * 沒在多選就整條不畫，單選的版面跟以前一模一樣。
+   */
+  if (multi) renderPickFoot(sel.size, t);
+  else railFoot("");
+}
+
+/**
+ * 多選動作列的內容。
+ *
+ * 單獨一個函式是因為點一格不能重畫整片：`#panel` 是捲動容器，
+ * 換掉 innerHTML 會把 scrollTop 歸零，選到第七排點一下就彈回最上面。
+ * 所以 main.js 點格子時只改那一格的 class，動作列走這裡。
+ */
+export function renderPickFoot(n, t) {
+  railFoot(
+    `<span class="dim">${esc(t("pickSel", n))}</span>
+     <button type="button" class="pick-add" data-addmulti${
+       n ? "" : " disabled"
+     }>${esc(t("pickAdd", n))}</button>`
+  );
+}
+
+/**
+ * 右欄底部那條動作列。目前只有選寶可夢面板的多選在用。
+ *
+ * 它在捲動區外面，所以不會隨著內容被換掉——換句話說，切到別的面板
+ * 不清就會留在那裡。清的責任放在 main.js 重畫右欄的第一行，
+ * 不是要每個繪製函式自己記得。
+ */
+export function railFoot(html) {
+  const el = $("#pickFoot");
+  el.innerHTML = html || "";
+  el.hidden = !html;
 }
 
 /* ─────────── 背卡 ─────────── */
