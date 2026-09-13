@@ -706,6 +706,24 @@ console.log("\n5. 繪製函式");
       throw new Error("單選時不該有選取狀態");
   });
 
+  // 整批異色開關：預設不開，開著時要標出來，兩種狀態都要有那顆鈕
+  run("renderPicker 多選的異色開關", () => {
+    ui.renderPicker({ col: "want", query: "", multi: true, sel: [] }, "zh", t);
+    const off = els.pickFoot.innerHTML;
+    if (!off.includes("data-pickshiny"))
+      throw new Error("底部沒有整批異色開關");
+    if (!off.includes('data-pickshiny\n               aria-pressed="false"'))
+      throw new Error("異色預設不該是開著的");
+
+    ui.renderPicker(
+      { col: "want", query: "", multi: true, sel: [], shiny: true },
+      "zh",
+      t
+    );
+    if (!els.pickFoot.innerHTML.includes('aria-pressed="true"'))
+      throw new Error("開著的時候要標成 pressed");
+  });
+
   run("renderDetail 從加號進來有返回鈕", () => {
     ui.renderDetail("d150", data, "zh", t, null, null, true);
     if (!els.panel.innerHTML.includes("data-pickback"))

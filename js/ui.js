@@ -889,7 +889,7 @@ export function renderPicker(pick, lang, t) {
    * 選完要捲到最底才按得到「加入」的話，一次加很多隻反而更累。
    * 沒在多選就整條不畫，單選的版面跟以前一模一樣。
    */
-  if (multi) renderPickFoot(sel.size, t);
+  if (multi) renderPickFoot(sel.size, t, pick.shiny);
   else railFoot("");
 }
 
@@ -900,9 +900,13 @@ export function renderPicker(pick, lang, t) {
  * 換掉 innerHTML 會把 scrollTop 歸零，選到第七排點一下就彈回最上面。
  * 所以 main.js 點格子時只改那一格的 class，動作列走這裡。
  */
-export function renderPickFoot(n, t) {
+export function renderPickFoot(n, t, shiny) {
   railFoot(
-    `<span class="dim">${esc(t("pickSel", n))}</span>
+    `<div class="pick-foot-l">
+       <button type="button" class="mk shiny" data-pickshiny
+               aria-pressed="${!!shiny}">${esc(t("markShiny"))}</button>
+       <span class="dim">${esc(t("pickSel", n))}</span>
+     </div>
      <button type="button" class="pick-add" data-addmulti${
        n ? "" : " disabled"
      }>${esc(t("pickAdd", n))}</button>`

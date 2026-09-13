@@ -9,7 +9,7 @@
  */
 
 import { LANGS, DEFAULT_LANG, makeT } from "./i18n.js";
-import { emptyFilter, filterCount, knownItems } from "./dex.js";
+import { emptyFilter, filterCount, knownItems, find, hasShiny } from "./dex.js";
 import { CARDS as BG_CARDS } from "./backgrounds.js";
 import * as store from "./store.js";
 import * as ui from "./ui.js";
@@ -63,6 +63,12 @@ const state = {
    */
   pickFilter: emptyFilter(),
   pickMulti: false,
+  /*
+   * 多選時「這一批都要異色」。跟上面兩個同一個理由放在 pick 外面，
+   * 而且切回單選也不清掉——連加兩批異色不該要按第二次。
+   * 只有異色做批次：XXL／XXS 是個體大小，不會一批十隻都要。
+   */
+  pickShiny: false,
   big: false, // 大圖示。預設小圖示，手機一排五隻
   names: true, // 格子下方顯示名稱
   code: "", // 訓練家代碼，只印在分享圖上
@@ -243,7 +249,12 @@ function drawDetail() {
   } else if (state.openCard) ui.renderCardDetail(state.openCard, state.lang, t);
   else if (state.pick) {
     ui.renderPicker(
-      { ...state.pick, filter: state.pickFilter, multi: state.pickMulti },
+      {
+        ...state.pick,
+        filter: state.pickFilter,
+        multi: state.pickMulti,
+        shiny: state.pickShiny,
+      },
       state.lang,
       t
     );
@@ -331,17 +342,23 @@ function addItem(id, col) {
 /**
  * 多選模式一次加進某一欄。
  *
- * 條件一律不帶（一般色、無背卡）。逐隻配背卡是單選那條路在做的事，
- * 這裡要的是快——選二十隻按一下，回去再挑要改的那幾隻。
+ * 背卡一律不帶，逐隻配背卡是單選那條路在做的事；異色則可以整批帶，
+ * 底部那顆開關開著就全部要異色。一批十隻常常整批都是異色，
+ * 但一批十隻不會整批都是 XXL，所以只有異色做成批次。
+ *
+ * **沒有異色的那幾隻照一般色加進去**，不略過（2026-09-13，使用者確認）。
+ * 1460 筆裡有 50 筆沒有實裝異色，開著異色選到那幾隻時，
+ * 略過等於默默少了幾隻，照加至少東西在清單裡，差在 toast 講明白。
  *
  * 三件事會讓某一隻加不進去，都不擋整批：
  * 完全相同的那一筆已經在清單裡（跟單選同一條規則）、那一欄滿了、
  * 以及 id 在圖鑑裡已經不存在。結果用一則 toast 講完，不逐隻跳。
  */
-function addMany(col, ids) {
+function addMany(col, ids, shiny) {
   const list = cur()[col];
   let added = 0;
   let dupe = 0;
+  let noShiny = 0;
   let full = false;
 
   for (const id of ids) {
@@ -349,18 +366,23 @@ function addMany(col, ids) {
       full = true;
       break;
     }
+    const e = find(id);
+    if (!e) continue;
+    // 沒有實裝異色的就算開著也只能一般色，重複判斷要拿實際會寫進去的值去比
+    const wantShiny = !!shiny && hasShiny(e);
     const same = list.some(
-      (x) => x.id === id && !x.bg && !x.shiny && !x.xxl && !x.xxs
+      (x) => x.id === id && !x.bg && !!x.shiny === wantShiny && !x.xxl && !x.xxs
     );
     if (same) {
       dupe++;
       continue;
     }
-    const item = store.newItem(id, false);
+    const item = store.newItem(id, wantShiny);
     item.xxl = item.xxs = false;
     item.bg = "";
     list.push(item);
     added++;
+    if (shiny && !wantShiny) noShiny++;
   }
 
   if (added) save();
@@ -368,6 +390,7 @@ function addMany(col, ids) {
   const msg = [
     added ? t("pickAdded", added) : "",
     dupe ? t("pickDupe", dupe) : "",
+    noShiny ? t("pickNoShiny", noShiny) : "",
     full ? t("full", store.MAX_ITEMS) : "",
   ].filter(Boolean);
   if (msg.length) ui.toast(msg.join(" · "));
@@ -770,9 +793,20 @@ document.addEventListener("click", (ev) => {
     return;
   }
 
+  /*
+   * 整批異色開關。跟點格子同一個道理只重畫底部那一列：
+   * 走 drawDetail() 會把格子牆的捲動位置歸零，而按這顆的時機
+   * 多半是已經往下選了一段。
+   */
+  if (el("[data-pickshiny]") && state.pick) {
+    state.pickShiny = !state.pickShiny;
+    ui.renderPickFoot(state.pick.sel.length, t, state.pickShiny);
+    return;
+  }
+
   // 多選模式下，底部那顆一次加進整批
   if (el("[data-addmulti]") && state.pick) {
-    addMany(state.pick.col, state.pick.sel);
+    addMany(state.pick.col, state.pick.sel, state.pickShiny);
     return;
   }
 
@@ -803,7 +837,7 @@ document.addEventListener("click", (ev) => {
        */
       cell.classList.toggle("picked", i < 0);
       cell.setAttribute("aria-pressed", String(i < 0));
-      ui.renderPickFoot(state.pick.sel.length, t);
+      ui.renderPickFoot(state.pick.sel.length, t, state.pickShiny);
       return;
     }
     state.openId = cell.dataset.id;

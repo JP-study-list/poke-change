@@ -124,7 +124,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 `js/main.js` —— 唯一有狀態、唯一綁事件的檔案。
 
 - **state**：`book` `lang` `view` `filter` `pop` `query` `openId` `openCard` `draft` `flash`
-  `pick` `pickFilter` `pickMulti`
+  `pick` `pickFilter` `pickMulti` `pickShiny`
 - **選寶可夢面板的篩選與多選模式放在 `pick` 外面**：`state.pick` 關一次面板就沒了，
   而那兩個要記到下一次按加號。也不跟圖鑑的 `filter` 共用，兩邊在做的事不一樣
 - **浮出來的面板只走 `ui.setPop()`**：`state.pop` 是 `null`／`"filter"`／`"settings"`，

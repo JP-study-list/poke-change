@@ -2088,6 +2088,17 @@ body.no-names .cell .no {
   border-top: 1px solid var(--line);
 }
 
+/*
+ * 左半邊是「這批都套」的條件加已選數字，右半邊是加入鈕。
+ * 條件開關用跟詳情面板一模一樣的 .mk，兩邊講同一種語彙。
+ */
+.pick-foot-l {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
 .pick-add {
   padding: 9px 18px;
   border: 1px solid var(--ink);
