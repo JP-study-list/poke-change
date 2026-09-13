@@ -686,7 +686,7 @@ function tradeCell(item, col, idx, lang, t) {
  * 先濾掉查不到條目的紀錄再算數量，否則圖鑑更新拿掉某個 id 之後，
  * 標題會寫 4 項但只畫得出 3 個。索引保留原本的位置，刪除才會刪對。
  */
-function tradeColumn(col, items, lang, t) {
+function tradeColumn(col, items, lang, t, editing) {
   const title = col === "want" ? t("colWant") : t("colHave");
   const rows = items
     .map((it, idx) => ({ it, idx }))
@@ -702,7 +702,7 @@ function tradeColumn(col, items, lang, t) {
     <span class="plus">+</span>
   </button>`;
 
-  const body = `<div class="grid">${rows
+  const body = `<div class="grid${editing ? " editing" : ""}">${rows
     .map(({ it, idx }) => tradeCell(it, col, idx, lang, t))
     .join("")}${plus}</div>${
     rows.length
@@ -712,11 +712,27 @@ function tradeColumn(col, items, lang, t) {
         )}</p>`
   }`;
 
+  /*
+   * 鉛筆只有觸控裝置看得到（CSS 管），因為那邊的格子上沒有刪除鈕：
+   * 常駐就是滿畫面的紅點，所以改成按了才一起出現。
+   * 空的那一欄不畫——沒有東西可刪的時候給一顆鈕只會讓人按了沒反應。
+   */
+  const pencil = rows.length
+    ? `<button type="button" class="edit-btn" data-edit="${col}"
+               aria-pressed="${!!editing}" title="${esc(t("editItems"))}"
+               aria-label="${esc(t("editItems"))}">
+         <svg viewBox="0 0 24 24" aria-hidden="true">
+           <path d="M4 20h4L19 9l-4-4L4 16z" /><path d="M14 6l4 4" />
+         </svg>
+       </button>`
+    : "";
+
   return `<section class="col ${col}">
     <div class="col-head">
       <i class="dot"></i>
       <span class="t">${esc(title)}</span>
       <span class="n">${esc(t("itemCount", rows.length))}</span>
+      ${pencil}
     </div>
     <div class="panel">${body}</div>
   </section>`;
@@ -732,7 +748,7 @@ function tradeColumn(col, items, lang, t) {
  * 收到圖的人可以直接照著加好友，這是圖片唯一需要「讀字」的地方。
  * 它存在偏好裡，三份清單共用同一組，因為那是使用者的身分。
  */
-export function renderTrade(book, lang, t, code = "") {
+export function renderTrade(book, lang, t, code = "", edit = {}) {
   const data = book.lists[book.active] || book.lists[0];
   const total = knownItems(data.want).length + knownItems(data.have).length;
 
@@ -764,8 +780,8 @@ export function renderTrade(book, lang, t, code = "") {
       }>${esc(t("share"))}</button>
     </div>
     <div class="cols">
-      ${tradeColumn("want", data.want, lang, t)}
-      ${tradeColumn("have", data.have, lang, t)}
+      ${tradeColumn("want", data.want, lang, t, edit.want)}
+      ${tradeColumn("have", data.have, lang, t, edit.have)}
     </div>`;
 }
 

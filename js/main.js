@@ -77,6 +77,12 @@ const state = {
    */
   bgMulti: false,
   bgSel: [],
+  /*
+   * 交換表的編輯模式，兩欄各自一個。開著時格子上會出現刪除鈕——
+   * 觸控裝置平常不放那顆，常駐就是滿畫面的紅點。
+   * 跟篩選一樣不寫進偏好，重新整理回到關著。
+   */
+  edit: { want: false, have: false },
   big: false, // 大圖示。預設小圖示，手機一排五隻
   names: true, // 格子下方顯示名稱
   code: "", // 訓練家代碼，只印在分享圖上
@@ -188,7 +194,7 @@ function draw() {
       },
       t
     );
-    ui.renderTrade(state.book, state.lang, t, state.code);
+    ui.renderTrade(state.book, state.lang, t, state.code, state.edit);
   } else {
     ui.renderInfoBar(
       { title: t("viewBg"), stats: [t("bgCount", CARD_TOTAL)] },
@@ -693,6 +699,15 @@ document.addEventListener("click", (ev) => {
   }
 
   // 交換表格子上的刪除鈕。要擋掉冒泡，否則會順便打開詳情面板
+  // 欄標題那顆鉛筆。只切換自己那一欄，另一欄不受影響
+  const pencil = el("[data-edit]");
+  if (pencil) {
+    const col = pencil.dataset.edit;
+    state.edit[col] = !state.edit[col];
+    draw();
+    return;
+  }
+
   const del = el("[data-del]");
   if (del && del.dataset.col) {
     ev.stopPropagation();

@@ -124,7 +124,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 `js/main.js` —— 唯一有狀態、唯一綁事件的檔案。
 
 - **state**：`book` `lang` `view` `filter` `pop` `query` `openId` `openCard` `draft` `flash`
-  `pick` `pickFilter` `pickMulti` `pickShiny` `bgMulti` `bgSel`
+  `pick` `pickFilter` `pickMulti` `pickShiny` `bgMulti` `bgSel` `edit`
 - **選寶可夢面板的篩選與多選模式放在 `pick` 外面**：`state.pick` 關一次面板就沒了，
   而那兩個要記到下一次按加號。也不跟圖鑑的 `filter` 共用，兩邊在做的事不一樣
 - **浮出來的面板只走 `ui.setPop()`**：`state.pop` 是 `null`／`"filter"`／`"settings"`，
@@ -187,7 +187,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改屬性配色 | `js/types.js` |
 | 改分享圖版面 | `js/share.js` 上方的尺寸常數（`CELL` `COLS` `NAME_H`） |
 | 改交換表格子長相 | `js/ui.js` 的 `tradeCell` + `css/style.css` 的 `.want-cell` |
-| 改交換表格子的刪除鈕 | `css/style.css` 的 `.want-del`。紅圓一半露在框外，所以 `.want-tile` **不能**有 `overflow: hidden`；手機那段是 `@media (hover: none)`，整顆不放 |
+| 改交換表格子的刪除鈕 | `css/style.css` 的 `.want-del`。紅圓一半露在框外，所以 `.want-tile` **不能**有 `overflow: hidden`；觸控裝置平常藏著，靠欄標題那顆鉛筆（`.edit-btn`）切換 `.grid.editing` 才出現 |
 | 改詳情面板的順序 | `js/ui.js` 的 `renderDetail`，由上到下就是操作順序 |
 | 改一欄的上限 | `js/store.js` 的 `MAX_ITEMS` |
 | 改清單份數 | `js/store.js` 的 `LIST_COUNT`，分頁樣式在 `css/style.css` 的 `.list-tabs` |

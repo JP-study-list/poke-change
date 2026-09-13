@@ -4,6 +4,57 @@
 
 ---
 
+## 2026-09-14（一）
+- 類型：修正 + 新增
+- 影響檔案：css/style.css, js/ui.js, js/main.js, js/i18n.js,
+  tools/check.mjs, js/version.js, VERSION.md, CLAUDE.md, project-index.md
+- 摘要：修好背卡格子比旁邊低一截；手機加編輯模式（鉛筆）才顯示刪除鈕。
+  版本升 1.04.00。
+- 原因：使用者在手機上看到有背卡的那一格「浮在空中」，
+  順帶指出手機沒有刪除鈕，要求做成鉛筆切換。
+- 查證（浮在空中）：
+  - 量到有背卡的格子 tile 在 @373、沒背卡的在 @366，名稱跟著低 7px，
+    而 cell 與 tile 的尺寸都一樣。**是 `<img>` 的 inline 基線**：
+    圖用 `position: relative` 加 margin 撐留白，inline 的替換元素會壓在
+    行盒基線上，margin 越大沉得越多——背卡那批是 18%、沒背卡的是 8%，
+    差出來的就是那 7px。
+  - 改成 `position: absolute` 加 `inset`，脫離行流就沒有基線可言。
+    **元素框仍然等於圖框**（寬高照舊 84%／64%），所以 extra 那批
+    靠 translate 修偏移的圖不受影響——那個百分比是相對元素算的。
+  - 修完量到五格 tile 全在 @361、名稱全在 @430，格子高度從 109 收到 97
+    （那 12px 就是原本讓給基線的空間）。帶倍率的圖另外量過，
+    視覺主體在有無背卡的格子裡都是 41px，跟一般圖一致。
+- 決定（編輯模式）：
+  - **鉛筆放每一欄的標題右邊，只切換自己那一欄**。刪除本來就是欄內的事，
+    而且想要有九隻、可以給空著的時候，沒必要兩欄一起變成滿畫面的紅點。
+  - **只有觸控裝置看得到鉛筆**（`@media (hover: none)`）。桌機把滑鼠移過去
+    就有叉了，再放一顆切換鈕是同一件事的第二條路。
+  - **空的那一欄不畫鉛筆**。沒有東西可刪時給一顆鈕只會讓人按了沒反應。
+  - **編輯模式下點格子照樣開詳情**，只有叉是刪除。誤觸的代價差太多。
+  - 狀態在 `state.edit`（兩欄各一個布林），不寫進偏好，重整回到關著。
+- 查證（編輯模式）：
+  - **`const edit` 撞名**：click 委派裡早就有一個 `const edit = el(".d-edit[data-col]")`，
+    同一個函式再宣告一次是 SyntaxError，整個 `main.js` 不會執行——
+    畫面只剩骨架，而 `check.mjs` 不載入 main.js 所以照樣全過。
+    改名成 `pencil`。**改 main.js 的委派一定要實跑，check 保證不到那裡。**
+  - `hover` 這個媒體特性照例用啟動參數驗（`--blink-settings=primaryHoverType=1,
+    availableHoverTypes=1`），CDP 的 `setEmulatedMedia` 對它無效。
+- 驗證：
+  - `node tools/check.mjs` 全部通過，新增一條驗鉛筆兩顆、只有開著那一欄帶
+    `editing`、另一欄不跟著開、空清單不給鉛筆。
+  - 觸控模式實跑（430 寬）：`matchMedia("(hover: none)")` 為 true，
+    鉛筆兩顆都是 `display: grid`；沒開編輯時叉是 `display: none`，
+    開了之後想要那一欄的叉 `display: grid`、`opacity: 1`，
+    可以給那一欄仍然 none；叉的圓心正好壓在圖框右上角（偏移 0,0）；
+    點一下少一格、localStorage 也少一筆、仍留在編輯模式可以連刪；
+    刪光之後那一欄的鉛筆消失、另一欄還在。
+  - 桌機（有 hover）同一段流程：鉛筆兩顆都是 `display: none`，
+    叉仍然是 hover 才浮出來（`opacity: 0`），行為沒變。
+- 待辦/已知問題：
+  - 加號面板的篩選改變後，已選但被篩掉的仍留在 `sel` 裡（1.01.00 留下的）。
+
+---
+
 ## 2026-09-13（八）
 - 類型：新增
 - 影響檔案：js/i18n.js, js/ui.js, js/main.js, css/style.css,

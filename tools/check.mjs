@@ -586,6 +586,33 @@ console.log("\n5. 繪製函式");
     if (!els.app.innerHTML.includes('data-list="1"\n               aria-pressed="true"'))
       throw new Error("目前這一份沒有標起來");
   });
+  /*
+   * 編輯模式：鉛筆按下去那一欄的格子牆才帶 editing，刪除鈕靠它顯示。
+   * 兩欄各自一個狀態，一欄開著不該把另一欄也打開。
+   */
+  run("renderTrade 編輯模式", () => {
+    ui.renderTrade(book, "zh", t);
+    const n = (els.app.innerHTML.match(/data-edit="/g) || []).length;
+    if (n !== 2) throw new Error(`鉛筆有 ${n} 顆，兩欄各一顆才對`);
+    if (els.app.innerHTML.includes("grid editing"))
+      throw new Error("沒開編輯不該有 editing");
+
+    ui.renderTrade(book, "zh", t, "", { want: true });
+    const html = els.app.innerHTML;
+    if ((html.match(/grid editing/g) || []).length !== 1)
+      throw new Error("只有想要那一欄該帶 editing");
+    if (!html.includes('data-edit="want"\n               aria-pressed="true"'))
+      throw new Error("鉛筆沒有標成按下去的樣子");
+    if (html.includes('data-edit="have"\n               aria-pressed="true"'))
+      throw new Error("另一欄不該跟著開");
+
+    // 空的那一欄沒有東西可刪，不給鉛筆
+    const empty = store.emptyBook();
+    ui.renderTrade(empty, "zh", t, "", { want: true, have: true });
+    if (els.app.innerHTML.includes("data-edit="))
+      throw new Error("空清單不該有鉛筆");
+  });
+
   run("renderTrade 兩欄都有加號", () => {
     ui.renderTrade(book, "zh", t);
     const n = (els.app.innerHTML.match(/data-addcell="/g) || []).length;

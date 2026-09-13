@@ -1761,16 +1761,21 @@ body.no-names .cell .no {
 }
 
 /*
- * 留白用 margin 不用 padding，兩者視覺等價（方塊是正方形，
- * contain 之後圖框一樣大），但 margin 會讓元素本身就等於圖框。
+ * 留白用 inset 撐開，元素本身仍然等於圖框（寬高就是 84%）。
  * 那批有透明留白的圖要靠 translate 修正偏移，而 translate 的百分比
  * 是相對元素算的，元素比圖框大就會平移過頭。
+ *
+ * **一定要 absolute，不能是 relative 加 margin**：`<img>` 是 inline，
+ * 垂直 margin 會把它壓在行盒的基線上，整塊跟著往下沉——
+ * 沉多少取決於 margin，所以背卡那批（18%）比沒背卡的（8%）低 7px，
+ * 同一排的格子看起來一高一低，背卡像浮在空中。
+ * absolute 脫離行流就沒有基線可言，兩種格子的圖框對齊到同一個位置。
  */
 .want-cell img {
-  position: relative;
+  position: absolute;
+  inset: 8%;
   width: 84%;
   height: 84%;
-  margin: 8%;
   object-fit: contain;
 }
 
@@ -1780,9 +1785,9 @@ body.no-names .cell .no {
  * 所以沒指定背卡的格子維持原本的大小——那些格子沒有要讓給誰。
  */
 .want-bg + img {
+  inset: 18%;
   width: 64%;
   height: 64%;
-  margin: 18%;
 }
 
 /*
@@ -1874,14 +1879,61 @@ body.no-names .cell .no {
 
 /*
  * 觸控裝置沒有 hover，一直顯示的話兩百隻就是兩百顆紅點。
- * 那跟格子不畫框是同一個理由，所以手機上整顆不放，
- * 刪除走詳情面板那一顆「移除」，每一筆各自都有。
+ * 那跟格子不畫框是同一個理由，所以平常整顆不放，改成欄標題那顆鉛筆
+ * 按下去才一起出現（2026-09-14，使用者要求）。
+ * 詳情面板那顆「移除」仍然在，兩條路都通。
  */
 @media (hover: none) {
   .want-del {
     display: none;
   }
+
+  .grid.editing .want-del {
+    display: grid;
+    opacity: 1;
+  }
 }
+
+/*
+ * 欄標題右邊那顆鉛筆。只有觸控裝置要——桌機把滑鼠移過去就有叉了，
+ * 再放一顆切換鈕是同一件事的第二條路。
+ */
+.edit-btn {
+  display: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--dim);
+  cursor: pointer;
+}
+
+.edit-btn svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 開著的時候填實，跟其他 aria-pressed 的鈕同一種語彙 */
+.edit-btn[aria-pressed="true"] {
+  border-color: transparent;
+  background: var(--ink);
+  color: var(--bg);
+}
+
+@media (hover: none) {
+  .edit-btn {
+    display: grid;
+  }
+}
+
 
 /*
  * 格子牆最後那一格加號。高度靠 aspect-ratio 跟旁邊的格子對齊，
