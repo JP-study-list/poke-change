@@ -69,6 +69,14 @@ const state = {
    * 只有異色做批次：XXL／XXS 是個體大小，不會一批十隻都要。
    */
   pickShiny: false,
+  /*
+   * 背卡詳情的多選。跟加號那個面板是兩套：那邊選的是「加哪幾隻」，
+   * 這邊選的是「這張卡要收哪幾隻」，加進去時自動帶這張卡。
+   * 選取跟著卡片走，換一張就清掉——不同卡的清單根本不是同一批寶可夢。
+   * 模式本身記著，一張一張卡收下去不必每張都再按一次。
+   */
+  bgMulti: false,
+  bgSel: [],
   big: false, // 大圖示。預設小圖示，手機一排五隻
   names: true, // 格子下方顯示名稱
   code: "", // 訓練家代碼，只印在分享圖上
@@ -246,7 +254,12 @@ function drawDetail() {
       !!state.pick // 從加號進來的話，面板上要有返回鈕回去選別隻
     );
     state.flash = null; // 閃一次就好，下一次重畫不該再閃
-  } else if (state.openCard) ui.renderCardDetail(state.openCard, state.lang, t);
+  } else if (state.openCard)
+    ui.renderCardDetail(state.openCard, state.lang, t, {
+      multi: state.bgMulti,
+      sel: state.bgSel,
+      shiny: state.pickShiny,
+    });
   else if (state.pick) {
     ui.renderPicker(
       {
@@ -291,8 +304,8 @@ function save() {
  * 但大多數交換談的是一般色，預設勾著等於每次都要先取消；
  * 而且詳情面板上方那張圖現在跟著這個值走，一開就是異色會看錯是哪一隻。
  */
-function newDraft() {
-  return { shiny: false, xxl: false, xxs: false, bg: "" };
+function newDraft(bg = "") {
+  return { shiny: false, xxl: false, xxs: false, bg };
 }
 
 /**
@@ -354,7 +367,7 @@ function addItem(id, col) {
  * 完全相同的那一筆已經在清單裡（跟單選同一條規則）、那一欄滿了、
  * 以及 id 在圖鑑裡已經不存在。結果用一則 toast 講完，不逐隻跳。
  */
-function addMany(col, ids, shiny) {
+function addMany(col, ids, { shiny = false, bg = "", stay = false } = {}) {
   const list = cur()[col];
   let added = 0;
   let dupe = 0;
@@ -371,7 +384,8 @@ function addMany(col, ids, shiny) {
     // 沒有實裝異色的就算開著也只能一般色，重複判斷要拿實際會寫進去的值去比
     const wantShiny = !!shiny && hasShiny(e);
     const same = list.some(
-      (x) => x.id === id && !x.bg && !!x.shiny === wantShiny && !x.xxl && !x.xxs
+      (x) =>
+        x.id === id && x.bg === bg && !!x.shiny === wantShiny && !x.xxl && !x.xxs
     );
     if (same) {
       dupe++;
@@ -379,7 +393,7 @@ function addMany(col, ids, shiny) {
     }
     const item = store.newItem(id, wantShiny);
     item.xxl = item.xxs = false;
-    item.bg = "";
+    item.bg = bg;
     list.push(item);
     added++;
     if (shiny && !wantShiny) noShiny++;
@@ -395,7 +409,23 @@ function addMany(col, ids, shiny) {
   ].filter(Boolean);
   if (msg.length) ui.toast(msg.join(" · "));
 
-  // 加完回交換表看結果，跟單選一樣。篩選留著，下次按加號還在
+  /*
+   * 從背卡進來的留在原地：使用者還在看這張卡，多半接著挑另一欄要哪幾隻。
+   * 選取清掉、勾圈要跟著消失，所以整片重畫，但把捲動位置放回去——
+   * 一張卡七十幾格，加完彈回最上面等於要重找剛才看到哪裡。
+   */
+  if (stay) {
+    const panel = document.querySelector("#panel");
+    const y = panel ? panel.scrollTop : 0;
+    state.bgSel = [];
+    draw();
+    drawDetail();
+    const after = document.querySelector("#panel");
+    if (after) after.scrollTop = y;
+    return;
+  }
+
+  // 從加號進來的回交換表看結果，跟單選一樣。篩選留著，下次按加號還在
   closePanels();
   draw();
 }
@@ -712,6 +742,8 @@ document.addEventListener("click", (ev) => {
   // 背卡卡片
   const card = el("[data-card]");
   if (card) {
+    // 換一張卡就清掉選取，兩張卡的清單不是同一批，留著只會加錯
+    if (state.openCard !== card.dataset.card) state.bgSel = [];
     state.openCard = card.dataset.card;
     state.openId = null;
     drawDetail();
@@ -798,15 +830,40 @@ document.addEventListener("click", (ev) => {
    * 走 drawDetail() 會把格子牆的捲動位置歸零，而按這顆的時機
    * 多半是已經往下選了一段。
    */
-  if (el("[data-pickshiny]") && state.pick) {
+  if (el("[data-pickshiny]")) {
     state.pickShiny = !state.pickShiny;
-    ui.renderPickFoot(state.pick.sel.length, t, state.pickShiny);
+    // 兩個地方共用這顆開關，重畫的是自己那一條動作列
+    if (state.pick) ui.renderPickFoot(state.pick.sel.length, t, state.pickShiny);
+    else if (state.openCard) ui.renderBgFoot(state.bgSel.length, t, state.pickShiny);
+    return;
+  }
+
+  // 背卡詳情的多選開關。換模式就把選起來的清掉，跟加號那邊同一條規則
+  if (el("[data-bgmulti]") && state.openCard) {
+    state.bgMulti = !state.bgMulti;
+    state.bgSel = [];
+    drawDetail();
+    return;
+  }
+
+  /*
+   * 背卡詳情多選時的兩顆加入鈕。整批自動帶這張背卡。
+   * 加完留在原地（stay）：使用者還在看這張卡，常常是想要幾隻之後
+   * 再挑可以給的幾隻，跳去交換表等於要自己找回來。
+   */
+  const addbg = el("[data-addbg]");
+  if (addbg && state.openCard) {
+    addMany(addbg.dataset.addbg, state.bgSel, {
+      shiny: state.pickShiny,
+      bg: state.openCard,
+      stay: true,
+    });
     return;
   }
 
   // 多選模式下，底部那顆一次加進整批
   if (el("[data-addmulti]") && state.pick) {
-    addMany(state.pick.col, state.pick.sel, state.pickShiny);
+    addMany(state.pick.col, state.pick.sel, { shiny: state.pickShiny });
     return;
   }
 
@@ -840,9 +897,27 @@ document.addEventListener("click", (ev) => {
       ui.renderPickFoot(state.pick.sel.length, t, state.pickShiny);
       return;
     }
+    /*
+     * 背卡詳情的多選也是勾選不是開詳情。跟加號那邊一樣只改那一格，
+     * 一張卡最多七十幾格，重畫整片同樣會把捲動位置歸零。
+     */
+    if (state.openCard && state.bgMulti && cell.dataset.bgcell) {
+      const id = cell.dataset.id;
+      const i = state.bgSel.indexOf(id);
+      if (i >= 0) state.bgSel.splice(i, 1);
+      else state.bgSel.push(id);
+      cell.classList.toggle("picked", i < 0);
+      cell.setAttribute("aria-pressed", String(i < 0));
+      ui.renderBgFoot(state.bgSel.length, t, state.pickShiny);
+      return;
+    }
+    /*
+     * 從背卡詳情點一隻進去，草稿先配好剛才那張卡——
+     * 使用者就是在那張卡的清單裡點的，再叫他自己從下拉挑一次同一張很沒道理。
+     */
+    state.draft = newDraft(state.openCard || "");
     state.openId = cell.dataset.id;
     state.openCard = null;
-    state.draft = newDraft();
     // 從交換表點進來就指出是哪一筆，圖鑑點進來沒有對應的筆數就不閃
     state.flash = cell.dataset.col
       ? { col: cell.dataset.col, idx: Number(cell.dataset.idx) }

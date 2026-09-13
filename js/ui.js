@@ -1026,10 +1026,13 @@ const bgCard = (lang, t) => (card) =>
   </button>`;
 
 /** 單張背卡的詳情：列出所有可能帶有它的寶可夢 */
-export function renderCardDetail(cardId, lang, t) {
+export function renderCardDetail(cardId, lang, t, pick = {}) {
   const hit = allCards().find(({ card }) => card.id === cardId);
   if (!hit) return;
   const { folder, card } = hit;
+
+  const multi = !!pick.multi;
+  const sel = new Set(pick.sel || []);
 
   const cells = entriesOf(card)
     .map(({ id, note }) => {
@@ -1037,9 +1040,17 @@ export function renderCardDetail(cardId, lang, t) {
       if (!e) return "";
       const form = formName(e, lang);
       const extra = note && note[lang] ? note[lang] : form;
-      return `<button class="cell" type="button" data-id="${esc(id)}">
+      const on = multi && sel.has(id);
+      return `<button class="cell${on ? " picked" : ""}" type="button"
+              data-id="${esc(id)}"${multi ? ` data-bgcell="1" aria-pressed="${on}"` : ""}>
         <img ${iconAttrs(e, false)} alt="" loading="lazy" />
-        <span class="no">#${e.dex}</span>
+        ${
+          multi
+            ? `<span class="pick-tick" aria-hidden="true">
+                 <svg viewBox="0 0 24 24"><path d="M5 13l4.5 4.5L19 7.5" /></svg>
+               </span>`
+            : `<span class="no">#${e.dex}</span>`
+        }
         <span class="nm">${esc(speciesName(e, lang))}${
         extra ? `<span class="form">${esc(extra)}</span>` : ""
       }</span>
@@ -1047,9 +1058,16 @@ export function renderCardDetail(cardId, lang, t) {
     })
     .join("");
 
-  // 骨架那批還沒有寶可夢清單，講明白比留一塊空白好
+  /*
+   * 骨架那批還沒有寶可夢清單，講明白比留一塊空白好。
+   * 有清單的才給多選鈕——沒有格子可選的時候放一顆鈕只會讓人按了沒反應。
+   */
   const list = card.pokemon.length
-    ? `<p class="d-sect">${esc(t("bgSlots", card.pokemon.length))}</p>
+    ? `<div class="d-sect-row">
+         <p class="d-sect">${esc(t("bgSlots", card.pokemon.length))}</p>
+         <button type="button" class="pick-btn wide" data-bgmulti
+                 aria-pressed="${multi}">${esc(t("pickMulti"))}</button>
+       </div>
        <div class="grid">${cells}</div>`
     : `<p class="dim">${esc(t("bgNoList"))}</p>`;
 
@@ -1072,6 +1090,35 @@ export function renderCardDetail(cardId, lang, t) {
     <img ${bgAttrs(card)} alt="" style="width:100%;border-radius:8px;margin:14px 0" />
     ${list}
     <button class="btn-close" type="button" data-close="1">${esc(t("close"))}</button>`;
+
+  // 跟選寶可夢面板同一條規則：沒在多選就整條收掉，版面回到原本的樣子
+  if (multi) renderBgFoot(sel.size, t, pick.shiny);
+  else railFoot("");
+}
+
+/**
+ * 背卡詳情多選時的底部動作列。
+ *
+ * 跟選寶可夢面板那一條長得一樣，差別在右邊是兩顆鈕不是一顆：
+ * 從交換表按加號是「從某一欄進來的」，這裡沒有那個脈絡，
+ * 同一張卡常常是想要幾隻、可以給幾隻，所以兩欄都要按得到。
+ */
+export function renderBgFoot(n, t, shiny) {
+  railFoot(
+    `<div class="pick-foot-l">
+       <button type="button" class="mk shiny" data-pickshiny
+               aria-pressed="${!!shiny}">${esc(t("markShiny"))}</button>
+       <span class="dim">${esc(t("pickSel", n))}</span>
+     </div>
+     <div class="pick-foot-r">
+       <button type="button" class="pick-add want" data-addbg="want"${
+         n ? "" : " disabled"
+       }>${esc(t("bgAddWant", n))}</button>
+       <button type="button" class="pick-add have" data-addbg="have"${
+         n ? "" : " disabled"
+       }>${esc(t("bgAddHave", n))}</button>
+     </div>`
+  );
 }
 
 export { MAX_ITEMS };

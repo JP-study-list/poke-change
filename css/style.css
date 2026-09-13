@@ -2099,6 +2099,35 @@ body.no-names .cell .no {
   min-width: 0;
 }
 
+/*
+ * 背卡那條有兩顆加入鈕（想要／可以給）。桌機的常駐右欄只有 340 寬，
+ * 一行擺不下左半邊加兩顆，所以整條允許換行，兩顆自己佔一行對半分。
+ */
+.pick-foot {
+  flex-wrap: wrap;
+}
+
+.pick-foot-r {
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.pick-foot-r .pick-add {
+  flex: 1 1 auto;
+  padding: 9px 10px;
+  white-space: nowrap;
+}
+
+/* 背卡詳情的清單標題那一行：左邊是「收集格 N」，右邊是多選鈕 */
+.d-sect-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .pick-add {
   padding: 9px 18px;
   border: 1px solid var(--ink);

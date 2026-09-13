@@ -836,6 +836,44 @@ console.log("\n5. 繪製函式");
   }
   ok(`renderCardDetail 全部 ${bg.CARD_COUNT} 張`, !cardErr, cardErr);
 
+  // 背卡詳情的多選：格子要能勾、底部要有兩顆加入鈕、單選時整條收掉
+  run("renderCardDetail 多選", () => {
+    const hit = bg.allCards().find(({ card }) => card.pokemon.length >= 2);
+    if (!hit) throw new Error("找不到有清單的背卡");
+    const ids = bg.entriesOf(hit.card).map((x) => x.id);
+
+    ui.renderCardDetail(hit.card.id, "zh", t);
+    if (!els.panel.innerHTML.includes("data-bgmulti"))
+      throw new Error("有清單的卡要有多選鈕");
+    if (!els.pickFoot.hidden)
+      throw new Error("沒開多選不該有底部動作列");
+
+    ui.renderCardDetail(hit.card.id, "zh", t, {
+      multi: true,
+      sel: ids.slice(0, 1),
+    });
+    const html = els.panel.innerHTML;
+    if (!html.includes("data-bgcell"))
+      throw new Error("多選時格子要認得出來");
+    const on = (html.match(/class="cell picked"/g) || []).length;
+    if (on !== 1) throw new Error(`選起來的應該 1 格，得到 ${on}`);
+    const foot = els.pickFoot.innerHTML;
+    for (const col of ["want", "have"]) {
+      if (!foot.includes(`data-addbg="${col}"`))
+        throw new Error(`底部少了「加進${col}」那顆`);
+    }
+    if (!foot.includes("data-pickshiny"))
+      throw new Error("底部少了整批異色開關");
+
+    // 沒有清單的那批不給多選鈕，按了也沒有格子可選
+    const empty = bg.allCards().find(({ card }) => !card.pokemon.length);
+    if (empty) {
+      ui.renderCardDetail(empty.card.id, "zh", t, { multi: true, sel: [] });
+      if (els.panel.innerHTML.includes("data-bgmulti"))
+        throw new Error("沒有清單的卡不該有多選鈕");
+    }
+  });
+
   // 三種語言都要能畫
   for (const l of LANGS) {
     const tl = makeT(l.code);

@@ -117,14 +117,14 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 右欄 | `renderRailSummary`（背卡沒有詳情可顯示時的預設內容，只有那個檢視用） |
 | 圖鑑 | `renderFilterBar` `renderFilterPanel` `visibleEntries` `renderGrid` `renderDetail` |
 | 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` `renderPicker` `renderPickFoot` |
-| 背卡 | `renderBg` `renderCardDetail` |
+| 背卡 | `renderBg` `renderCardDetail` `renderBgFoot` |
 
 ### 協調層
 
 `js/main.js` —— 唯一有狀態、唯一綁事件的檔案。
 
 - **state**：`book` `lang` `view` `filter` `pop` `query` `openId` `openCard` `draft` `flash`
-  `pick` `pickFilter` `pickMulti` `pickShiny`
+  `pick` `pickFilter` `pickMulti` `pickShiny` `bgMulti` `bgSel`
 - **選寶可夢面板的篩選與多選模式放在 `pick` 外面**：`state.pick` 關一次面板就沒了，
   而那兩個要記到下一次按加號。也不跟圖鑑的 `filter` 共用，兩邊在做的事不一樣
 - **浮出來的面板只走 `ui.setPop()`**：`state.pop` 是 `null`／`"filter"`／`"settings"`，
@@ -191,6 +191,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改詳情面板的順序 | `js/ui.js` 的 `renderDetail`，由上到下就是操作順序 |
 | 改一欄的上限 | `js/store.js` 的 `MAX_ITEMS` |
 | 改清單份數 | `js/store.js` 的 `LIST_COUNT`，分頁樣式在 `css/style.css` 的 `.list-tabs` |
+| 改背卡詳情的批次加入 | `js/ui.js` 的 `renderCardDetail`（多選時的格子）與 `renderBgFoot`（底部兩顆鈕）。加進去帶哪些條件在 `js/main.js` 的 `addMany` |
 | 改選寶可夢面板 | `js/ui.js` 的 `renderPicker`，一次最多畫 `PICK_MAX` 筆。多選的底部動作列是 `renderPickFoot`，殼在 `index.html` 的 `#pickFoot` |
 | 改那個面板的篩選 | 跟圖鑑同一組 `FILTER_GROUPS`，HTML 走共用的 `pickedChips` / `filterGroups`，dataset 前綴由 `FATTR` 給 |
 | 加篩選條件 | `js/dex.js` 的 `FILTER_GROUPS`，標籤補 `js/i18n.js`，面板裡的組序在 `js/ui.js` 的 `FGROUPS` |
