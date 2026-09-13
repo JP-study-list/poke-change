@@ -184,6 +184,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改屬性配色 | `js/types.js` |
 | 改分享圖版面 | `js/share.js` 上方的尺寸常數（`CELL` `COLS` `NAME_H`） |
 | 改交換表格子長相 | `js/ui.js` 的 `tradeCell` + `css/style.css` 的 `.want-cell` |
+| 改交換表格子的刪除鈕 | `css/style.css` 的 `.want-del`。紅圓一半露在框外，所以 `.want-tile` **不能**有 `overflow: hidden`；手機那段是 `@media (hover: none)`，整顆不放 |
 | 改詳情面板的順序 | `js/ui.js` 的 `renderDetail`，由上到下就是操作順序 |
 | 改一欄的上限 | `js/store.js` 的 `MAX_ITEMS` |
 | 改清單份數 | `js/store.js` 的 `LIST_COUNT`，分頁樣式在 `css/style.css` 的 `.list-tabs` |

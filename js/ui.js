@@ -645,7 +645,9 @@ function tradeCell(item, col, idx, lang, t) {
       <img ${iconAttrs(e, item.shiny)} alt="" loading="lazy" />
       ${item.shiny ? '<i class="spark">✦</i>' : ""}
       <button class="want-del" type="button" data-del="${idx}" data-col="${col}"
-              title="${esc(t("remove"))}">×</button>
+              title="${esc(t("remove"))}" aria-label="${esc(t("remove"))}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+      </button>
     </span>
     <span class="nm">${esc(speciesName(e, lang))}${
     formName(e, lang) ? `<span class="form">${esc(formName(e, lang))}</span>` : ""

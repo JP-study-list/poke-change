@@ -1183,8 +1183,16 @@ select {
  * 這批圖都是正方形畫布，`.cell img` 平常是滿版寬、圖框只有那麼高，
  * 所以帶倍率的那些收成正方形再置中。交換表那邊改用 margin 達成同一件事。
  */
+/*
+ * 放大之後元素框跟著變大（實測 2.46 倍，向上溢出 61px），
+ * 溢出的那一圈全是透明留白，卻照樣接得到點擊，會搶走隔壁格子的。
+ * 圖本身沒有互動，點擊一律由格子委派，所以整個關掉。
+ * 交換表格子拿掉 `overflow: hidden` 之後這件事才浮出來——
+ * 在那之前是被裁掉的，圖鑑的格子則是一直沒裁。
+ */
 img[style*="--iz"] {
   transform: scale(var(--iz, 1)) translate(calc(var(--ix, 0px) * -1), calc(var(--iy, 0px) * -1));
+  pointer-events: none;
 }
 
 .cell img[style*="--iz"] {
@@ -1734,11 +1742,16 @@ body.no-names .cell .no {
   cursor: pointer;
 }
 
+/*
+ * 不能 `overflow: hidden`：刪除鈕要有一半露在方塊外面。
+ * 原本靠它裁背卡底圖的圓角，現在底圖自己帶一份（見 .want-bg）。
+ * 圖示不必裁，`contain` 加 margin 本來就在框內，
+ * 外部來源那批帶 scale 的也一樣——放大的是透明留白，主體仍佔 98%。
+ */
 .want-tile {
   position: relative;
   display: block;
   aspect-ratio: 1;
-  overflow: hidden;
   border-radius: var(--radius);
 }
 
@@ -1781,6 +1794,7 @@ body.no-names .cell .no {
 .want-bg {
   position: absolute;
   inset: 0;
+  border-radius: var(--radius);
   background-size: cover;
   background-position: center;
 }
@@ -1810,21 +1824,43 @@ body.no-names .cell .no {
   margin-top: 3px;
 }
 
+/*
+ * 刪除鈕是紅圓白叉，圓心壓在圖框的右上角，一半在外一半在內
+ * （2026-09-13，使用者要求）。
+ *
+ * 原本是灰底灰叉蹲在方塊裡面，背卡底圖改成原樣顯示之後
+ * 它就壓在圖上看不清。紅圓跟彈窗那顆關閉鈕同一個 `--x-bg`，
+ * 全站只有一種「按了會收掉東西」的紅圓叉。
+ *
+ * 溢出只取一半（-8px = 半徑）。格子間距只有 6~8px，
+ * 溢出更多會跨進隔壁格子，而且交換表的格子本來就不畫框，
+ * 沒背卡的格子上那顆紅點會懸在一片空白裡。
+ */
 .want-del {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 20px;
-  height: 20px;
+  top: -8px;
+  right: -8px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
   border: 0;
   border-radius: 50%;
-  background: var(--card);
-  color: var(--dim);
-  font-size: 14px;
-  line-height: 1;
+  background: var(--x-bg);
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.12s;
+}
+
+.want-del svg {
+  width: 9px;
+  height: 9px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3.2;
+  stroke-linecap: round;
 }
 
 .want-cell:hover .want-del,
@@ -1833,13 +1869,17 @@ body.no-names .cell .no {
 }
 
 .want-del:hover {
-  color: var(--shiny);
+  background: var(--x-bg-hover);
 }
 
-/* 觸控裝置沒有 hover，刪除鈕一直顯示 */
+/*
+ * 觸控裝置沒有 hover，一直顯示的話兩百隻就是兩百顆紅點。
+ * 那跟格子不畫框是同一個理由，所以手機上整顆不放，
+ * 刪除走詳情面板那一顆「移除」，每一筆各自都有。
+ */
 @media (hover: none) {
   .want-del {
-    opacity: 1;
+    display: none;
   }
 }
 
