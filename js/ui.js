@@ -73,19 +73,19 @@ export function renderChrome(t, lang, disp = {}) {
    * 它也是「畫面要長什麼樣」，不是一個獨立的功能。
    */
   $("#displayOpts").innerHTML = [
-    ["big", t("bigIcons"), disp.big],
-    ["names", t("showNames"), disp.names],
-    ["dark", t("theme"), disp.dark],
-  ]
-    .map(
-      ([k, label, on]) =>
-        `<button type="button" data-disp="${k}" aria-pressed="${!!on}">
-          <span class="ic" aria-hidden="true">
-            <svg viewBox="0 0 24 24">${dispIcon(k, !!on)}</svg>
-          </span>${esc(label)}
-        </button>`
-    )
-    .join("");
+    dispGroup("big", t("dispSize"), [
+      { val: false, name: t("dispSizeS"), thumb: DISP_THUMBS.bigOff },
+      { val: true, name: t("dispSizeL"), thumb: DISP_THUMBS.bigOn },
+    ], !!disp.big),
+    dispGroup("names", t("dispNames"), [
+      { val: true, name: t("dispNamesOn"), thumb: DISP_THUMBS.namesOn },
+      { val: false, name: t("dispNamesOff"), thumb: DISP_THUMBS.namesOff },
+    ], !!disp.names),
+    dispGroup("dark", t("dispTheme"), [
+      { val: false, name: t("dispLight"), thumb: DISP_THUMBS.darkOff },
+      { val: true, name: t("dispDark"), thumb: DISP_THUMBS.darkOn },
+    ], !!disp.dark),
+  ].join("");
   $("#localNotice").innerHTML = `<strong>${esc(t("localOnly"))}</strong>${esc(
     t("localHint")
   )}`;
@@ -123,24 +123,84 @@ const VIEW_ICONS = {
 };
 
 /*
- * 設定面板那三個顯示選項的圖示（2026-09-14，使用者要求）。
+ * 設定面板那三個顯示選項的預覽縮圖（2026-09-14，使用者要求）。
  *
- * 圖示本身就是開關：關著是線條加淡框，開著填成金色。原本只有一個
- * 方框打勾，三項長得一模一樣，得靠讀字才知道自己在開什麼。
+ * 三項都是「畫面會長什麼樣」，所以用兩張小縮圖二選一，不用開關——
+ * 一排五隻還是三隻、格子底下有沒有字，畫出來比寫出來好懂。
  *
- * 深色模式的圖示**跟著狀態換**，太陽與月亮：那一項的兩個狀態各自
- * 有公認的樣子，只換顏色等於浪費了這件事。另外兩項沒有這種對照，
- * 硬要換只會變成兩個都看不懂的圖。
+ * 縮圖是 inline SVG，不是圖檔：要跟著深淺色換色，而且 240 個位元組
+ * 就畫得完的東西不值得多一次請求。
+ *
+ * **外觀那兩張的顏色寫死**，不吃 CSS 變數：它們預覽的正是兩套配色本身，
+ * 跟著當前主題走的話兩張會長得一模一樣。數字抄自 `:root` 與 `body.dark`，
+ * 改配色時這裡要跟著改（跟 `js/share.js` 同一個道理）。
  */
-const DISP_ICONS = {
-  big: `<rect x="2.8" y="4" width="11.4" height="11.4" rx="2.6" /><rect x="16.2" y="13.6" width="5" height="5" rx="1.4" />`,
-  names: `<rect x="4.5" y="3.2" width="15" height="9.6" rx="2.2" /><path d="M4.5 16.8h15M7.5 20.4h9" />`,
-  darkOn: `<path d="M20 14.2A8.2 8.2 0 0 1 9.8 4 7.2 7.2 0 1 0 20 14.2z" />`,
-  darkOff: `<circle cx="12" cy="12" r="4" /><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6" />`,
+const thumbCells = (cols, size, gap, rowGap, withName) => {
+  const w = cols * size + (cols - 1) * gap;
+  const x0 = (100 - w) / 2;
+  const rows = 2;
+  const y0 = (55 - (rows * size + (rows - 1) * rowGap)) / 2;
+  let out = "";
+  for (let r = 0; r < rows; r++) {
+    const y = y0 + r * (size + rowGap);
+    for (let c = 0; c < cols; c++) {
+      const x = x0 + c * (size + gap);
+      out += `<rect x="${x}" y="${y}" width="${size}" height="${size}" rx="2.5" class="tc" />`;
+      if (withName)
+        out += `<rect x="${x + size * 0.18}" y="${y + size + 3}" width="${
+          size * 0.64
+        }" height="2.4" rx="1.2" class="tl" />`;
+    }
+  }
+  return out;
 };
 
-const dispIcon = (k, on) =>
-  k === "dark" ? (on ? DISP_ICONS.darkOn : DISP_ICONS.darkOff) : DISP_ICONS[k];
+/* 外觀那兩張：一條標題列加兩排格子，配色寫死 */
+const themeThumb = (bg, line, cell) =>
+  `<rect x="0" y="0" width="100" height="55" fill="${bg}" />
+   <rect x="8" y="7" width="30" height="4" rx="2" fill="${line}" />
+   ${[0, 1]
+     .map((r) =>
+       [0, 1, 2]
+         .map(
+           (c) =>
+             `<rect x="${8 + c * 29}" y="${17 + r * 18}" width="25" height="14" rx="2.5" fill="${cell}" />`
+         )
+         .join("")
+     )
+     .join("")}`;
+
+const DISP_THUMBS = {
+  bigOff: thumbCells(5, 12, 2.5, 6, false),
+  bigOn: thumbCells(3, 19, 4, 6, false),
+  namesOn: thumbCells(3, 15, 4, 10, true),
+  namesOff: thumbCells(3, 15, 4, 10, false),
+  darkOff: themeThumb("#faf9f5", "#cfc9bd", "#e8e4da"),
+  darkOn: themeThumb("#101010", "#3c3c40", "#232326"),
+};
+
+/*
+ * 一項就是一組：小標題加兩張縮圖。`data-val` 是要切成哪一個值，
+ * 不是 toggle——兩張卡各自代表一個值，點已經選中的那張不該把它關掉。
+ */
+function dispGroup(key, label, opts, cur) {
+  const cards = opts
+    .map(
+      ({ val, name, thumb }) =>
+        `<button type="button" class="opt-card" data-disp="${key}"
+                 data-val="${val ? 1 : 0}" aria-pressed="${val === cur}">
+          <span class="thumb">
+            <svg viewBox="0 0 100 55" aria-hidden="true">${thumb}</svg>
+          </span>
+          <span class="opt-name">${esc(name)}</span>
+        </button>`
+    )
+    .join("");
+  return `<div class="opt-group">
+    <p class="opt-label">${esc(label)}</p>
+    <div class="opt-cards">${cards}</div>
+  </div>`;
+}
 
 /** 檢視切換。桌機在頂部列，900 以下是貼底的 bar，同一段 DOM */
 export function renderViews(view, t) {

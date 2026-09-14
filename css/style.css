@@ -740,73 +740,99 @@ select {
 }
 
 /* 顯示切換。兩顆開關，按下去是選起來的狀態 */
+/*
+ * 顯示選項：一項一組，小標題加兩張預覽縮圖二選一
+ * （2026-09-14，使用者要求，參考他自己另一個站的設定面板）。
+ *
+ * 原本是三行方框打勾，後來換成圓形圖示開關，兩種都只是「開或關」。
+ * 這三項講的都是畫面會長什麼樣，畫出來比寫出來好懂，
+ * 而且三項並排的時候看得出彼此是同一類設定。
+ */
 .toggles {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 16px;
 }
 
-/*
- * 兩顆開關。原本是白底方框，跟旁邊的導覽長得一樣。
- * 現在左邊一個小方塊表示開關狀態，文字就是文字。
- */
-.toggles button {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 7px 10px 7px 8px;
-  border: 0;
-  border-radius: 7px;
-  background: none;
-  color: var(--ink2);
-  font: inherit;
-  font-size: var(--fs-base);
-  text-align: left;
-  cursor: pointer;
-}
-
-/*
- * 圖示本身就是開關（2026-09-14，使用者要求）。
- *
- * 原本是一個方框打勾，三項長得一模一樣，得讀字才知道在開什麼。
- * 現在每一項有自己的圖示：關著是線條加淡框，開著整顆填金、圖示轉白。
- * 深色模式那一項連圖都換（太陽↔月亮），圖示在 `js/ui.js` 的 `DISP_ICONS`。
- */
-.toggles .ic {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  flex: none;
-  border: 1.5px solid var(--line);
-  border-radius: 50%;
-  background: var(--card);
+.opt-label {
+  margin-bottom: 7px;
+  font-size: var(--fs-12);
   color: var(--dim);
 }
 
-.toggles .ic svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.opt-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
-.toggles button:hover {
+/*
+ * 選中的那張靠 inset 陰影加粗邊框，不改 border-width——
+ * 換一張選中會讓兩張各差 0.5px，整組跟著位移。
+ */
+.opt-card {
+  display: block;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.opt-card:hover {
+  border-color: var(--dim);
+}
+
+.opt-card[aria-pressed="true"] {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+.opt-card .thumb {
+  display: block;
   background: var(--sunk);
 }
 
-.toggles button[aria-pressed="true"] {
-  color: var(--ink);
+.opt-card svg {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
-/* 填實金色是「這一項開著」，跟全站其他 aria-pressed 的鈕同一種語彙 */
-.toggles button[aria-pressed="true"] .ic {
-  border-color: transparent;
-  background: var(--gold);
-  color: #fff;
+/* 縮圖裡的格子與名稱線。外觀那兩張自己帶顏色，不吃這裡 */
+.opt-card .tc {
+  fill: var(--dim);
+  opacity: 0.3;
+}
+
+.opt-card .tl {
+  fill: var(--dim);
+  opacity: 0.55;
+}
+
+.opt-card[aria-pressed="true"] .tc {
+  fill: var(--gold);
+  opacity: 0.55;
+}
+
+.opt-card[aria-pressed="true"] .tl {
+  fill: var(--gold-ink);
+  opacity: 0.75;
+}
+
+.opt-name {
+  display: block;
+  padding: 7px 6px;
+  font-size: var(--fs-13);
+  color: var(--dim);
+}
+
+.opt-card[aria-pressed="true"] .opt-name {
+  color: var(--ink);
+  font-weight: 600;
 }
 
 /* 右欄裡的標題區。選寶可夢面板也用這個 */

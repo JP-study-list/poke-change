@@ -179,7 +179,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改詳情面板顯示哪幾個等級的 CP | `js/ui.js` 的 `CP_LEVELS`，數字要對得上 godex 的欄位名 |
 | 改設定面板裡有什麼 | `index.html` 的 `#settings` 裡的 `.modal-scroll`，內容由 `renderChrome` 填 |
 | 改檢視的圖示 | `js/ui.js` 的 `VIEW_ICONS` |
-| 改設定裡三個顯示選項的圖示 | `js/ui.js` 的 `DISP_ICONS`。深色那一項有開關兩種圖，由 `dispIcon()` 挑 |
+| 改設定裡三個顯示選項 | `js/ui.js` 的 `DISP_THUMBS`（縮圖）與 `dispGroup()`（一項一組）。外觀那兩張的顏色寫死，改配色要跟著改 |
 | 改手機底部 bar 的高度 | `css/style.css` 的 `--tab-h`，內容區的底部內距吃同一個值 |
 | 改資訊列顯示什麼 | `js/main.js` 的 `draw()`，文字翻好再傳給 `renderInfoBar` |
 | 改右欄寬度或收起的斷點 | `css/style.css` 的 `--rail-w` 與 1200px 那段查詢 |

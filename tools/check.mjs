@@ -510,22 +510,33 @@ console.log("\n5. 繪製函式");
   run("renderChrome 帶顯示選項", () =>
     ui.renderChrome(t, "zh", { big: true, names: false })
   );
-  // 三個顯示選項各自有圖示，深色那一項的圖還會跟著開關換（太陽↔月亮）
-  run("renderChrome 顯示選項的圖示", () => {
-    ui.renderChrome(t, "zh", { big: false, names: false, dark: false });
-    const off = els.displayOpts.innerHTML;
-    const n = (off.match(/<svg/g) || []).length;
-    if (n !== 3) throw new Error(`三項應該各一個圖示，得到 ${n} 個`);
-    if (off.includes("::before") || !off.includes('class="ic"'))
-      throw new Error("圖示沒有包在徽章裡");
+  /*
+   * 三個顯示選項是兩張縮圖二選一，不是開關。
+   * 每一項一定剛好有一張被標成選中，點已經選中的那張不會把它關掉。
+   */
+  run("renderChrome 顯示選項的縮圖", () => {
+    ui.renderChrome(t, "zh", { big: false, names: true, dark: false });
+    const html = els.displayOpts.innerHTML;
+    const cards = (html.match(/class="opt-card"/g) || []).length;
+    if (cards !== 6) throw new Error(`三項各兩張應該 6 張，得到 ${cards}`);
+    const on = (html.match(/aria-pressed="true"/g) || []).length;
+    if (on !== 3) throw new Error(`每項各一張選中應該 3 張，得到 ${on}`);
+    for (const k of ["big", "names", "dark"]) {
+      for (const v of ["0", "1"]) {
+        if (!html.includes(`data-disp="${k}"\n                 data-val="${v}"`))
+          throw new Error(`${k} 少了 data-val="${v}" 那一張`);
+      }
+    }
 
-    ui.renderChrome(t, "zh", { big: false, names: false, dark: true });
-    const on = els.displayOpts.innerHTML;
-    if (on === off) throw new Error("開了深色之後圖示應該換一個");
-    // 太陽有光芒（好幾段 path），月亮只有一條弧線
-    const rays = (s) => (s.match(/M12 2\.6v2\.2/g) || []).length;
-    if (rays(off) !== 1 || rays(on) !== 0)
-      throw new Error("深色關著要是太陽、開著要是月亮");
+    // 值變了，選中的那張要跟著換
+    const dark = (h) =>
+      h.slice(h.lastIndexOf('data-disp="dark"\n                 data-val="1"'));
+    if (!dark(html).startsWith('data-disp="dark"\n                 data-val="1" aria-pressed="false"'))
+      throw new Error("淺色時深色那張不該是選中的");
+    ui.renderChrome(t, "zh", { big: false, names: true, dark: true });
+    const h2 = els.displayOpts.innerHTML;
+    if (!dark(h2).startsWith('data-disp="dark"\n                 data-val="1" aria-pressed="true"'))
+      throw new Error("深色時深色那張要選中");
   });
 
   run("renderViews", () => ui.renderViews("dex", t));

@@ -648,10 +648,15 @@ document.addEventListener("click", (ev) => {
   // 顯示選項
   const disp = el("[data-disp]");
   if (disp) {
+    /*
+     * 兩張縮圖各代表一個值，所以是「設成這個值」不是 toggle——
+     * 點已經選中的那張把它關掉，畫面會變成兩張都沒選。
+     */
     const which = disp.dataset.disp;
-    if (which === "big") state.big = !state.big;
-    else if (which === "names") state.names = !state.names;
-    else document.body.classList.toggle("dark");
+    const val = disp.dataset.val === "1";
+    if (which === "big") state.big = val;
+    else if (which === "names") state.names = val;
+    else document.body.classList.toggle("dark", val);
     applyDisplay();
     savePref();
     draw();
