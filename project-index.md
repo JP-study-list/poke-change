@@ -17,9 +17,10 @@ index.html  →  <script type="module" src="./js/main.js">  →  main.js  →  �
 所有內容由 `js/ui.js` 在執行時填入。無 build、無 bundler、無 npm。
 
 版面是兩欄：內容與右欄。**沒有側欄**，導覽在頂部列，900 以下掉成貼底的 bar。
-右欄（`#sheet`）在 1200 以上只有背卡常駐，圖鑑與交換表走彈出（`body.rail-pop`），
-1200 以下一律彈出。彈出形態是**置中的視窗**，900 以下也置中，只是留白縮窄。
-檢視 bar、右欄與篩選面板都是同一段 DOM 兩種形態，繪製函式不需要知道自己在哪。
+右欄（`#sheet`）**三個檢視一律彈出**，平常 `display: none`，
+點開東西才靠 `is-open` 打開；形態是**置中的視窗**，900 以下也置中，只是留白縮窄。
+常駐右欄（`rail-pop`／`rail-off`／1200 那段）2026-09-14 拿掉了。
+檢視 bar 與篩選面板仍是同一段 DOM 兩種形態，繪製函式不需要知道自己在哪。
 設定是置中的彈窗（`.modal`），放在 `<header>` 外面，所有寬度同一種形態。
 
 **本機啟動**：`python3 -m http.server 8000`（ES modules 不能用 `file://`）
@@ -114,7 +115,6 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 區塊 | 主要函式 |
 | --- | --- |
 | 版面共用 | `renderChrome` `renderViews` `renderInfoBar` `setPop` `railFoot` `toast` `openSheet` `closeSheet` `esc` |
-| 右欄 | `renderRailSummary`（背卡沒有詳情可顯示時的預設內容，只有那個檢視用） |
 | 圖鑑 | `renderFilterBar` `renderFilterPanel` `visibleEntries` `renderGrid` `renderDetail` |
 | 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` `renderPicker` `renderPickFoot` |
 | 背卡 | `renderBg` `renderCardDetail` `renderBgFoot` |
@@ -131,12 +131,9 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
   兩顆鈕的 `aria-expanded` 與面板的顯示綁在同一個函式裡，兩邊不會講不同的話，
   也天生擋掉兩片面板同時打開。點外面關掉那一段放在 click 委派最前面，
   因為底下每一段處理完都會 return
-- **右欄一定要重畫**：背卡那一欄是常駐的，`closePanels()` 清掉 state 之後
-  必須接 `drawDetail()`，否則桌機會停在剛才那張卡的詳情，關不掉也回不到摘要。
-  圖鑑與交換表是彈出（`body.rail-pop`，條件是 `state.view !== "bg"`），
-  整片消失就等於畫好了，但那段邏輯要留給背卡
-- **右欄的預設摘要只有背卡擺**：`railHasContent()` 認的是 `state.view === "bg"`。
-  圖鑑與交換表沒點開東西時整欄收起（`body.rail-off`），格子牆吃滿寬度
+- **右欄三個檢視一律彈出**（2026-09-14）：沒點東西就整欄不存在，
+  格子牆吃滿寬度。`rail-pop`、`rail-off`、`railHasContent()` 與背卡的
+  清單摘要都已移除
 - **三份清單**：`state.book` 是整包，`cur()` 取目前那一份。畫面與操作一律只碰那一份
 - **資料流**：使用者操作 → 改 state → `draw()` → `save()`
 - **事件**：單一 `document` 委派（click / input / change / keydown）+ `pagehide`

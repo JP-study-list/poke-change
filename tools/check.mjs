@@ -589,7 +589,6 @@ console.log("\n5. 繪製函式");
   run("renderInfoBar 有清除鈕", () =>
     ui.renderInfoBar({ title: t("viewDex"), stats: [], clear: true }, t)
   );
-  run("renderRailSummary", () => ui.renderRailSummary(book, t));
   run("renderGrid", () =>
     ui.renderGrid(dex.ENTRIES.slice(0, 60), data, "zh", t)
   );
@@ -690,22 +689,10 @@ console.log("\n5. 繪製函式");
     if (!html.includes(t("itemCount", 0))) throw new Error("可以給那欄不是 0");
   });
 
-  run("右欄摘要只數畫得出來的", () => {
-    ui.renderRailSummary(ghostBook(), t);
-    const html = els.panel.innerHTML;
-    if (!/<b>1<\/b>/.test(html)) throw new Error("想要不是 1");
-    if (/<b>3<\/b>/.test(html)) throw new Error("想要數了畫不出來的");
-    if (!/<b>0<\/b>/.test(html)) throw new Error("可以給不是 0");
-  });
-
   run("只剩畫不出來的條目時分享鈕是灰的", () => {
     const g = ghostBook();
     g.lists[0].want = [{ id: "d9999", shiny: false, xxl: false, xxs: false, bg: "" }];
     g.lists[0].have = [];
-    ui.renderRailSummary(g, t);
-    if (!els.panel.innerHTML.includes("disabled")) {
-      throw new Error("右欄的分享鈕該是灰的");
-    }
     ui.renderTrade(g, "zh", t);
     if (!els.app.innerHTML.includes("disabled")) {
       throw new Error("交換表的分享鈕該是灰的");

@@ -78,7 +78,6 @@
   --topbar-h: 52px;
   --tab-h: 56px; /* 手機貼底的檢視 bar。900 以下才存在 */
   --bar-h: 44px; /* 資訊列。頂部列下面那條，寫「現在在看什麼」 */
-  --rail-w: 340px; /* 右欄。桌機常駐，1200 以下收起來 */
 
   /*
    * 字級。原本全站只有 11 到 15px，標題跟內文差不多大，
@@ -538,134 +537,6 @@ select {
 
 .btn-x:hover {
   background: var(--x-bg-hover);
-}
-
-/*
- * 彈出形態用右上角的 X，底下那顆文字關閉鈕收起來。
- * 常駐形態剛好相反，見 1200 那段：在那裡「關閉」的意思是
- * 收掉這筆詳情回到摘要，不是關掉一片浮出來的東西。
- */
-.btn-close {
-  display: none;
-}
-
-/*
- * 常駐那一種只給「右欄一直在」的檢視。
- *
- * `body.rail-pop` 是圖鑑，它的右欄點了才出現，所以留在上面那套彈出形態：
- * fixed 脫離流排，浮在格子牆上面，格子牆的欄數不會因為點一隻而重排。
- * 沒有這個區隔的話，圖鑑點下去整片會從 14 欄掉成 12 欄。
- */
-@media (min-width: 1200px) {
-  body:not(.rail-pop) .rail {
-    position: sticky;
-    top: calc(var(--topbar-h) + var(--bar-h));
-    inset: auto;
-    z-index: 1;
-    display: block;
-    width: var(--rail-w);
-    flex: 0 0 var(--rail-w);
-    height: calc(100vh - var(--topbar-h) - var(--bar-h));
-    background: none;
-  }
-
-  /*
-   * 常駐那一種要把彈出形態的置中與外觀整組退掉。
-   * 尤其 transform 在 position: static 底下照樣生效，
-   * 不清掉的話整欄內容會往左上位移一半。
-   */
-  body:not(.rail-pop) .rail-inner {
-    position: static;
-    transform: none;
-    width: auto;
-    height: 100%;
-    max-height: none;
-    border: 0;
-    border-left: 1px solid var(--line);
-    border-radius: 0;
-    box-shadow: none;
-  }
-
-  body:not(.rail-pop) .rail-scroll {
-    padding: 18px 16px 32px;
-  }
-
-  /*
-   * 常駐欄裡不放紅色的 X。那顆鈕的意思是關掉一片浮出來的東西，
-   * 而這裡關掉的是「這一筆詳情」，關完欄位還在，只是換回清單摘要。
-   * 所以換回底下那顆輕量的文字鈕。
-   */
-  body:not(.rail-pop) .btn-x {
-    display: none;
-  }
-
-  body:not(.rail-pop) .btn-close {
-    display: block;
-  }
-
-  /* 交換表沒有東西要放進右欄，整欄收起來把寬度讓給格子牆 */
-  body.rail-off:not(.rail-pop) .rail {
-    display: none;
-  }
-}
-
-/* ─────────── 右欄摘要 ─────────── */
-
-.rs-label {
-  font: var(--caps);
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
-
-.rs-name {
-  margin-top: 6px;
-  font-size: var(--fs-lg);
-  font-weight: 700;
-  line-height: 1.3;
-  overflow-wrap: anywhere;
-}
-
-.rs-nums {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 16px 0 18px;
-  padding-top: 14px;
-  border-top: 1px solid var(--hair);
-}
-
-.rs-num {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--fs-13);
-  color: var(--dim);
-  padding: 5px 0;
-}
-
-.rs-num .dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex: none;
-}
-
-.rs-num.want .dot {
-  background: var(--want);
-}
-
-.rs-num.have .dot {
-  background: var(--have);
-}
-
-/* 數字靠右，兩列的個位數才對得齊 */
-.rs-num b {
-  margin-left: auto;
-  font-size: var(--fs-xl);
-  font-weight: 700;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
 }
 
 /* ─────────── 側欄 ─────────── */
@@ -1540,27 +1411,6 @@ body.no-names .cell .no {
 .bg-row .s {
   font-size: 11px;
   color: var(--dim);
-}
-
-/*
- * 右欄的關閉。常駐的時候它的意思是「收掉這筆詳情，回到清單摘要」，
- * 彈出的時候才是真的關掉，所以做成輕量的文字鈕，不是一顆實體按鈕。
- */
-.btn-close {
-  width: 100%;
-  margin-top: 24px;
-  padding: 9px;
-  border: 0;
-  border-top: 1px solid var(--hair);
-  border-radius: 0;
-  background: none;
-  color: var(--dim);
-  font-size: var(--fs-13);
-  cursor: pointer;
-}
-
-.btn-close:hover {
-  color: var(--ink);
 }
 
 /* ─────────── 交換表 ─────────── */

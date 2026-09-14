@@ -403,42 +403,6 @@ export function setPop(open) {
 
 /* ─────────── 右欄摘要 ─────────── */
 
-/**
- * 背卡檢視沒有東西可顯示時的預設內容：目前這一份清單的摘要。
- *
- * 只有背卡在用。桌機右欄常駐，在背卡裡挑卡的時候順便看得到排了幾隻。
- * 分享圖的按鈕也在這裡，跟交換表那顆同一條路徑。
- * 圖鑑不擺這個（2026-09-12 使用者指定），交換表本身就是清單，也不擺。
- */
-export function renderRailSummary(book, t) {
-  const data = book.lists[book.active] || book.lists[0];
-
-  /*
-   * 數字與分享鈕都算畫得出來的那些，跟欄標題和分享圖同一個判斷。
-   * 未濾的話，清單裡只剩圖鑑已經沒有的條目時，鈕是亮的但產不出圖。
-   */
-  const want = knownItems(data.want).length;
-  const have = knownItems(data.have).length;
-  const total = want + have;
-
-  $("#panel").innerHTML = `
-    <div class="rs">
-      <p class="rs-label">${esc(t("viewTrade"))}</p>
-      <p class="rs-name">${esc(data.name || t("listTab", book.active + 1))}</p>
-      <div class="rs-nums">
-        <span class="rs-num want">
-          <i class="dot"></i>${esc(t("colWant"))}<b>${want}</b>
-        </span>
-        <span class="rs-num have">
-          <i class="dot"></i>${esc(t("colHave"))}<b>${have}</b>
-        </span>
-      </div>
-      <button type="button" class="btn-share wide" data-share${
-        total ? "" : " disabled"
-      }>${esc(t("share"))}</button>
-    </div>`;
-}
-
 /* ─────────── 圖鑑 ─────────── */
 
 /** 詳情面板要顯示哪幾個等級的 IV100 CP。欄位名就是 cp + 等級 */
@@ -708,8 +672,7 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
 
     ${editBlock("want", data, id, e, lang, t, flash)}
     ${editBlock("have", data, id, e, lang, t, flash)}
-
-    <button class="btn-close" type="button" data-close="1">${esc(t("close"))}</button>`;
+`;
 }
 
 /* ─────────── 交換表 ─────────── */
@@ -979,8 +942,7 @@ export function renderPicker(pick, lang, t) {
                : ""
            }`
         : `<p class="empty">${esc(t("empty"))}</p>`
-    }
-    <button class="btn-close" type="button" data-close="1">${esc(t("close"))}</button>`;
+    }`;
 
   /*
    * 多選的動作列貼在面板底部，不排在格子牆後面。
@@ -1186,8 +1148,7 @@ export function renderCardDetail(cardId, lang, t, pick = {}) {
         : ""
     }
     <img ${bgAttrs(card)} alt="" style="width:100%;border-radius:8px;margin:14px 0" />
-    ${list}
-    <button class="btn-close" type="button" data-close="1">${esc(t("close"))}</button>`;
+    ${list}`;
 
   // 跟選寶可夢面板同一條規則：沒在多選就整條收掉，版面回到原本的樣子
   if (multi) renderBgFoot(sel.size, t, pick.shiny);
