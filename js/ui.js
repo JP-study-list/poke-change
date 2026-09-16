@@ -892,6 +892,34 @@ export function renderTrade(book, lang, t, code = "", edit = {}) {
 const PICK_MAX = 150;
 
 /**
+ * 選起來但畫面上看不到的有幾隻。
+ *
+ * 改篩選與打字**不清掉選取**（先篩火選兩隻、再篩水選三隻、一次加完，
+ * 這是這個面板本來就該支援的用法），代價是那幾隻的勾跟著格子一起
+ * 從畫面上消失，底部卻仍然算在數字裡。不交代的話就是「我明明只看到
+ * 兩個勾，卻加進來五筆」，而且沒有任何線索。
+ *
+ * 「看不到」包含兩種：被篩選或搜尋濾掉的，以及排在 PICK_MAX 之後
+ * 沒畫出來的。對使用者來說是同一件事——格子不在畫面上。
+ */
+function countHidden(sel, shown) {
+  const ids = new Set(shown.map((e) => e.id));
+  return [...sel].filter((id) => !ids.has(id)).length;
+}
+
+/**
+ * 同上，但給 main.js 用：點格子與切異色那兩條路只重畫底部那一列，
+ * 手上沒有 `shown`，所以在這裡重算一次。
+ * 那兩個時機都不常按，多跑一次 search 不影響打字時的重畫。
+ */
+export function pickHidden(pick) {
+  const sel = pick.sel || [];
+  if (!sel.length) return 0;
+  const hits = search(applyFilter(ENTRIES, pick.filter || {}), pick.query || "");
+  return countHidden(sel, hits.slice(0, PICK_MAX));
+}
+
+/**
  * 面板有兩種模式。
  *
  * 單選：點一隻就切到詳情，可以配背卡與條件，跟原本一樣。
@@ -998,7 +1026,7 @@ export function renderPicker(pick, lang, t) {
    * 選完要捲到最底才按得到「加入」的話，一次加很多隻反而更累。
    * 沒在多選就整條不畫，單選的版面跟以前一模一樣。
    */
-  if (multi) renderPickFoot(sel.size, t, pick.shiny);
+  if (multi) renderPickFoot(sel.size, t, pick.shiny, countHidden(sel, shown));
   else railFoot("");
 }
 
@@ -1009,12 +1037,14 @@ export function renderPicker(pick, lang, t) {
  * 換掉 innerHTML 會把 scrollTop 歸零，選到第七排點一下就彈回最上面。
  * 所以 main.js 點格子時只改那一格的 class，動作列走這裡。
  */
-export function renderPickFoot(n, t, shiny) {
+export function renderPickFoot(n, t, shiny, hidden = 0) {
   railFoot(
     `<div class="pick-foot-l">
        <button type="button" class="mk shiny" data-pickshiny
                aria-pressed="${!!shiny}">${esc(t("markShiny"))}</button>
-       <span class="dim">${esc(t("pickSel", n))}</span>
+       <span class="dim">${esc(t("pickSel", n))}${
+      hidden ? esc(t("pickHidden", hidden)) : ""
+    }</span>
      </div>
      <button type="button" class="pick-add" data-addmulti${
        n ? "" : " disabled"

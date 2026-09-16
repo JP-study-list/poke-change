@@ -211,6 +211,18 @@ function draw() {
 }
 
 /*
+ * 選寶可夢面板要的那一包。`state.pick` 只裝這一次開啟的東西
+ * （哪一欄、打了什麼、選了誰），篩選、多選與異色刻意放在它外面才記得住，
+ * 要畫的時候再合起來。只重畫底部那一列時也要同一包，所以抽成函式。
+ */
+const pickView = () => ({
+  ...state.pick,
+  filter: state.pickFilter,
+  multi: state.pickMulti,
+  shiny: state.pickShiny,
+});
+
+/*
  * 右欄一次只顯示一種：條目詳情、背卡詳情、選寶可夢。
  * 打開任一種之前要把另外兩種清掉。
  * 篩選與設定是自己浮出來的面板，不跟這裡搶位置。
@@ -250,18 +262,7 @@ function drawDetail() {
       sel: state.bgSel,
       shiny: state.pickShiny,
     });
-  else if (state.pick) {
-    ui.renderPicker(
-      {
-        ...state.pick,
-        filter: state.pickFilter,
-        multi: state.pickMulti,
-        shiny: state.pickShiny,
-      },
-      state.lang,
-      t
-    );
-  }
+  else if (state.pick) ui.renderPicker(pickView(), state.lang, t);
 }
 
 /*
@@ -862,7 +863,13 @@ document.addEventListener("click", (ev) => {
   if (el("[data-pickshiny]")) {
     state.pickShiny = !state.pickShiny;
     // 兩個地方共用這顆開關，重畫的是自己那一條動作列
-    if (state.pick) ui.renderPickFoot(state.pick.sel.length, t, state.pickShiny);
+    if (state.pick)
+      ui.renderPickFoot(
+        state.pick.sel.length,
+        t,
+        state.pickShiny,
+        ui.pickHidden(pickView())
+      );
     else if (state.openCard) ui.renderBgFoot(state.bgSel.length, t, state.pickShiny);
     return;
   }
@@ -923,7 +930,13 @@ document.addEventListener("click", (ev) => {
        */
       cell.classList.toggle("picked", i < 0);
       cell.setAttribute("aria-pressed", String(i < 0));
-      ui.renderPickFoot(state.pick.sel.length, t, state.pickShiny);
+      // 點得到的格子一定看得到，藏起來的數字不會變，但值仍由同一條路算
+      ui.renderPickFoot(
+        state.pick.sel.length,
+        t,
+        state.pickShiny,
+        ui.pickHidden(pickView())
+      );
       return;
     }
     /*

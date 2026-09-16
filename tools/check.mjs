@@ -959,6 +959,42 @@ console.log("\n5. 繪製函式");
       throw new Error("單選時不該有選取狀態");
   });
 
+  /*
+   * 改篩選不清掉選取（先篩火選幾隻、再篩水選幾隻是這個面板該支援的用法），
+   * 所以會有「選了 2 隻、畫面上只看得到 1 個勾」的狀態。
+   * 底部那行必須把差額講出來，否則就是「我只看到一個勾卻加進來兩筆」。
+   */
+  run("renderPicker 篩選不清選取，藏起來的要交代", () => {
+    const f = dex.emptyFilter();
+    f.type = ["fire"];
+    const fire = dex.applyFilter(dex.ENTRIES, f);
+    const fireIds = new Set(fire.map((e) => e.id));
+    // 一隻通過篩選、一隻被篩掉
+    const sel = [fire[0].id, dex.ENTRIES.find((e) => !fireIds.has(e.id)).id];
+    const pick = { col: "want", query: "", multi: true, sel, filter: f };
+
+    ui.renderPicker(pick, "zh", t);
+    const foot = els.pickFoot.innerHTML;
+    if (!foot.includes(t("pickSel", 2)))
+      throw new Error("數字要算全部選取的 2 隻，不是畫面上看得到的那 1 隻");
+    if (!foot.includes(t("pickHidden", 1)))
+      throw new Error("沒有交代被篩掉的那 1 隻");
+    const on = (els.panel.innerHTML.match(/class="cell picked"/g) || []).length;
+    if (on !== 1) throw new Error(`畫面上應該只有 1 個勾，得到 ${on}`);
+    if (ui.pickHidden(pick) !== 1)
+      throw new Error("pickHidden 跟畫面算的不一樣");
+
+    // 清掉篩選，兩隻都看得到，那一句就不該出現
+    const all = { ...pick, filter: dex.emptyFilter() };
+    ui.renderPicker(all, "zh", t);
+    const clean = els.pickFoot.innerHTML;
+    ui.renderPickFoot(2, t, false, 0);
+    if (clean !== els.pickFoot.innerHTML)
+      throw new Error("沒有藏起來的時候底部不該多那一句");
+    if (ui.pickHidden(all) !== 0)
+      throw new Error("沒有篩選時 pickHidden 應該是 0");
+  });
+
   // 整批異色開關：預設不開，開著時要標出來，兩種狀態都要有那顆鈕
   run("renderPicker 多選的異色開關", () => {
     ui.renderPicker({ col: "want", query: "", multi: true, sel: [] }, "zh", t);

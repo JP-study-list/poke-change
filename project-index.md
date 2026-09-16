@@ -118,7 +118,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | --- | --- |
 | 版面共用 | `renderChrome` `renderViews` `renderInfoBar` `setPop` `railFoot` `toast` `openSheet` `closeSheet` `esc` |
 | 圖鑑 | `renderFilterBar` `renderFilterPanel` `visibleEntries` `renderGrid` `renderDetail` |
-| 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` `renderPicker` `renderPickFoot` |
+| 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` `renderPicker` `renderPickFoot` `pickHidden` |
 | 背卡 | `renderBg` `renderCardDetail` `renderBgFoot` |
 
 ### 協調層
@@ -201,7 +201,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改背卡詳情的卡面圖大小 | `css/style.css` 的 `.card-art`（限高 38vh，寬度 auto） |
 | 改背卡詳情的批次加入 | `js/ui.js` 的 `renderCardDetail`（多選時的格子）與 `renderBgFoot`（底部兩顆鈕）。加進去帶哪些條件在 `js/main.js` 的 `addMany` |
 | 改選寶可夢面板 | `js/ui.js` 的 `renderPicker`，一次最多畫 `PICK_MAX` 筆。多選的底部動作列是 `renderPickFoot`，殼在 `index.html` 的 `#pickFoot` |
-| 改那個面板的篩選 | 跟圖鑑同一組 `FILTER_GROUPS`，HTML 走共用的 `pickedChips` / `filterGroups`，dataset 前綴由 `FATTR` 給 |
+| 改那個面板的篩選 | 跟圖鑑同一組 `FILTER_GROUPS`，HTML 走共用的 `pickedChips` / `filterGroups`，dataset 前綴由 `FATTR` 給。**改篩選不清掉選取**，畫面上看不到的那幾隻由 `countHidden` / `pickHidden` 算出來，底部補一句交代 |
 | 加篩選條件 | `js/dex.js` 的 `FILTER_GROUPS`，標籤補 `js/i18n.js`，面板裡的組序在 `js/ui.js` 的 `FGROUPS` |
 | 改手機的欄數 | `css/style.css` 的 `--cell-cols`，900px 以下講死不推算 |
 | 改選寶可夢面板的欄數 | 單選吃 `--cell-cols`、多選（720 寬）吃 `--pick-wide-cols`，兩組都在 `:root` 與 `body.big-icons`。跟著設定的大小圖示走，不要改成推算 |
