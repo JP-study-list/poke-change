@@ -101,6 +101,7 @@ const dex = await import("../js/dex.js");
 const store = await import("../js/store.js");
 const bg = await import("../js/backgrounds.js");
 const extra = await import("../js/extra.js");
+const maxdata = await import("../js/maxdata.js");
 
 /** 背卡檢視的狀態，畫面測試用。收合狀態不影響資料正確性，給預設值就好 */
 const BG_STATE = { query: "", scope: "all", open: new Set() };
@@ -309,6 +310,65 @@ console.log("\n2. 圖鑑條目");
   );
 }
 
+console.log("\n2c. 極巨化名單");
+{
+  const { MAX_IDS } = maxdata;
+  const byId = new Map(dex.ENTRIES.map((e) => [e.id, e]));
+
+  ok("名單不是空的", MAX_IDS.length > 0, String(MAX_IDS.length));
+
+  const missing = MAX_IDS.filter((id) => !byId.has(id));
+  ok(
+    "名單上的條目都還在圖鑑裡",
+    !missing.length,
+    missing.slice(0, 5).join(", ")
+  );
+
+  ok("名單沒有重複", new Set(MAX_IDS).size === MAX_IDS.length);
+
+  /*
+   * Max Battle 抓到的不會是裝扮版，名單收進裝扮就會讓
+   * 「2020 新年妙蛙種子」長出一個它不該有的勾選框。
+   */
+  const costumes = MAX_IDS.filter((id) => byId.get(id).kind === "costume");
+  ok("名單裡沒有裝扮", !costumes.length, costumes.slice(0, 5).join(", "));
+
+  /*
+   * 超極巨化本身就是條目，它已經是極巨化了。
+   * 收進名單的話詳情面板會多一顆再勾一次的鈕。
+   */
+  const gmax = MAX_IDS.filter((id) => /GIGANTAMAX/.test(id));
+  ok("名單裡沒有超極巨化條目", !gmax.length, gmax.join(", "));
+
+  // canMax 是畫面唯一的判斷入口，兩邊講的話要一樣
+  ok(
+    "canMax 跟名單一致",
+    MAX_IDS.every((id) => dex.canMax(byId.get(id))) &&
+      !dex.canMax(byId.get("d1.cJAN_2020_NOEVOLVE"))
+  );
+
+  /*
+   * 那 13 隻超極巨化是這一版一起加的，它們有自己的圖與 CP。
+   * 掉了就是 build-dex 的排除規則又把它們吃回去了。
+   */
+  const gmaxEntries = dex.ENTRIES.filter((e) => e.form === "GIGANTAMAX");
+  ok("超極巨化條目 13 筆", gmaxEntries.length === 13, String(gmaxEntries.length));
+  ok(
+    "超極巨化都有圖與 CP",
+    gmaxEntries.every((e) => e.icon && e.shinyIcon && e.cp20 && e.cp25 && e.cp50)
+  );
+  ok(
+    "超極巨化的 CP 等於本體",
+    gmaxEntries.every((e) => {
+      const base =
+        byId.get(`d${e.dex}`) ||
+        byId.get(`d${e.dex}.fAMPED`) ||
+        byId.get(`d${e.dex}.fNORMAL`);
+      return base && base.cp20 === e.cp20 && base.cp50 === e.cp50;
+    })
+  );
+}
+
 console.log("\n2b. 篩選");
 {
   const f = dex.emptyFilter();
@@ -418,6 +478,7 @@ console.log("\n4. 儲存往返");
 
   const first = store.current(book);
   first.want.push({ ...store.newItem("d150"), xxl: true });
+  first.want.push({ ...store.newItem("d6"), max: true });
   first.have.push(store.newItem("d25.cHALLOWEEN_2017", false));
   first.name = "測試清單";
   book.lists[2].want.push(store.newItem("d1"));
@@ -429,6 +490,19 @@ console.log("\n4. 儲存往返");
   ok("清單名稱保留", back.lists[0].name === "測試清單");
   ok("目前看哪一份會保留", back.active === 2);
   ok("三份各自獨立", back.lists[1].want.length === 0 && back.lists[2].want.length === 1);
+  ok("極巨化會往返保留", back.lists[0].want[1].max === true);
+
+  /*
+   * max 是 2026-09-16 加的欄位，沒有升儲存版本號，
+   * 靠的就是舊紀錄讀進來補 false。這條壞了等於舊使用者一開網站就爆。
+   */
+  const legacy = store.normalizeList({
+    name: "舊的",
+    want: [{ id: "d6", shiny: true, xxl: false, xxs: false, bg: "" }],
+    have: [],
+  });
+  ok("舊紀錄沒有 max 欄位時補 false", legacy.want[0].max === false);
+  ok("舊紀錄其他欄位不受影響", legacy.want[0].shiny === true);
 
   const round = store.fromJSON(store.toJSON(book));
   ok("匯出匯入是整包", round && round.kind === "book");
@@ -601,6 +675,24 @@ console.log("\n5. 繪製函式");
       have: [],
     });
     ui.renderTrade(withBg, "zh", t);
+  });
+  /*
+   * 極巨化的徽章。分享圖也畫同一顆，但那是 canvas 驗不到的，
+   * 所以這裡至少釘住「勾了就畫、沒勾就不畫」。
+   */
+  run("renderTrade 極巨化的徽章", () => {
+    const withMax = store.normalize({
+      v: 2,
+      active: 0,
+      lists: [
+        { name: "", want: [{ id: "d6", max: true }, { id: "d6" }], have: [] },
+        store.emptyList(),
+        store.emptyList(),
+      ],
+    });
+    ui.renderTrade(withMax, "zh", t);
+    const n = (els.app.innerHTML.match(/class="maxb"/g) || []).length;
+    if (n !== 1) throw new Error(`徽章有 ${n} 顆，勾了的那一格才該有`);
   });
   run("renderTrade 帶友情碼", () => ui.renderTrade(book, "zh", t, "499230220284"));
   run("renderTrade 空清單", () => ui.renderTrade(store.emptyBook(), "zh", t));
@@ -834,6 +926,39 @@ console.log("\n5. 繪製函式");
       throw new Error("「不指定」那一列的狀態不對");
     if (html.includes('data-idx="'))
       throw new Error("還沒加進清單就不該出現編輯區");
+  });
+
+  /*
+   * 極巨化的勾選框只在名單內的條目出現。
+   * 兩個方向都要驗：名單外的長出來，使用者會勾一個遊戲裡做不到的條件；
+   * 名單內的沒長出來，這個功能等於不存在。
+   */
+  run("renderDetail 只有能極巨化的才有那顆鈕", () => {
+    const { MAX_IDS } = maxdata;
+    const inList = MAX_IDS[0];
+    const outList = dex.ENTRIES.find((e) => !dex.canMax(e)).id;
+
+    ui.renderDetail(inList, store.emptyList(), "zh", t);
+    if (!/data-draft="max"/.test(els.panel.innerHTML))
+      throw new Error(`${inList} 在名單裡卻沒有極巨化鈕`);
+
+    ui.renderDetail(outList, store.emptyList(), "zh", t);
+    if (/data-draft="max"/.test(els.panel.innerHTML))
+      throw new Error(`${outList} 不在名單裡卻有極巨化鈕`);
+  });
+
+  // 勾起來要標起來，不然按了畫面沒反應
+  run("renderDetail 草稿的極巨化有標起來", () => {
+    const { MAX_IDS } = maxdata;
+    ui.renderDetail(MAX_IDS[0], store.emptyList(), "zh", t, {
+      shiny: false,
+      xxl: false,
+      xxs: false,
+      max: true,
+      bg: "",
+    });
+    if (!/data-draft="max"\s+aria-pressed="true"/.test(els.panel.innerHTML))
+      throw new Error("極巨化沒有標起來");
   });
 
   // 上方那張圖要跟著草稿的異色走，不然勾了異色畫面上沒有任何反應

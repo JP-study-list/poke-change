@@ -16,6 +16,7 @@ import {
   formName,
   iconAttrs,
   hasShiny,
+  canMax,
   FILTER_GROUPS,
   applyFilter,
   filterCount,
@@ -539,6 +540,7 @@ function editBlock(col, data, id, e, lang, t, flash) {
         ${hasShiny(e) ? mk("shiny", t("markShiny"), "shiny") : ""}
         ${mk("xxl", t("markXxl"), "xxl")}
         ${mk("xxs", t("markXxs"), "xxs")}
+        ${canMax(e) ? mk("max", t("markMax"), "max") : ""}
         <button type="button" class="mk del" data-del="${idx}" data-col="${col}">${esc(
       t("remove")
     )}</button>
@@ -567,7 +569,7 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
   if (!e) return;
 
   // 沒有草稿（例如自我檢查直接呼叫）就當場開一份，繪製不依賴 main.js 的狀態
-  const d = draft || { shiny: false, xxl: false, xxs: false, bg: "" };
+  const d = draft || { shiny: false, xxl: false, xxs: false, max: false, bg: "" };
 
   const types = e.types
     .map((ty) => {
@@ -656,6 +658,7 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
       ${hasShiny(e) ? dmk("shiny", t("markShiny"), "shiny") : ""}
       ${dmk("xxl", t("markXxl"), "xxl")}
       ${dmk("xxs", t("markXxs"), "xxs")}
+      ${canMax(e) ? dmk("max", t("markMax"), "max") : ""}
     </div>
 
     <p class="d-sect">${esc(t("bgSection"))}</p>
@@ -697,6 +700,10 @@ function tradeCell(item, col, idx, lang, t) {
   /*
    * 異色是星星，疊在格子左上角。尺寸是文字，放在格子下方。
    * 兩者分開是因為尺寸有 XXL 與 XXS 兩種，塞進格子裡會蓋到圖。
+   *
+   * 極巨化是右上角的洋紅圓徽章，跟左上角的星星分成兩個角落，
+   * 兩個同時出現也不會疊在一起。不放進下方那行文字是因為
+   * 「極巨化」三個字比 XXL 長太多，手機 68px 的格子排不下。
    */
   const size = [item.xxl ? "XXL" : "", item.xxs ? "XXS" : ""]
     .filter(Boolean)
@@ -713,6 +720,7 @@ function tradeCell(item, col, idx, lang, t) {
       ${bgLayer}
       <img ${iconAttrs(e, item.shiny)} alt="" loading="lazy" />
       ${item.shiny ? '<i class="spark">✦</i>' : ""}
+      ${item.max ? `<i class="maxb" title="${esc(t("markMax"))}">M</i>` : ""}
       <button class="want-del" type="button" data-del="${idx}" data-col="${col}"
               title="${esc(t("remove"))}" aria-label="${esc(t("remove"))}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>

@@ -289,12 +289,16 @@ function save() {
 /**
  * 面板上那份條件草稿。
  *
- * 四個條件一律從「沒有」開始。異色曾經在有異色圖時預設勾起來，
+ * 五個條件一律從「沒有」開始。異色曾經在有異色圖時預設勾起來，
  * 但大多數交換談的是一般色，預設勾著等於每次都要先取消；
  * 而且詳情面板上方那張圖現在跟著這個值走，一開就是異色會看錯是哪一隻。
+ *
+ * max 不管條目能不能極巨化都帶著。不能極巨化的條目根本不會畫出那顆鈕
+ * （`ui.js` 看 `canMax`），草稿裡多一個永遠是 false 的欄位比讓
+ * 兩邊各自判斷一次安全。
  */
 function newDraft(bg = "") {
-  return { shiny: false, xxl: false, xxs: false, bg };
+  return { shiny: false, xxl: false, xxs: false, max: false, bg };
 }
 
 /**
@@ -302,7 +306,7 @@ function newDraft(bg = "") {
  *
  * 按鈕不是開關。同一隻可以配不同背卡各收一筆，
  * 「再按一次就移除」在這種情況下沒有意義，移除走每一筆自己的刪除鈕。
- * 四個條件完全一樣的那一筆已經在清單裡就不再新增，改成閃一下指出它，
+ * 五個條件完全一樣的那一筆已經在清單裡就不再新增，改成閃一下指出它，
  * 因為那是手滑按兩次，不是真的想要兩格一模一樣的。
  */
 function addItem(id, col) {
@@ -315,7 +319,8 @@ function addItem(id, col) {
       (x.bg || "") === (d.bg || "") &&
       !!x.shiny === !!d.shiny &&
       !!x.xxl === !!d.xxl &&
-      !!x.xxs === !!d.xxs
+      !!x.xxs === !!d.xxs &&
+      !!x.max === !!d.max
   );
   if (same >= 0) {
     state.flash = { col, idx: same };
@@ -332,6 +337,7 @@ function addItem(id, col) {
   const item = store.newItem(id, d.shiny);
   item.xxl = !!d.xxl;
   item.xxs = !!d.xxs;
+  item.max = !!d.max;
   item.bg = d.bg || "";
   list.push(item);
   save();
@@ -372,16 +378,22 @@ function addMany(col, ids, { shiny = false, bg = "", stay = false } = {}) {
     if (!e) continue;
     // 沒有實裝異色的就算開著也只能一般色，重複判斷要拿實際會寫進去的值去比
     const wantShiny = !!shiny && hasShiny(e);
+    // 極巨化跟 XXL／XXS 一樣不做批次，所以這裡比的是「沒有勾」
     const same = list.some(
       (x) =>
-        x.id === id && x.bg === bg && !!x.shiny === wantShiny && !x.xxl && !x.xxs
+        x.id === id &&
+        x.bg === bg &&
+        !!x.shiny === wantShiny &&
+        !x.xxl &&
+        !x.xxs &&
+        !x.max
     );
     if (same) {
       dupe++;
       continue;
     }
     const item = store.newItem(id, wantShiny);
-    item.xxl = item.xxs = false;
+    item.xxl = item.xxs = item.max = false;
     item.bg = bg;
     list.push(item);
     added++;

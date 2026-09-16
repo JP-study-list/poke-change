@@ -284,11 +284,33 @@ async function main() {
 
   /**
    * 型態沒有自己的數值、但實際上就是本體的那幾筆。
-   * 目前只有哲爾尼亞斯，它那兩個樣子在 GO 裡只是外觀。
    * 這張表要一筆一筆指名，不能寫成「查不到就用本體」，
    * 那樣原始回歸會拿到蓋歐卡的數字。
+   *
+   * 哲爾尼亞斯那兩個樣子在 GO 裡只是外觀。
+   *
+   * 超極巨化 13 筆同理：game master 沒有給它們自己的基礎數值，
+   * 而極巨化在 GO 裡加的是血量倍率與招式，不動基礎數值，
+   * 所以指到本體是對的，不是拿別隻的數字來充數。
+   * 顫弦蠑螈沒有本體，圖鑑裡只有高調與低調，指到高調——
+   * 遊戲裡的超極巨化顫弦蠑螈就是高調形態。
    */
-  const STATS_SAME_AS = { "716|NEUTRAL": "NORMAL" };
+  const STATS_SAME_AS = {
+    "716|NEUTRAL": "NORMAL",
+    "3|GIGANTAMAX": "NORMAL",
+    "6|GIGANTAMAX": "NORMAL",
+    "9|GIGANTAMAX": "NORMAL",
+    "12|GIGANTAMAX": "NORMAL",
+    "68|GIGANTAMAX": "NORMAL",
+    "94|GIGANTAMAX": "NORMAL",
+    "99|GIGANTAMAX": "NORMAL",
+    "131|GIGANTAMAX": "NORMAL",
+    "143|GIGANTAMAX": "NORMAL",
+    "812|GIGANTAMAX": "NORMAL",
+    "815|GIGANTAMAX": "NORMAL",
+    "818|GIGANTAMAX": "NORMAL",
+    "849|GIGANTAMAX": "AMPED",
+  };
 
   /*
    * IV100 的 CP。團體戰捕捉是 20 級、天氣加成 25 級、練滿 50 級。
@@ -396,6 +418,9 @@ async function main() {
     WORMADAM_PLANT: ["草木蓑衣", "くさきのミノ", "Plant Cloak"],
     WORMADAM_SANDY: ["砂土蓑衣", "すなちのミノ", "Sandy Cloak"],
     WORMADAM_TRASH: ["垃圾蓑衣", "ゴミのミノ", "Trash Cloak"],
+    // 語言檔沒有 form_gigantamax，只有篩選器用的 filter_label_gigantamax。
+    // 這三個字就是從那個 key 抄來的官方譯名，不是看圖自己取的
+    GIGANTAMAX: ["超極巨化", "キョダイマックス", "Gigantamax"],
     ARTISAN: ["名匠之作", "めいこうのさくひん", "Artisan"],
     MASTERPIECE: ["傑作", "けっさく", "Masterpiece"],
     COUNTERFEIT: ["贗品", "がんさく", "Counterfeit"],
@@ -414,14 +439,18 @@ async function main() {
   }
 
   /**
-   * 超級進化、極巨化與原始回歸都是暫時狀態，不是可交換的個體，整批排除。
+   * 超級進化、無極巨化與原始回歸都是暫時狀態，不是可交換的個體，整批排除。
    * 玩家交換的是原本那隻，那些只是戰鬥中的形態。
    * 原始回歸是後來才補進這條的：它跟超級進化同一類，
    * 而且 game master 根本沒給它自己的基礎數值，收進來連 CP 都是空的。
+   *
+   * **超極巨化 2026-09-16 從這條放行了**（使用者要求）。它跟上面那幾個
+   * 不一樣：外觀真的變了，上游給了自己的圖與異色圖，交換過去也還是那個樣子。
+   * 一般的極巨化仍然不是條目——它沒有自己的外觀，做成第五個勾選條件，
+   * 名單由 tools/build-max.mjs 產生。
    */
   const isTempEvo = (code) =>
-    !!code &&
-    (/^MEGA(_|$)/.test(code) || /GIGANTAMAX|ETERNAMAX/.test(code) || code === "PRIMAL");
+    !!code && (/^MEGA(_|$)/.test(code) || /ETERNAMAX/.test(code) || code === "PRIMAL");
 
   /**
    * 暫時不要出現在網站上的圖鑑編號。

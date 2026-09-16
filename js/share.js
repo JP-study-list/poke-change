@@ -69,6 +69,7 @@ const LIGHT = {
   shiny: "#c94f7c",
   xxl: "#2f6f4f",
   xxs: "#8a5cc4",
+  max: "#da0d86",
 };
 
 const DARK = {
@@ -83,6 +84,8 @@ const DARK = {
   shiny: "#e87ba3",
   xxl: "#5fae83",
   xxs: "#b088e8",
+  // 兩套同一個值，跟 CSS 那邊一樣：實心填色配白字，調亮白字就掉出 AA
+  max: "#da0d86",
 };
 
 const FONT = "'Noto Sans TC', 'Hiragino Sans', system-ui, sans-serif";
@@ -335,6 +338,27 @@ export async function buildShareImage(data, opts) {
         ctx.strokeText("✦", bx + 4, cy + 3);
         ctx.fillStyle = C.shiny;
         ctx.fillText("✦", bx + 4, cy + 3);
+      }
+
+      /*
+       * 極巨化是右上角的洋紅圓徽章，跟畫面上的格子一致。
+       * 畫面那顆在叉出現時會讓位，這裡沒有那個狀態，一律畫。
+       * 半徑 8 是照畫面 14px 直徑換算的（這張圖是 2 倍解析度，
+       * 但整個 ctx 已經 scale 過，所以用的是 CSS 像素）。
+       */
+      if (it.max) {
+        const r = 8;
+        const mx = bx + box - r + 1;
+        const my = cy + r - 1;
+        ctx.beginPath();
+        ctx.arc(mx, my, r, 0, Math.PI * 2);
+        ctx.fillStyle = C.max;
+        ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.font = `700 10px ${FONT}`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("M", mx, my + 0.5);
       }
 
       const mid = bx + box / 2;

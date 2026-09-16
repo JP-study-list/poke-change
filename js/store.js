@@ -22,9 +22,15 @@
  *
  *   list = {
  *     name: "",                        這一份的名稱
- *     want: [ {id, shiny, xxl, xxs, bg}, ... ],   想要的
- *     have: [ {id, shiny, xxl, xxs, bg}, ... ],   可以給的
+ *     want: [ {id, shiny, xxl, xxs, max, bg}, ... ],   想要的
+ *     have: [ {id, shiny, xxl, xxs, max, bg}, ... ],   可以給的
  *   }
+ *
+ * ── max 是 2026-09-16 加的，沒有升版本號 ──
+ * 多一個布林欄位對舊資料是相容的：讀到沒有 max 的舊紀錄就補 false。
+ * 反過來，新版存的 max 給舊版讀會被 cleanItem 洗掉——跟 v1 到 v2
+ * 一樣是單向的，但這裡只丟一個旗標，不像 v1 會整份清單對不上，
+ * 所以不值得為它升 v，升了反而讓舊版讀不到整包資料。
  *
  * 同一個條目可以出現多次。「異色超夢」與「有東京背卡的超夢」
  * 是兩個獨立的交換目標，不該合併。
@@ -66,7 +72,7 @@ export const current = (book) => book.lists[book.active] || book.lists[0];
 
 /** 一筆新的交換項目。預設想要異色，因為交換的價值就在重骰個體值 */
 export function newItem(id, shiny = true) {
-  return { id, shiny: !!shiny, xxl: false, xxs: false, bg: "" };
+  return { id, shiny: !!shiny, xxl: false, xxs: false, max: false, bg: "" };
 }
 
 /* ─────────── 訓練家代碼 ─────────── */
@@ -100,6 +106,9 @@ function cleanItem(v) {
     shiny: !!v.shiny,
     xxl: !!v.xxl,
     xxs: !!v.xxs,
+    // 舊紀錄沒有這個欄位，補 false。不檢查條目能不能極巨化：
+    // 名單會隨 GO 更新縮水，拿名單去洗紀錄等於默默改掉使用者存的東西
+    max: !!v.max,
     bg: typeof v.bg === "string" ? v.bg.slice(0, 40) : "",
   };
 }

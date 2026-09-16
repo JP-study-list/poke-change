@@ -21,6 +21,7 @@
 
 import { GODEX } from "./godex.js";
 import { extraEntries } from "./extra.js";
+import { MAX_IDS } from "./maxdata.js";
 import { allBgEntryIds } from "./backgrounds.js";
 import { TYPES } from "./types.js";
 import { imgAttrs } from "./imgchain.js";
@@ -145,6 +146,19 @@ function zoomAttr(e) {
 
 /** 這個條目有沒有異色可以收 */
 export const hasShiny = (e) => !!(e && e.shinyIcon);
+
+/**
+ * 這個條目能不能極巨化。
+ *
+ * 極巨化在 GO 裡不是外觀而是個體身上的能力，所以它是交換條件不是條目，
+ * 勾選框只在名單內的條目出現。名單由 tools/build-max.mjs 產生，
+ * 來源與比對見 tools/max-report.md。
+ *
+ * 那 13 隻超極巨化本身就是條目，它已經是極巨化了，名單刻意不收，
+ * 不會長出一個再勾一次的框。
+ */
+const MAX_SET = new Set(MAX_IDS);
+export const canMax = (e) => !!(e && MAX_SET.has(typeof e === "string" ? e : e.id));
 
 /* ─────────── 搜尋與篩選 ─────────── */
 

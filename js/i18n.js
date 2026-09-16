@@ -112,6 +112,7 @@ export const STRINGS = {
     markShiny: "異色",
     markXxl: "XXL",
     markXxs: "XXS",
+    markMax: "極巨化",
     markBg: "背卡",
     bgAny: "不指定",
 
@@ -246,6 +247,7 @@ export const STRINGS = {
     markShiny: "色違い",
     markXxl: "XXL",
     markXxs: "XXS",
+    markMax: "ダイマックス",
     markBg: "背景カード",
     bgAny: "指定なし",
 
@@ -380,6 +382,7 @@ export const STRINGS = {
     markShiny: "Shiny",
     markXxl: "XXL",
     markXxs: "XXS",
+    markMax: "Dynamax",
     markBg: "Background",
     bgAny: "Any",
 

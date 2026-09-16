@@ -46,6 +46,13 @@
   --shiny: #c94f7c;
   --xxl: #2f6f4f;
   --xxs: #8a5cc4;
+  /*
+   * 極巨化。這是 GO 自己的洋紅（Dittobase 的主題變數也用同一個值）。
+   * **深色刻意不覆寫**：它跟 --x-bg 一樣是實心填色配白字，
+   * 調亮會讓白字掉到 AA 以下（#e83fa0 上白字只有 3.7:1）。
+   * 這個值上白字 4.8:1，兩套底色都過，而且在近黑上仍然醒目。
+   */
+  --max: #da0d86;
   --bgcard: #4a7fb5;
 
   --type-bug: #96c22b;
@@ -1712,6 +1719,40 @@ body.no-names .cell .no {
   text-shadow: 0 0 3px var(--card), 0 0 3px var(--card);
 }
 
+/*
+ * 極巨化的徽章。右上角，跟左上角的異色星星分成兩個角落，
+ * 同時勾也不會疊在一起。
+ *
+ * 不放進下方那行尺寸文字：「極巨化」三個字比 XXL 長太多，
+ * 手機 68px 的格子排不下。
+ *
+ * 刪除鈕的圓心壓在同一個角上，兩顆圓會差一點點重疊，
+ * 所以叉出現的時候徽章讓位——那一角一次只給一個圓。
+ * 刪除是暫時的操作狀態，讓掉不影響平常看得到。
+ */
+.maxb {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--max);
+  color: #fff;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+  transition: opacity 0.12s;
+}
+
+.want-cell:hover .maxb,
+.grid.editing .maxb {
+  opacity: 0;
+}
+
 /* 尺寸在方塊下方，跟名稱同一區 */
 .want-cell .sz {
   display: block;
@@ -2213,6 +2254,10 @@ body.no-names .cell .no {
 
 .mk.xxs[aria-pressed="true"] {
   background: var(--xxs);
+}
+
+.mk.max[aria-pressed="true"] {
+  background: var(--max);
 }
 
 /* 已經有一模一樣的一筆時閃一下，指出是哪一筆，而不是默默不動 */
