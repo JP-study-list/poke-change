@@ -26,11 +26,15 @@ import {
   speciesName,
   formName,
   goUrl,
+  go256Url,
   artUrl,
   iconZoom,
   iconOffset,
+  gmaxZoom,
+  gmaxOffset,
 } from "./dex.js";
 import { findCard, bgSources } from "./backgrounds.js";
+import { MAX_MARK_PATH } from "./ui.js";
 import { formatCode } from "./store.js";
 
 const SCALE = 2;
@@ -70,6 +74,9 @@ const LIGHT = {
   xxl: "#2f6f4f",
   xxs: "#8a5cc4",
   max: "#da0d86",
+  gmax: "#9c0055",
+  maxMark: "#ee6fb4",
+  gmaxMark: "#a463d8",
 };
 
 const DARK = {
@@ -86,6 +93,9 @@ const DARK = {
   xxs: "#b088e8",
   // 兩套同一個值，跟 CSS 那邊一樣：實心填色配白字，調亮白字就掉出 AA
   max: "#da0d86",
+  gmax: "#9c0055",
+  maxMark: "#ee6fb4",
+  gmaxMark: "#a463d8",
 };
 
 const FONT = "'Noto Sans TC', 'Hiragino Sans', system-ui, sans-serif";
@@ -136,9 +146,21 @@ async function loadSprite(entry, shiny, gmax) {
    * 超極巨化的外觀真的不一樣，勾了就換圖，跟畫面上的 iconAttrs 同一條鏈。
    * 名單裡有四隻上游還沒有圖，那幾隻 gmaxIcon 是空的，直接落到一般那張。
    */
-  const big = gmax ? (shiny && entry.gmaxShinyIcon ? entry.gmaxShinyIcon : entry.gmaxIcon) : null;
+  const bigFile = gmax ? (shiny && entry.gmaxShinyIcon ? entry.gmaxShinyIcon : entry.gmaxIcon) : null;
+  if (bigFile) {
+    const img = await loadImage(
+      entry.gmax256 ? go256Url(bigFile) : goUrl(bigFile)
+    );
+    if (img) {
+      // 256 那批四周有留白，倍率與偏移跟畫面吃同一組值
+      if (entry.gmax256) {
+        img.__zoom = gmaxZoom(entry);
+        img.__off = gmaxOffset(entry);
+      }
+      return img;
+    }
+  }
   return (
-    (big && (await loadImage(goUrl(big)))) ||
     (await loadImage(goUrl(normal))) ||
     (await loadImage(goUrl(entry.icon))) ||
     (await loadImage(artUrl(entry.dex)))
@@ -352,20 +374,26 @@ export async function buildShareImage(data, opts) {
        * 半徑 8 是照畫面 14px 直徑換算的（這張圖是 2 倍解析度，
        * 但整個 ctx 已經 scale 過，所以用的是 CSS 像素）。
        */
+      /*
+       * 極巨化／超極巨化的符號，疊在格子右上角，沒有底。
+       * 吃畫面那顆同一個 path 字串（Path2D 直接收 SVG path data），
+       * 所以兩邊不會走樣。24×24 的 viewBox 縮成 18 個 CSS 像素。
+       * 描邊跟畫面一樣用卡片色，背卡底圖有亮有暗，不描會糊掉。
+       */
       if (it.max || it.gmax) {
-        const r = 8;
-        const mx = bx + box - r + 1;
-        const my = cy + r - 1;
-        ctx.beginPath();
-        ctx.arc(mx, my, r, 0, Math.PI * 2);
-        ctx.fillStyle = C.max;
-        ctx.fill();
-        ctx.fillStyle = "#fff";
-        // 兩者互斥，一次只畫一個字。G 比 M 寬，字級小半號才塞得進同一顆圓
-        ctx.font = `700 ${it.gmax ? 9 : 10}px ${FONT}`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(it.gmax ? "G" : "M", mx, my + 0.5);
+        const size = 21;
+        const k = size / 24;
+        ctx.save();
+        ctx.translate(bx + box - size + 1, cy - 1);
+        ctx.scale(k, k);
+        const mark = new Path2D(MAX_MARK_PATH);
+        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = C.card;
+        ctx.lineJoin = "round";
+        ctx.stroke(mark);
+        ctx.fillStyle = it.gmax ? C.gmaxMark : C.maxMark;
+        ctx.fill(mark);
+        ctx.restore();
       }
 
       const mid = bx + box / 2;

@@ -329,35 +329,24 @@ const idList = [...ids].sort((a, b) => {
 });
 
 /*
- * 超極巨化的名單。
+ * 超極巨化的名單 = **圖鑑裡有 `gmaxIcon` 的條目**。
  *
- * 2026-09-16 下午起它跟極巨化一樣是勾選條件，不是條目了，
- * 所以這裡也要產一份「哪些條目勾得到超極巨化」。
+ * 那個欄位由 build-dex 掛上去，條件是「game master 的
+ * allowedSourdoughPokemon 說這個型態可以，而且上游真的有圖」。
+ * 直接沿用它，名單與「勾了會換圖」就永遠一致——
+ * 勾得到卻沒有任何反應是最難解釋的狀態，比少一隻還糟。
  *
- * 物種以 Dittobase 標已實裝的為準（17 個），型態則看 game master 的
- * allowedSourdoughPokemon——它給的是 pokemonId 加 form，顫弦蠑螈
- * 高調與低調都列了，光靠 Dittobase 那一筆掛在物種上的會漏掉低調。
- * game master 那份有 31 個物種，多出來的是還沒實裝的，用 Dittobase 篩掉。
+ * 這也順便處理掉三件靠 Dittobase 接不起來的事：
+ *   1. 武道熊師上游命名成 `fBREAD_DOUGH_MODE`，不是 GIGANTAMAX
+ *   2. 皮卡丘、喵喵、灰塵山與長毛巨魔的圖只在 256x256 目錄
+ *   3. 喵喵的兩個地區型不能超極巨化，靠 sourdough 的型態粒度擋掉
  *
- * **不受「上游有沒有圖」限制**：當條目的時候沒圖就畫不出來，
- * 現在只是一個旗標，皮卡丘、喵喵、灰塵山與積怨番長那四隻照樣勾得到，
- * 只是勾了不會換圖（`gmaxIcon` 沒有就維持本體的圖）。
+ * Dittobase 的 isGigantamax 仍然拿來交叉比對，差異寫進報告。
  */
-const gmaxSpecies = new Set(
-  dittoRows.filter((r) => r.gmax && r.released).map((r) => r.species)
+const gmaxIds = new Set(
+  [...GODEX, ...extraEntries()].filter((e) => e.gmaxIcon).map((e) => e.id)
 );
-const gmaxIds = new Set();
 const gmaxUnmatched = [];
-for (const { species, form } of gm.sourForms) {
-  if (!gmaxSpecies.has(species)) continue;
-  const key = species + (form ? "-" + slugify(form) : "");
-  const id = names.get(key);
-  if (!id) {
-    gmaxUnmatched.push(key);
-    continue;
-  }
-  gmaxIds.add(id);
-}
 
 const gmaxList = [...gmaxIds].sort(byDex);
 
@@ -472,6 +461,8 @@ const report = [
     ? `只有 Dittobase 有：\`${gmaxOnlyDitto.join("`, `")}\`\n`
     : "",
   gmaxOnlyGM.length ? `只有 game master 有：\`${gmaxOnlyGM.join("`, `")}\`\n` : "",
+  `\n名單本身不是從這兩份來的，而是「圖鑑裡有 \`gmaxIcon\` 的條目」——\n`,
+  `game master 說這個型態可以、而且上游真的有圖。這樣勾得到就一定換得了圖。\n`,
   "",
   "## 名單",
   "",

@@ -88,7 +88,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `js/godex.js` | `GODEX` `GODEX_COUNT` | **自動產生，不要手改。** 1431 個條目，含 dex / 型態 / 裝扮 / 三語名 / 屬性 / 稀有度 / 圖檔名 / 有無異色 / IV100 的 `cp20` `cp25` `cp50` |
 | `js/extra.js` | `PIKA_EXTRA` `DB_EXTRA` `ALIAS` `MISSING_ICON` `extraEntries()` | 手動補 godex 缺的 29 筆：22 種 Choggor 的裝扮皮卡丘、5 種只有 Dittobase 有圖的裝扮，以及沒有 GO 圖示的捷拉奧拉與纏紅鶴。每筆帶 `fill`／`offX`／`offY`，那批圖四周有透明留白，不補這三個值會小一半，數字由 `tools/measure-icons.mjs` 量 |
 | `js/costumes.js` | `COSTUME_NAMES` `costumeName()` | 裝扮的三語譯名。**遊戲內裝扮沒有官方名稱**，只能自己取，這是唯一來源 |
-| `js/maxdata.js` | `MAX_IDS` `MAX_COUNT` `GMAX_IDS` `GMAX_COUNT` | **自動產生，不要手改。** `MAX_IDS` 148 個可極巨化的條目 id，`GMAX_IDS` 是其中 18 個可超極巨化的。決定詳情面板要畫哪幾顆條件鈕，由 `dex.canMax()` / `canGmax()` 查。Dittobase 與 game master 的 `BREAD_MODE` 取聯集，報告在 `tools/max-report.md` |
+| `js/maxdata.js` | `MAX_IDS` `MAX_COUNT` `GMAX_IDS` `GMAX_COUNT` | **自動產生，不要手改。** `MAX_IDS` 148 個可極巨化的條目 id，`GMAX_IDS` 是其中 20 個可超極巨化的（等於圖鑑裡有 `gmaxIcon` 的條目）。決定詳情面板要畫哪幾顆條件鈕，由 `dex.canMax()` / `canGmax()` 查。Dittobase 與 game master 的 `BREAD_MODE` 取聯集，報告在 `tools/max-report.md` |
 | `js/bgdata.js` | `BG_CARDS` `BG_CARD_COUNT` | **自動產生，不要手改。** 240 張背卡骨架，含代號、上游檔名、收納夾、英文名、日期、特效層旗標與寶可夢清單 |
 | `js/bgevents.js` | `HAND_EVENTS` | 手工維護的 21 張，有三語名、註記、寶可夢清單與本地備援圖。會逐欄覆蓋骨架。其中 30 週年那四張只蓋名稱與日期，清單等活動辦完 |
 | `js/bgseries.js` | `SERIES` `seriesInfo` `seriesOrder` | 23 個收納夾的三語名與顯示順序 |
@@ -193,7 +193,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改一欄的上限 | `js/store.js` 的 `MAX_ITEMS` |
 | GO 開放新的寶可夢可以極巨化 | `node tools/build-max.mjs --force`，名單會自己長出來 |
 | 上游補了缺的超極巨化圖 | `node tools/build-dex.mjs --force` 就好，`gmaxIcon` 會自己長出來 |
-| 改極巨化徽章的樣子 | `css/style.css` 的 `.maxb`（`.gmax` 只換字）與 `--max`，分享圖那顆在 `js/share.js` 畫 `it.max`／`it.gmax` 那一段，兩邊的顏色與大小要對得上。詳情面板那顆靠 `.d-icon` 定位 |
+| 改極巨化的符號 | 形狀在 `js/ui.js` 的 `MAX_MARK_PATH`（canvas 吃同一個字串），顏色是 `css/style.css` 的 `--max-mark`／`--gmax-mark`，分享圖那份在 `js/share.js` 的 `maxMark`／`gmaxMark`。詳情面板那顆靠 `.d-icon` 定位 |
 | 超極巨化勾了要換的圖 | `js/godex.js` 的 `gmaxIcon`（由 `build-dex.mjs` 的 `GMAX_ICONS` 掛到本體），畫面走 `dex.iconAttrs(e, shiny, gmax)` |
 | 改清單份數 | `js/store.js` 的 `LIST_COUNT`，分頁樣式在 `css/style.css` 的 `.list-tabs` |
 | 改背卡詳情的卡面圖大小 | `css/style.css` 的 `.card-art`（限高 38vh，寬度 auto） |

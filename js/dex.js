@@ -34,11 +34,21 @@ const TYPE_KEYS = Object.keys(TYPES);
 const GO_BASE =
   "https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Images/Pokemon/Addressable%20Assets/";
 
+/*
+ * 另一個圖檔目錄。上游兩邊的進度不一樣：主目錄的超極巨化只有 13 種，
+ * 這裡有 19 種，而且皮卡丘、喵喵、灰塵山、長毛巨魔與武道熊師只在這裡。
+ * 差別是這批畫在 256×256 的固定畫布上、四周有留白，
+ * 所以用它的條目會帶 gmax256 與量出來的 gmaxFill／gmaxOffX／gmaxOffY。
+ */
+const GO_BASE_256 =
+  "https://raw.githubusercontent.com/PokeMiners/pogo_assets/master/Images/Pokemon%20-%20256x256/Addressable%20Assets/";
+
 /** 官方立繪，GO 圖示載入失敗時的最後防線 */
 const ART_BASE =
   "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/";
 
 export const goUrl = (file) => (file ? GO_BASE + file : null);
+export const go256Url = (file) => (file ? GO_BASE_256 + file : null);
 export const artUrl = (dex) => (dex ? `${ART_BASE}${dex}.png` : null);
 
 /* ─────────── 條目清單 ─────────── */
@@ -113,9 +123,15 @@ export function iconAttrs(e, shiny, gmax) {
   // 外部來源的裝扮沒有異色圖，一律顯示一般版
   if (e.art) return imgAttrs([e.art, artUrl(e.dex)]) + zoomAttr(e);
   const normal = shiny && e.shinyIcon ? e.shinyIcon : e.icon;
-  const big = gmax ? (shiny && e.gmaxShinyIcon ? e.gmaxShinyIcon : e.gmaxIcon) : null;
-  const chain = [big, normal, e.icon].filter(Boolean).map(goUrl);
-  return imgAttrs([...chain, artUrl(e.dex)]);
+  const bigFile = gmax ? (shiny && e.gmaxShinyIcon ? e.gmaxShinyIcon : e.gmaxIcon) : null;
+  const big = bigFile ? (e.gmax256 ? go256Url(bigFile) : goUrl(bigFile)) : null;
+  const chain = [big, goUrl(normal), goUrl(e.icon), artUrl(e.dex)].filter(Boolean);
+  /*
+   * 256 那批要補留白，否則會比旁邊的小一號還偏位。
+   * 載不出來換到備援時 `__imgfb` 會把這三個變數清掉，
+   * 不然退回的一般圖會被放大——跟 extra.js 那批是同一個機制。
+   */
+  return imgAttrs(chain) + (big && e.gmax256 ? gmaxZoomAttr(e) : "");
 }
 
 /*
@@ -143,6 +159,26 @@ export function iconZoom(e) {
  * 放大之後這個偏移也會放大，要靠 translate 抵銷回來。
  */
 export const iconOffset = (e) => ({ x: (e && e.offX) || 0, y: (e && e.offY) || 0 });
+
+/** 超極巨化那張圖的放大倍率與偏移，只有用 256 目錄的條目才有 */
+export const gmaxZoom = (e) => {
+  const fill = e && e.gmaxFill;
+  if (!fill || fill >= FILL_TARGET) return 1;
+  return Math.round((FILL_TARGET / fill) * 100) / 100;
+};
+
+export const gmaxOffset = (e) => ({
+  x: (e && e.gmaxOffX) || 0,
+  y: (e && e.gmaxOffY) || 0,
+});
+
+function gmaxZoomAttr(e) {
+  const z = gmaxZoom(e);
+  const { x, y } = gmaxOffset(e);
+  if (z <= 1 && !x && !y) return "";
+  const pct = (n) => `${Math.round(n * 1000) / 10}%`;
+  return ` style="--iz:${z};--ix:${pct(x)};--iy:${pct(y)}"`;
+}
 
 /* CSS 變數形式。備援圖是滿版的，所以換了來源要清掉，見 imgchain.js */
 function zoomAttr(e) {

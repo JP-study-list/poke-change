@@ -72,11 +72,15 @@ async function cached(name, url) {
 }
 
 /**
- * 取得 Addressable Assets 目錄下的檔名清單。
- * GitHub 的 tree API 一次只回一層，所以要沿著 Images → Pokemon → Addressable Assets 往下走。
+ * 取得某個 Addressable Assets 目錄下的檔名清單。
+ * GitHub 的 tree API 一次只回一層，所以要沿著目錄一層一層往下走。
+ *
+ * 兩個目錄都要：主目錄的圖是緊貼裁切的（主體佔畫布 98%），
+ * `Pokemon - 256x256` 是固定畫布、四周有留白（84~100%）。
+ * 主目錄有的一律用主目錄，256 那份只用來補主目錄還沒有的超極巨化。
  */
-async function assetList() {
-  const path = join(CACHE, "assets.json");
+async function assetList(dir = "Pokemon", cacheName = "assets.json") {
+  const path = join(CACHE, cacheName);
   if (!FORCE) {
     try {
       await stat(path);
@@ -85,10 +89,10 @@ async function assetList() {
       /* 沒快取就往下走 */
     }
   }
-  process.stdout.write("  下載 圖檔清單 … ");
+  process.stdout.write(`  下載 圖檔清單 ${dir} … `);
   let sha = null;
   let url = TREE_URL;
-  for (const seg of ["Images", "Pokemon", "Addressable Assets"]) {
+  for (const seg of ["Images", dir, "Addressable Assets"]) {
     const tree = await (await fetch(url)).json();
     const hit = (tree.tree || []).find((t) => t.path === seg);
     if (!hit) throw new Error(`圖檔清單找不到 ${seg}`);
@@ -161,9 +165,10 @@ function iconFile({ dex, form, costume }, shiny) {
 
 async function main() {
   console.log("讀取上游資料");
-  const [gm, files, zh, ja, en] = await Promise.all([
+  const [gm, files, files256, zh, ja, en] = await Promise.all([
     cached("game_master.json", GM_URL),
     assetList(),
+    assetList("Pokemon - 256x256", "assets256.json"),
     cached("i18n_zh.json", TEXT_BASE + LANG_FILES.zh),
     cached("i18n_ja.json", TEXT_BASE + LANG_FILES.ja),
     cached("i18n_en.json", TEXT_BASE + LANG_FILES.en),
@@ -458,7 +463,7 @@ async function main() {
 
   /* 4. 組出輸出 */
   const out = [];
-  const missing = { name: [], form: new Set(), costume: new Set(), gm: [], stats: [] };
+  const missing = { name: [], form: new Set(), costume: new Set(), gm: [], stats: [], gmax256: [] };
   let skipped = 0;
 
   /*
@@ -472,12 +477,96 @@ async function main() {
    * 「阿羅拉的超極巨化」這種東西），顫弦蠑螈的 pm849.fGIGANTAMAX
    * 也是整個物種一張，兩個型態共用。
    */
+  /*
+   * 哪些「型態」能超極巨化，以 game master 的 allowedSourdoughPokemon 為準。
+   *
+   * **不能用「同編號就掛」**：喵喵有阿羅拉與伽勒爾兩個地區型，
+   * 它們不能超極巨化，掛了就會在詳情面板長出一顆不該有的鈕、
+   * 勾了還換成本體的超極巨化圖。顫弦蠑螈相反，高調與低調兩型都能，
+   * 所以也不能寫成「只掛本體」。這份資料的粒度剛好就是型態。
+   *
+   * sourdough（酸麵團）是超極巨化在遊戲資料裡的代號，bread 是極巨化。
+   */
+  const dexOfSpecies = new Map();
+  for (const tpl of gm) {
+    const st = tpl.data && tpl.data.pokemonSettings;
+    const m = st && String(tpl.templateId).match(/^V(\d+)_POKEMON_/);
+    if (m && !dexOfSpecies.has(st.pokemonId)) dexOfSpecies.set(st.pokemonId, Number(m[1]));
+  }
+  const GMAX_ALLOWED = new Set();
+  const sour =
+    gm.find((x) => x.templateId === "BREAD_SHARED_SETTINGS")?.data?.breadSettings
+      ?.allowedSourdoughPokemon || [];
+  for (const x of sour) {
+    const dex = dexOfSpecies.get(x.pokemonId);
+    if (!dex) continue;
+    for (const f of x.form && x.form.length ? x.form : [""]) {
+      const code = String(f || "").replace(`${x.pokemonId}_`, "");
+      GMAX_ALLOWED.add(`${dex}|${!code || code === "NORMAL" || code === "FORM_UNSET" ? "" : code}`);
+    }
+  }
+
   const GMAX_ICONS = new Map();
   for (const [, e] of entries) {
     if (!/^GIGANTAMAX$/.test(e.form || "")) continue;
     GMAX_ICONS.set(e.dex, {
       icon: iconFile(e, false),
       shinyIcon: e.shiny ? iconFile(e, true) : null,
+    });
+  }
+
+  /*
+   * 主目錄還沒有、但 256x256 目錄已經有的超極巨化。
+   *
+   * 上游兩個目錄的進度不一樣：主目錄 13 種，256 那份 19 種。
+   * 皮卡丘、喵喵、灰塵山與長毛巨魔只在 256 有，武道熊師更麻煩——
+   * **上游把它命名成 fBREAD_DOUGH_MODE 而不是 GIGANTAMAX**
+   * （bread 是 Max Battle 在遊戲資料裡的代號），所以照 GIGANTAMAX
+   * 去抓一定抓不到，只能一筆一筆指名。`_2` 是連擊流，對照 game master
+   * 的 allowedSourdoughPokemon：SINGLE_STRIKE 配 BREAD_DOUGH_MODE。
+   *
+   * 那批圖是 256×256 的固定畫布、四周有留白（主體佔 83~100%），
+   * 直接拿來用會比旁邊的小一號還偏位，所以每一筆都帶量出來的
+   * fill／offX／offY，畫面與 canvas 兩邊都吃這組值修正。
+   * **數字要逐張量**，一般色與異色差不到 2%，取一般色那張的就好。
+   */
+  const GMAX_256 = [
+    { dex: 25, file: "pm25.fGIGANTAMAX", fill: 0.844, offX: -0.045, offY: -0.016 },
+    { dex: 52, file: "pm52.fGIGANTAMAX", fill: 0.922, offX: -0.002, offY: -0.004 },
+    { dex: 569, file: "pm569.fGIGANTAMAX", fill: 1, offX: 0, offY: 0.043 },
+    { dex: 861, file: "pm861.fGIGANTAMAX", fill: 0.914, offX: -0.025, offY: -0.027 },
+    {
+      dex: 892,
+      form: "SINGLE_STRIKE",
+      file: "pm892.fBREAD_DOUGH_MODE",
+      fill: 0.906,
+      offX: 0.023,
+      offY: -0.047,
+    },
+    {
+      dex: 892,
+      form: "RAPID_STRIKE",
+      file: "pm892.fBREAD_DOUGH_MODE_2",
+      fill: 0.828,
+      offX: -0.021,
+      offY: -0.023,
+    },
+  ];
+
+  const has256 = new Set(files256);
+  const GMAX_256_BY_KEY = new Map();
+  for (const g of GMAX_256) {
+    if (GMAX_ICONS.has(g.dex)) continue; // 主目錄已經有了，那份比較好
+    if (!has256.has(`${g.file}.icon.png`)) {
+      missing.gmax256.push(g.file);
+      continue;
+    }
+    GMAX_256_BY_KEY.set(`${g.dex}|${g.form || ""}`, {
+      icon: `${g.file}.icon.png`,
+      shinyIcon: has256.has(`${g.file}.s.icon.png`) ? `${g.file}.s.icon.png` : null,
+      fill: g.fill,
+      offX: g.offX,
+      offY: g.offY,
     });
   }
 
@@ -558,10 +647,23 @@ async function main() {
      * 遊戲裡沒有「2020 新年的超極巨化妙蛙花」，Max Battle 抓到的
      * 不會是裝扮版。這跟可極巨化名單不收裝扮是同一條線。
      */
-    const gi = GMAX_ICONS.get(e.dex);
-    if (gi && row.kind !== "costume") {
-      row.gmaxIcon = gi.icon;
-      if (gi.shinyIcon) row.gmaxShinyIcon = gi.shinyIcon;
+    if (row.kind !== "costume" && GMAX_ALLOWED.has(`${e.dex}|${e.form || ""}`)) {
+      const gi =
+        GMAX_ICONS.get(e.dex) ||
+        GMAX_256_BY_KEY.get(`${e.dex}|${e.form || ""}`) ||
+        GMAX_256_BY_KEY.get(`${e.dex}|`) ||
+        null;
+      if (gi) {
+        row.gmaxIcon = gi.icon;
+        if (gi.shinyIcon) row.gmaxShinyIcon = gi.shinyIcon;
+        // 只有 256 那批要修正留白，主目錄的圖本來就是緊貼裁切的
+        if (gi.fill !== undefined) {
+          row.gmax256 = 1;
+          row.gmaxFill = gi.fill;
+          if (gi.offX) row.gmaxOffX = gi.offX;
+          if (gi.offY) row.gmaxOffY = gi.offY;
+        }
+      }
     }
 
     out.push(row);
@@ -594,8 +696,10 @@ async function main() {
  *           game master 沒有那個型態的基礎數值時三個都不輸出
  * icon      GO 圖示檔名
  * shinyIcon 異色圖示檔名，上游沒有異色圖就沒這個欄位
- * gmaxIcon  超極巨化的圖示檔名，只有那 13 種的本體與型態有
+ * gmaxIcon  超極巨化的圖示檔名，只有那幾種的本體與型態有
  * gmaxShinyIcon 同上的異色版
+ * gmax256   這張圖在 Pokemon - 256x256 目錄，不在主目錄
+ * gmaxFill / gmaxOffX / gmaxOffY  256 那批的留白修正，逐張量的
  *
  * 裝扮沒有官方名稱，遊戲內只顯示物種名。譯名見 js/costumes.js。
  *

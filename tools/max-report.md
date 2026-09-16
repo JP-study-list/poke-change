@@ -8,7 +8,7 @@
 - Dittobase 解析到條目 **2390** 筆
 - 其中標了極巨化或超極巨化且已實裝 **158** 筆
 - 對到本站條目 **148** 個 id
-- 其中勾得到超極巨化的 **18** 個：`d3`, `d6`, `d9`, `d12`, `d25`, `d52`, `d68`, `d94`, `d99`, `d131`, `d143`, `d569`, `d812`, `d815`, `d818`, `d849.fAMPED`, `d849.fLOW_KEY`, `d861`
+- 其中勾得到超極巨化的 **20** 個：`d3`, `d6`, `d9`, `d12`, `d25`, `d52`, `d68`, `d94`, `d99`, `d131`, `d143`, `d569`, `d812`, `d815`, `d818`, `d849.fAMPED`, `d849.fLOW_KEY`, `d861`, `d892.fRAPID_STRIKE`, `d892.fSINGLE_STRIKE`
 - 對不上的 **0** 筆
 
 
@@ -38,6 +38,11 @@ Dittobase 標已實裝的 **17** 個。
 
 
 只有 game master 有：`eevee`, `melmetal`, `corviknight`, `orbeetle`, `drednaw`, `coalossal`, `flapple`, `appletun`, `sandaconda`, `centiskorch`, `hatterene`, `alcremie`, `copperajah`, `urshifu`
+
+
+名單本身不是從這兩份來的，而是「圖鑑裡有 `gmaxIcon` 的條目」——
+
+game master 說這個型態可以、而且上游真的有圖。這樣勾得到就一定換得了圖。
 
 
 ## 名單

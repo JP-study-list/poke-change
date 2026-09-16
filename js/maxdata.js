@@ -198,6 +198,8 @@ export const GMAX_IDS = [
   "d849.fAMPED",
   "d849.fLOW_KEY",
   "d861",
+  "d892.fRAPID_STRIKE",
+  "d892.fSINGLE_STRIKE",
 ];
 
 export const GMAX_COUNT = GMAX_IDS.length;

@@ -361,10 +361,27 @@ console.log("\n2c. 極巨化名單");
      * 勾起來就換圖。掉了的話勾超極巨化會看不出任何差別。
      */
     const withIcon = dex.ENTRIES.filter((e) => e.gmaxIcon);
-    ok("有 gmaxIcon 的條目 14 筆", withIcon.length === 14, String(withIcon.length));
+    ok("有 gmaxIcon 的條目 20 筆", withIcon.length === 20, String(withIcon.length));
+
+    /*
+     * 名單就是「有 gmaxIcon 的條目」，兩邊必須完全相等。
+     * 名單多了會出現勾得到卻沒反應的條目，那比少一隻還難解釋。
+     */
+    ok(
+      "名單完全等於有圖的那些",
+      GMAX_IDS.length === withIcon.length &&
+        withIcon.every((e) => GMAX_IDS.includes(e.id))
+    );
+
+    /*
+     * 上游對超極巨化有兩套命名：GIGANTAMAX，以及武道熊師那兩筆的
+     * BREAD_DOUGH_MODE（bread 是 Max Battle 在遊戲資料裡的代號）。
+     * 只認前者的話武道熊師會靜默消失。
+     */
     ok(
       "gmaxIcon 指向超極巨化的圖",
-      withIcon.every((e) => /\.fGIGANTAMAX\./.test(e.gmaxIcon))
+      withIcon.every((e) => /\.f(GIGANTAMAX|BREAD_DOUGH_MODE)/.test(e.gmaxIcon)),
+      withIcon.filter((e) => !/\.f(GIGANTAMAX|BREAD_DOUGH_MODE)/.test(e.gmaxIcon)).map((e) => e.id).join(", ")
     );
     ok(
       "gmaxIcon 不掛在裝扮上",
@@ -373,11 +390,24 @@ console.log("\n2c. 極巨化名單");
     );
 
     /*
-     * 名單比有圖的多：皮卡丘、喵喵、灰塵山與長毛巨魔上游還沒有圖，
-     * 但它現在只是一個旗標，勾得到，只是勾了不換圖。
+     * 喵喵的兩個地區型不能超極巨化，掛了就會長出一顆不該有的鈕。
+     * 這是「同編號就掛」會犯的錯，粒度要看 game master 的型態。
      */
-    const noIcon = GMAX_IDS.filter((id) => !byId.get(id).gmaxIcon);
-    ok(`名單裡有 ${noIcon.length} 筆上游還沒有圖`, noIcon.length > 0, noIcon.join(", "));
+    for (const id of ["d52.fALOLA", "d52.fGALARIAN"]) {
+      ok(`${id} 沒有超極巨化`, !byId.get(id).gmaxIcon && !dex.canGmax(byId.get(id)));
+    }
+    ok("喵喵本體有超極巨化", !!byId.get("d52").gmaxIcon);
+
+    /*
+     * 256x256 目錄那批是固定畫布、四周有留白，不修正會比旁邊小一號還偏位。
+     * 逐張量的數字在 build-dex 的 GMAX_256。
+     */
+    const c256 = withIcon.filter((e) => e.gmax256);
+    ok(`${c256.length} 筆用 256 目錄的圖`, c256.length === 6, String(c256.length));
+    ok(
+      "256 那批都有留白修正值",
+      c256.every((e) => typeof e.gmaxFill === "number" && e.gmaxFill > 0 && e.gmaxFill <= 1)
+    );
 
     // iconAttrs 要真的換圖，這是「勾了看得出來」的唯一機制
     const v = byId.get("d3");
@@ -386,9 +416,12 @@ console.log("\n2c. 極巨化名單");
     ok("勾超極巨化會換圖", big.includes(v.gmaxIcon) && !plain.includes(v.gmaxIcon));
     const bigShiny = dex.iconAttrs(v, true, true);
     ok("異色加超極巨化取異色的那張", bigShiny.includes(v.gmaxShinyIcon));
-    // 沒圖的那幾隻不能破圖，備援鏈要退回一般那張
-    const pika = byId.get("d25");
-    ok("沒有 gmaxIcon 的退回一般圖", dex.iconAttrs(pika, false, true).includes(pika.icon));
+    // 不在名單裡的條目就算被要求 gmax 也不能破圖，備援鏈要退回一般那張
+    const plainOne = byId.get("d1");
+    ok(
+      "沒有 gmaxIcon 的退回一般圖",
+      dex.iconAttrs(plainOne, false, true).includes(plainOne.icon)
+    );
   }
 
   // canMax 是畫面唯一的判斷入口，兩邊講的話要一樣

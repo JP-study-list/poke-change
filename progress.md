@@ -4,6 +4,60 @@
 
 ---
 
+## 2026-09-16（七）
+- 類型：新增
+- 影響檔案：js/ui.js, css/style.css, js/share.js, tools/build-dex.mjs,
+  js/godex.js, tools/build-max.mjs, js/maxdata.js, js/dex.js,
+  tools/check.mjs, js/version.js, VERSION.md, CLAUDE.md, project-index.md
+- 摘要：極巨化改用官方符號，超極巨化補到 20 種且全部換得了圖。版本升 1.08.00。
+- 原因：使用者要求「官方本身就有專屬符號，照官方的做」，並提供三張截圖：
+  篩選標籤（看得清楚形狀）與寶可夢清單上的實際樣式（極巨化粉紅、超極巨化紫）。
+- 符號：
+  - **上游沒有收那顆符號**。搜過整棵樹 48319 個檔案，`Images` 底下 80 個
+    目錄都沒有，只有極巨粒子的道具罐（`mp_pack.png`）與貼紙包佔位圖。
+    異色倒是有（`Images/Pokedex/ic_shiny.png`，三顆四角星），但我們用的
+    是 `✦` 字元，那是另一回事。所以只能照截圖手工畫。
+  - 畫成 SVG path 放在 `js/ui.js` 的 `MAX_MARK_PATH`，**canvas 吃同一個字串**
+    （`new Path2D()` 直接收 SVG path data），兩邊不會走樣。
+    形狀是兩片交叉的彎刃，四個尖端，用參數化的程式產生再固定下來。
+  - **第一版做成洋紅圓底配白符號，跟刪除鈕撞臉**——那顆是右上角的紅圓白叉，
+    兩個放在同一個角落一眼分不出來。截圖才看出來，量測看不出這種問題。
+    改成無底符號直接疊在圖上，這也才是使用者給的圖二、圖三的樣子：
+    官方只在篩選標籤上用圓底。
+  - 因此拆成兩組色：`--max`／`--gmax` 給條件鈕的實心底（配白字），
+    `--max-mark`／`--gmax-mark` 給疊在圖上的符號（粉紅與紫）。
+    符號帶白描邊，背卡底圖有亮有暗，不描會糊掉。
+- 順手修掉的一個錯誤結論：
+  **「那四隻沒圖」是錯的**。我上次只查了 `Images/Pokemon/Addressable Assets`，
+  而 **`Images/Pokemon - 256x256/Addressable Assets` 有 19 種**，
+  皮卡丘、喵喵、灰塵山、長毛巨魔與武道熊師都在那裡。
+  武道熊師更隱蔽：上游叫 `fBREAD_DOUGH_MODE` 不是 GIGANTAMAX（`_2` 是連擊流），
+  照 GIGANTAMAX 搜一定漏掉。超極巨化因此從 13 種變 20 個條目，全部換得了圖。
+- 256 那批的處理：
+  - 那是固定畫布、四周有留白（主體佔 83~100%，主目錄是 98%），
+    直接用會比旁邊小一號還偏位，所以逐張量 `gmaxFill`／`gmaxOffX`／`gmaxOffY`，
+    畫面走 `--iz`／`--ix`／`--iy`、canvas 走 `__zoom`／`__off`，跟 extra.js
+    那批同一套機制。**主目錄有的一律用主目錄**，那份裁切比較好。
+  - **掛圖要看型態不能看編號**：喵喵的阿羅拉與伽勒爾不能超極巨化，
+    「同編號就掛」會讓它們長出不該有的鈕（實際犯過，截圖才發現）。
+    粒度改用 game master 的 `allowedSourdoughPokemon`，它正好是型態層級。
+  - 超極巨化名單改成「圖鑑裡有 `gmaxIcon` 的條目」，名單與換圖永遠一致。
+- 驗證：
+  - `node tools/check.mjs` 全部通過。新增：有圖 20 筆、名單完全等於有圖的、
+    兩套命名都認（GIGANTAMAX 與 BREAD_DOUGH_MODE）、喵喵地區型沒有超極巨化、
+    256 那批都有留白修正值。
+  - CDP 實跑：詳情面板按極巨化 → 符號 `rgb(238, 111, 180)`；按超極巨化 →
+    `rgb(164, 99, 216)` 且圖換成 `pm3.fGIGANTAMAX.icon.png`；
+    交換表五格分別吃到一般圖、GIGANTAMAX 圖、256 的皮卡丘、
+    BREAD_DOUGH_MODE 的武道熊師、異色超極巨化的噴火龍。
+  - 分享圖逐像素：粉紅 378、紫 366，兩顆符號都畫出來了。
+  - 放大截圖確認符號形狀與顏色，以及詳情面板那顆的位置。
+- 待辦/已知問題：
+  - 符號是照截圖手工畫的，跟官方不會 100% 一致。使用者看過實際畫面
+    如果覺得不像，調 `MAX_MARK_PATH` 就好，canvas 會跟著變。
+
+---
+
 ## 2026-09-16（六）
 - 類型：重構
 - 影響檔案：tools/build-dex.mjs, js/godex.js, tools/build-max.mjs, js/maxdata.js,

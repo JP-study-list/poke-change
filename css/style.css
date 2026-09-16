@@ -52,7 +52,22 @@
    * 調亮會讓白字掉到 AA 以下（#e83fa0 上白字只有 3.7:1）。
    * 這個值上白字 4.8:1，兩套底色都過，而且在近黑上仍然醒目。
    */
+  /*
+   * 極巨化與超極巨化。**兩組色，用途不同**：
+   *
+   * `--max` / `--gmax` 是條件鈕的實心底色，配白字，深色不覆寫
+   * （實心填色調亮白字就掉出 AA，跟 --x-bg 同一個道理）。
+   *
+   * `--max-mark` / `--gmax-mark` 是疊在寶可夢圖上那顆符號的顏色，
+   * 照遊戲裡的寶可夢清單取——極巨化粉紅、超極巨化紫。
+   * 那個位置不能用實心圓：交換表格子的刪除鈕就是右上角的紅圓白叉，
+   * 再放一顆洋紅圓白符號，兩者一眼分不出來。
+   * 官方也只在篩選標籤上用圓底，貼在寶可夢身上的是無底符號。
+   */
   --max: #da0d86;
+  --gmax: #9c0055;
+  --max-mark: #ee6fb4;
+  --gmax-mark: #a463d8;
   --bgcard: #4a7fb5;
 
   --type-bug: #96c22b;
@@ -1730,22 +1745,36 @@ body.no-names .cell .no {
  * 所以叉出現的時候徽章讓位——那一角一次只給一個圓。
  * 刪除是暫時的操作狀態，讓掉不影響平常看得到。
  */
+/*
+ * 疊在寶可夢圖右上角的符號，沒有底，就是符號本身——
+ * 跟遊戲裡的寶可夢清單一致（2026-09-16，使用者給的參考圖）。
+ *
+ * 白描邊是必要的，不是裝飾：背卡底圖有亮有暗，深色模式又是近黑，
+ * 只靠粉紅或紫在某些底上會整個糊掉。異色的星星也是同一個理由描邊。
+ * `paint-order: stroke` 讓描邊畫在填色下面，外緣才乾淨。
+ */
 .maxb {
   position: absolute;
-  top: 2px;
-  right: 3px;
-  display: grid;
-  place-items: center;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--max);
-  color: #fff;
-  font-size: 9px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 1;
+  top: 1px;
+  right: 1px;
+  display: block;
+  width: 20px;
+  height: 20px;
   transition: opacity 0.12s;
+}
+
+.maxb svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: var(--max-mark);
+  stroke: var(--card);
+  stroke-width: 1.8;
+  paint-order: stroke;
+}
+
+.maxb.gmax svg {
+  fill: var(--gmax-mark);
 }
 
 .want-cell:hover .maxb,
@@ -1753,14 +1782,7 @@ body.no-names .cell .no {
   opacity: 0;
 }
 
-/*
- * 超極巨化用同一顆圓，只換字（M → G）。
- * 不換顏色：兩者互斥，畫面上一次只看得到一顆，
- * 再給第二個色只是多一個要記的對應關係。
- */
-.maxb.gmax {
-  font-size: 8.5px;
-}
+
 
 /*
  * 詳情面板上方那張圖的殼。徽章要疊在圖的右上角，
@@ -1777,15 +1799,10 @@ body.no-names .cell .no {
 }
 
 .d-icon .maxb {
-  width: 18px;
-  height: 18px;
-  font-size: 11px;
-  top: 0;
-  right: 0;
-}
-
-.d-icon .maxb.gmax {
-  font-size: 10px;
+  width: 30px;
+  height: 30px;
+  top: -2px;
+  right: -2px;
 }
 
 /* 尺寸在方塊下方，跟名稱同一區 */
