@@ -834,6 +834,9 @@ VERSION.md            版本紀錄（給使用者看的，一版一筆）
 ### 待辦
 
 - 阿爾宙斯等 GO 實裝之後解除隱藏（刪掉 `HIDDEN_DEX` 裡的 493 重跑腳本）
+- 上游補上皮卡丘、喵喵、灰塵山與積怨番長的超極巨化圖之後重跑 `build-dex`，
+  並在 `STATS_SAME_AS` 補那幾筆指到本體（Dittobase 說這四隻早就實裝了，只是沒圖）
+- GO 開放新的寶可夢可以極巨化時重跑 `node tools/build-max.mjs --force`
 - 2026-11 洗翠黏美兒與黏美龍實裝後解除隱藏（清掉 `HIDDEN_FORMS` 重跑腳本，
   並把 check 那兩條從「不該在圖鑑裡」改成驗屬性是鋼加龍）
 - 之後轉私人 repo + Cloudflare Pages + 自有網域
