@@ -638,8 +638,12 @@ select {
 }
 
 /*
- * 選中的那張靠 inset 陰影加粗邊框，不改 border-width——
- * 換一張選中會讓兩張各差 0.5px，整組跟著位移。
+ * 框線一律 1px，選中的那張只換顏色不加粗（2026-09-16，使用者要求）。
+ *
+ * 原本選中的多疊一層 inset 陰影，視覺上變成 2px，跟旁邊那張擺在一起
+ * 一眼就看得出兩條線不一樣粗。深色的 `--ink` 對淺灰的 `--line` 已經
+ * 夠分得出誰被選中，不必再靠粗細講第二次。
+ * **不要改成 `border-width: 2px`**：兩張各差 1px 會讓整組跟著位移。
  */
 .opt-card {
   display: block;
@@ -659,7 +663,6 @@ select {
 
 .opt-card[aria-pressed="true"] {
   border-color: var(--ink);
-  box-shadow: inset 0 0 0 1px var(--ink);
 }
 
 .opt-card .thumb {
