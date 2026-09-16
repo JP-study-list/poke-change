@@ -2248,6 +2248,24 @@ body.no-names .cell .no {
 
 /* ─────────── 背卡 ─────────── */
 
+/*
+ * 詳情裡的卡面圖要限高（2026-09-15，使用者要求）。
+ *
+ * 彈窗比它取代的那個常駐右欄寬（520 對 340），等比放大之後一張方形卡面
+ * 就吃掉大半個視窗，底下的收集格全被推到摺線以下，得捲一下才知道有東西。
+ *
+ * **寬度是 auto 不是 100%**：寫 100% 再靠 object-fit 收的話，留白留在
+ * 元素框裡，圓角就跟圖錯開一圈。讓元素自己等比縮到最高 38vh，
+ * 左右留白但圓角貼著圖。
+ */
+.card-art {
+  display: block;
+  max-width: 100%;
+  max-height: 38vh;
+  margin: 14px auto;
+  border-radius: 8px;
+}
+
 .bg-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));

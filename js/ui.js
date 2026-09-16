@@ -1147,7 +1147,7 @@ export function renderCardDetail(cardId, lang, t, pick = {}) {
         ? `<p class="d-meta">${esc(card[`note_${lang}`])}</p>`
         : ""
     }
-    <img ${bgAttrs(card)} alt="" style="width:100%;border-radius:8px;margin:14px 0" />
+    <img ${bgAttrs(card)} class="card-art" alt="" />
     ${list}`;
 
   // 跟選寶可夢面板同一條規則：沒在多選就整條收掉，版面回到原本的樣子
