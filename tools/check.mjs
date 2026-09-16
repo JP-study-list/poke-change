@@ -456,6 +456,53 @@ console.log("\n2c. 極巨化名單");
       !dex.canMax(byId.get("d1.cJAN_2020_NOEVOLVE"))
   );
 
+  /*
+   * Max Battle 白名單（1.08.03）。
+   *
+   * 極巨化只能從 Max Battle 抓到，所以勾了極巨化之後背卡只剩這幾張。
+   * **id 打錯會靜默失效**：那張卡不會被認成 Max Battle，於是勾了極巨化
+   * 的選單裡少一張，畫面上完全看不出異狀——跟漏掉條件鈕底色同一類的洞，
+   * 所以在這裡釘住。
+   */
+  const cardById = new Map(bg.allCards().map(({ card }) => [card.id, card]));
+  for (const id of bg.MAX_BATTLE_CARDS) {
+    ok(`Max Battle 白名單的 ${id} 真的存在`, cardById.has(id));
+  }
+
+  /*
+   * 白名單那幾張的清單本來就是該場 Max Battle 的陣容，所以「勾了極巨化
+   * 還剩得下來的卡」必須非空——一張都不剩表示白名單跟條目對不上了。
+   * d3（妙蛙花，可超極巨化）在 Max Finale 的輪替陣容裡。
+   */
+  const vCards = bg.cardsFor("d3", { max: true });
+  ok(
+    "勾極巨化後妙蛙花只剩 Max Battle 的卡",
+    vCards.length > 0 && vCards.every(({ card }) => bg.isMaxBattle(card.id)),
+    vCards.map(({ card }) => card.id).join(", ")
+  );
+
+  /*
+   * 反向：不過濾時那些野生卡要在。這條擋的是「過濾寫死成永遠生效」，
+   * 那會讓沒勾極巨化的人也選不到背卡。
+   */
+  const vAll = bg.cardsFor("d3");
+  ok(
+    "沒勾極巨化時野生卡還在",
+    vAll.length > vCards.length && vAll.some(({ card }) => !bg.isMaxBattle(card.id))
+  );
+
+  /*
+   * keep 是舊紀錄的出口：1.08.03 之前存下的「極巨化 + 野生卡」，
+   * 濾掉的話下拉會顯示「不指定」、格子上卻還畫著那張卡，改不掉。
+   */
+  const wild = vAll.find(({ card }) => !bg.isMaxBattle(card.id)).card.id;
+  ok(
+    "keep 會留下自己已經選著的那張",
+    bg.cardsFor("d3", { max: true, keep: wild }).some(({ card }) => card.id === wild)
+  );
+
+  // 雷吉那張是五星團戰給的，不是 Max Battle。收進白名單就會多出不存在的組合
+  ok("雷吉那張沒被當成 Max Battle", !bg.isMaxBattle("go-fest-2025"));
 }
 
 console.log("\n2b. 篩選");

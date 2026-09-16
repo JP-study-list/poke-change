@@ -174,12 +174,72 @@ export function entriesOf(card) {
 }
 
 /**
+ * 有 Max Battle 的背卡。
+ *
+ * 極巨化只能從 Max Battle 抓到，所以一隻極巨化的寶可夢身上那張背卡，
+ * 一定是某場 Max Battle 給的。野生或團戰拿到的卡跟極巨化互斥——
+ * 「極巨化的妙蛙花配東京都內背卡」這種組合在遊戲裡不存在，
+ * 列出來只會誤導。
+ *
+ * ── 為什麼是卡片層級，不逐隻標 ──
+ * 這幾張卡的寶可夢清單本來就是該場 Max Battle 的陣容
+ * （Eternatus 那張 74 筆裡 70 筆可極巨化，13 個可超極巨化的條目
+ * 跟官方公布的 Max Finale 輪替陣容逐隻對得上），所以標了卡，
+ * 交集自然就精準，不必再維護第二份名單。
+ *
+ * ── 為什麼不能從資料自動判斷 ──
+ * 皮卡丘可超極巨化，而它出現在六十幾張人孔蓋與職棒背卡上，
+ * 那些全是野生皮卡丘。同一隻在同一張卡上是野生抓的還是 Max Battle
+ * 抓的，Dittobase 的清單不分，比例也推不出來——229 張有清單的卡裡
+ * 134 張比例是 100%，但那些卡的清單中位長度只有 2 筆，全是御三家、
+ * 皮卡丘這種熱門物種的小卡，100% 是巧合不是訊號。所以只能人工指名。
+ *
+ * ── 目前這四張 ──
+ * 全部是 GO Fest 2025。Dark Skies 與 Max Finale 的 Max Battle 成功捕捉
+ * 有機會拿到特殊背景（官方說法），實體場那三張的清單就是該場的
+ * Max Battle 陣容：蒼響、藏瑪然特，巴黎多了超極巨化噴火龍那一路。
+ *
+ * **雷吉那張（go-fest-2025）刻意不收**：那六隻是 2025 年 6 月
+ * 「Ancients Recovered」的五星團戰陣容，背卡來自團戰捕捉。
+ * 雷吉三神柱後來確實有自己的 Max Battle，但那是另一回事，
+ * 這張卡不是那時候給的。
+ *
+ * 之後 GO 再辦給背卡的 Max Battle，補進來就好。
+ * **名單只會長**，所以不拿它去洗使用者存好的紀錄，見 cardsFor。
+ */
+export const MAX_BATTLE_CARDS = new Set([
+  "go-fest-2025-eternatus", // Dark Skies／Max Finale，超極巨化輪替陣容
+  "go-fest-2025-paris", // 實體場：蒼響、藏瑪然特、超極巨化噴火龍
+  "go-fest-2025-jerseycity", // 實體場：蒼響、藏瑪然特
+  "go-fest-2025-osaka", // 實體場：蒼響、藏瑪然特
+]);
+
+/** 這張卡是不是 Max Battle 給的 */
+export const isMaxBattle = (cardId) => MAX_BATTLE_CARDS.has(cardId);
+
+/**
  * 某個條目可能擁有的所有背卡。
+ *
+ * `opts.max` 為真時只留 Max Battle 的卡。這是**畫面層的過濾**，
+ * 不是資料清洗：`MAX_BATTLE_CARDS` 之後會長，拿它去清掉使用者
+ * 已經存好的背卡等於默默改人家的東西，跟「normalize 不拿極巨化
+ * 名單洗紀錄」同一個道理。存進去的值一律留著，只有使用者自己
+ * 按下極巨化那一刻才會把不合的那張退掉。
+ *
+ * `opts.keep` 是那條原則的出口：**使用者自己已經選著的那張一律留著**，
+ * 即使它不合。這條規則是 1.08.03 才加的，在那之前存下的紀錄可能
+ * 帶著現在不合的組合；把它濾掉的話下拉會顯示「不指定」、格子上
+ * 卻還畫著那張卡，而且使用者再也點不到它、改不掉它。
+ * 能看見才能修正，所以寧可多列一張。
+ *
+ * @param {string} entryId
+ * @param {{max?: boolean, keep?: string}} [opts]
  * @returns {Array<{folder, card, note}>}
  */
-export function cardsFor(entryId) {
+export function cardsFor(entryId, opts = {}) {
   const out = [];
   for (const { folder, card } of allCards()) {
+    if (opts.max && !isMaxBattle(card.id) && card.id !== opts.keep) continue;
     for (const e of entriesOf(card)) {
       if (e.id === entryId) out.push({ folder, card, note: e.note });
     }

@@ -502,16 +502,24 @@ function editBlock(col, data, id, e, lang, t, flash) {
    * 一長串平的選項在手機上滑不完，分組之後至少找得到。
    * 上面選背卡是點圖，這裡是下拉，因為這裡改的是已經收進清單的那一筆，
    * 每一筆都攤成一整排圖會把面板撐得很長。
+   *
+   * **逐筆算，不共用一份**：同一隻的兩筆可以一筆極巨化、一筆不是，
+   * 而極巨化那筆只能配 Max Battle 的卡。
    */
-  const cards = cardsFor(id);
-  const groups = [];
-  for (const { folder, card } of cards) {
-    const last = groups[groups.length - 1];
-    if (last && last.folder === folder) last.cards.push(card);
-    else groups.push({ folder, cards: [card] });
-  }
+  const groupCards = (cards) => {
+    const groups = [];
+    for (const { folder, card } of cards) {
+      const last = groups[groups.length - 1];
+      if (last && last.folder === folder) last.cards.push(card);
+      else groups.push({ folder, cards: [card] });
+    }
+    return groups;
+  };
 
   const block = ({ item, idx }) => {
+    // keep：舊紀錄可能帶著現在不合的組合，自己選著的那張一律留在選項裡
+    const cards = cardsFor(id, { max: item.max || item.gmax, keep: item.bg });
+    const groups = groupCards(cards);
     const mk = (field, label, cls) =>
       `<button type="button" class="mk ${cls}" data-field="${field}"
                aria-pressed="${!!item[field]}">${esc(label)}</button>`;
@@ -586,8 +594,19 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
     `<button type="button" class="mk ${cls}" data-draft="${field}"
              aria-pressed="${!!d[field]}">${esc(label)}</button>`;
 
-  const cards = cardsFor(id);
-  const bgBlock = cards.length
+  /*
+   * 勾了極巨化或超極巨化就只剩 Max Battle 的卡。
+   * 極巨化只能從 Max Battle 抓到，野生或團戰拿到的卡跟它互斥，
+   * 列出來的每一張都是實際上組不出來的組合。
+   * 草稿不必傳 keep：勾下去那一刻 main.js 就把不合的那張退成「不指定」了。
+   */
+  const cards = cardsFor(id, { max: d.max || d.gmax });
+  /*
+   * 一張都不剩時仍然畫出區塊，只有「不指定」那一列。
+   * 換成「目前沒有活動背卡」會被讀成「這隻寶可夢沒有背卡」，
+   * 但它其實有，只是極巨化配不上——那句話留給真的沒有背卡的條目。
+   */
+  const bgBlock = cards.length || d.max || d.gmax
     ? `<div class="bg-list">
         <button type="button" class="bg-row none" data-pick=""
                 aria-pressed="${!d.bg}">

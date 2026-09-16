@@ -100,7 +100,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 檔案 | 匯出 | 用途 |
 | --- | --- | --- |
-| `js/backgrounds.js` | `CARDS` `FOLDERS` `findCard` `bgUrl` `bgAttrs` `bgSources` `cardName` `folderName` `allCards` `entriesOf` `cardsFor` `allBgEntryIds` `totalCardSlots` | 合併骨架與手工資料，240 張背卡 / 23 個收納夾 / 1579 個收集格 |
+| `js/backgrounds.js` | `CARDS` `FOLDERS` `findCard` `bgUrl` `bgAttrs` `bgSources` `cardName` `folderName` `allCards` `entriesOf` `cardsFor` `allBgEntryIds` `totalCardSlots` `MAX_BATTLE_CARDS` `isMaxBattle` | 合併骨架與手工資料，240 張背卡 / 23 個收納夾 / 1579 個收集格 |
 | `js/imgchain.js` | `imgAttrs` | 圖片備援鏈。dex 與 backgrounds 共用，獨立成檔是為了不讓那兩個檔繞成一圈 |
 | `js/dex.js` | `ENTRIES` `find` `fullName` `speciesName` `formName` `iconAttrs` `hasShiny` `search` `FILTER_GROUPS` `GROUP_KEYS` `emptyFilter` `normalizeFilter` `applyFilter` `filterCount` `goUrl` `artUrl` | 合併 godex 與 extra，1460 個條目。負責名稱組合、搜尋、篩選、圖片備援鏈 |
 | `js/store.js` | `emptyList` `emptyBook` `current` `newItem` `normalize` `normalizeList` `load` `save` `flush` `clearList` `toJSON` `fromJSON` `exportName` `cleanCode` `formatCode` `MAX_ITEMS` `COLUMNS` `LIST_COUNT` | localStorage 讀寫。三份清單裝在一個 key 裡，`current()` 取目前那一份。**任何讀進來的資料都不信任**，一律過 `normalize` |
@@ -199,6 +199,8 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 超極巨化勾了要換的圖 | `js/godex.js` 的 `gmaxIcon`（由 `build-dex.mjs` 的 `GMAX_ICONS` 掛到本體），畫面走 `dex.iconAttrs(e, shiny, gmax)` |
 | 改清單份數 | `js/store.js` 的 `LIST_COUNT`，分頁樣式在 `css/style.css` 的 `.list-tabs` |
 | 改背卡詳情的卡面圖大小 | `css/style.css` 的 `.card-art`（限高 38vh，寬度 auto） |
+| 勾了極巨化該列哪些背卡 | `js/backgrounds.js` 的 `MAX_BATTLE_CARDS`（白名單，人工指名）。過濾走 `cardsFor(id, { max })`，只影響列出什麼，不洗存進去的值 |
+| 極巨化與背卡的衝突清除 | `js/main.js` 兩條路：草稿在 `data-draft` 那段、已加入那筆在 `setField`。跟極巨化／超極巨化互斥同一個位置 |
 | 改背卡詳情的批次加入 | `js/ui.js` 的 `renderCardDetail`（多選時的格子）與 `renderBgFoot`（底部兩顆鈕）。加進去帶哪些條件在 `js/main.js` 的 `addMany` |
 | 改選寶可夢面板 | `js/ui.js` 的 `renderPicker`，一次最多畫 `PICK_MAX` 筆。多選的底部動作列是 `renderPickFoot`，殼在 `index.html` 的 `#pickFoot` |
 | 改那個面板的篩選 | 跟圖鑑同一組 `FILTER_GROUPS`，HTML 走共用的 `pickedChips` / `filterGroups`，dataset 前綴由 `FATTR` 給。**改篩選不清掉選取**，畫面上看不到的那幾隻由 `countHidden` / `pickHidden` 算出來，底部補一句交代 |

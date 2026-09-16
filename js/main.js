@@ -10,7 +10,7 @@
 
 import { LANGS, DEFAULT_LANG, makeT } from "./i18n.js";
 import { emptyFilter, filterCount, knownItems, find, hasShiny } from "./dex.js";
-import { CARDS as BG_CARDS } from "./backgrounds.js";
+import { CARDS as BG_CARDS, isMaxBattle } from "./backgrounds.js";
 import * as store from "./store.js";
 import * as ui from "./ui.js";
 import { buildShareImage } from "./share.js";
@@ -443,6 +443,8 @@ function setField(col, idx, field, value) {
   // 極巨化與超極巨化互斥，跟草稿那邊同一條規則
   if (value && (field === "max" || field === "gmax")) {
     item[field === "max" ? "gmax" : "max"] = false;
+    // 極巨化只能從 Max Battle 抓到，野生或團戰的卡配不上，退回「不指定」
+    if (item.bg && !isMaxBattle(item.bg)) item.bg = "";
   }
   save();
 }
@@ -692,6 +694,13 @@ document.addEventListener("click", (ev) => {
      */
     if (state.draft[f] && (f === "max" || f === "gmax")) {
       state.draft[f === "max" ? "gmax" : "max"] = false;
+      /*
+       * 極巨化只能從 Max Battle 抓到，所以野生或團戰拿到的背卡配不上。
+       * 下面那份清單跟著縮成只剩 Max Battle 的卡，已經選著的那張
+       * 如果不在裡面就退回「不指定」——留著的話畫面上會有一個
+       * 點不到、也取消不掉的選取。
+       */
+      if (state.draft.bg && !isMaxBattle(state.draft.bg)) state.draft.bg = "";
     }
     drawDetail();
     return;
