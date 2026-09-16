@@ -104,6 +104,7 @@
   --cell-img: 54px;
   --cell-pad: 7px 5px 6px;
   --cell-cols: 5;
+  --pick-wide-cols: 7;
 }
 
 body.big-icons {
@@ -112,6 +113,7 @@ body.big-icons {
   --cell-img: 62px;
   --cell-pad: 10px 8px 9px;
   --cell-cols: 3;
+  --pick-wide-cols: 5;
 }
 
 /*
@@ -2103,19 +2105,25 @@ body.no-names .cell .no {
 }
 
 /*
- * 面板很窄，格子跟著窄，一排三隻剛好還看得出是誰。
+ * 欄數吃設定的 `--cell-cols`：小圖示五欄、大圖示三欄，桌機手機同一套。
+ * 原本桌機寫死三欄，520 寬的彈窗除出來每格 152px，
+ * 中間擺一張 54px 的小圖，設定選了小圖示卻看起來比圖鑑還大。
+ *
  * minmax 的下限要寫 0，1fr 的預設下限是 auto，
  * 名稱長一點就把格子撐開，整排捲出面板右邊。
  */
 .pick-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--cell-cols), minmax(0, 1fr));
 }
 
 /*
  * 多選時把整個彈窗放寬，一排五隻。**只在桌機**。
  *
- * 520 是「常駐右欄」時代留下的寬度。單選一次只挑一隻，三欄夠用；
- * 多選要一次挑二十隻，三欄得捲七排才看得完，捲動本身就變成瓶頸。
+ * 520 是「常駐右欄」時代留下的寬度。單選一次只挑一隻，那幾欄夠用；
+ * 多選要一次挑二十隻，欄數少就得捲很多排，捲動本身變成瓶頸。
+ * 寬彈窗的欄數另外記一組（`--pick-wide-cols`，小 7 大 5），
+ * 一樣跟著設定走。**不要寫成 `--cell-cols + 2`**：那是算出來的，
+ * 而這兩個值講的是兩種寬度各自排得好看的欄數，沒有固定差距。
  *
  * 一定要關在 min-width 裡：手機那段是 `.rail-inner`（0,1,0），
  * 特異性低於 `body.pick-wide .rail-inner`（0,2,1），寫在外面會反過來
@@ -2129,7 +2137,7 @@ body.no-names .cell .no {
   }
 
   body.pick-wide .pick-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--pick-wide-cols), minmax(0, 1fr));
   }
 }
 

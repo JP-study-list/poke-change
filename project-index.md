@@ -195,6 +195,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改那個面板的篩選 | 跟圖鑑同一組 `FILTER_GROUPS`，HTML 走共用的 `pickedChips` / `filterGroups`，dataset 前綴由 `FATTR` 給 |
 | 加篩選條件 | `js/dex.js` 的 `FILTER_GROUPS`，標籤補 `js/i18n.js`，面板裡的組序在 `js/ui.js` 的 `FGROUPS` |
 | 改手機的欄數 | `css/style.css` 的 `--cell-cols`，900px 以下講死不推算 |
+| 改選寶可夢面板的欄數 | 單選吃 `--cell-cols`、多選（720 寬）吃 `--pick-wide-cols`，兩組都在 `:root` 與 `body.big-icons`。跟著設定的大小圖示走，不要改成推算 |
 | 改格子大小的兩段值 | `css/style.css` 的 `--cell-*`，桌機在 `:root`，手機在斷點內 |
 
 ---
