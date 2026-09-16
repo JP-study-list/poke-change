@@ -685,18 +685,20 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
 }
 
 /**
- * 極巨化的符號，照遊戲裡那顆畫的：兩片交叉的彎刃，四個尖端。
+ * 極巨化的符號。
  *
- * **極巨化與超極巨化是同一個形狀**，遊戲裡也是——兩者靠底色分，
- * 極巨化亮洋紅、超極巨化深酒紅（GO 的篩選標籤就是這樣區分的）。
+ * **這是官方那張圖，不是自己畫的。** 先前手工描過一版 SVG path，
+ * 形狀差很多——官方那顆是空心輪廓，上方分岔成尖角、下方兩條帶子張開，
+ * 右下還有平行線紋理，照著截圖畫不出來。
  *
- * 用 SVG path 而不是圖檔：上游沒有把這顆符號抽出來（搜過 48319 個
- * 檔案，只有極巨粒子的道具罐與貼紙包），而且 canvas 要畫同一顆，
- * path 字串可以直接餵給 `new Path2D()`，兩邊不會走樣。
- * 24×24 的 viewBox，`js/share.js` 換算時也照這個尺寸。
+ * 圖存在 `img/max-mark.png`（從 Bulbapedia 取得，185×185 帶 alpha）。
+ * **收進 repo 的理由跟 img/bg、img/extra 一樣**：來源沒有 CORS 標頭，
+ * 不收進來就畫不進分享圖。25 KB，一張。
+ *
+ * 顏色靠 CSS mask 上色（極巨化粉紅、超極巨化紫），所以只要一張圖。
+ * canvas 那邊用 `source-in` 做同一件事，見 js/share.js。
  */
-export const MAX_MARK_PATH =
-  "M5 2.2 Q5.8 16.4 19 21.8 Q14.3 10.4 5 2.2 Z M19 2.2 Q5.8 7.6 5 21.8 Q14.3 13.6 19 2.2 Z";
+export const MAX_MARK_SRC = "./img/max-mark.png";
 
 /**
  * 極巨化／超極巨化的徽章。圖的右上角一顆圓，裡面是官方那顆符號。
@@ -714,7 +716,7 @@ function markBadge(v, t) {
   if (!kind) return "";
   return `<i class="maxb${kind === "gmax" ? " gmax" : ""}" title="${esc(
     t(kind === "gmax" ? "markGmax" : "markMax")
-  )}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${MAX_MARK_PATH}" /></svg></i>`;
+  )}"></i>`;
 }
 
 /* ─────────── 交換表 ─────────── */

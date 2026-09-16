@@ -1749,9 +1749,14 @@ body.no-names .cell .no {
  * 疊在寶可夢圖右上角的符號，沒有底，就是符號本身——
  * 跟遊戲裡的寶可夢清單一致（2026-09-16，使用者給的參考圖）。
  *
- * 白描邊是必要的，不是裝飾：背卡底圖有亮有暗，深色模式又是近黑，
- * 只靠粉紅或紫在某些底上會整個糊掉。異色的星星也是同一個理由描邊。
- * `paint-order: stroke` 讓描邊畫在填色下面，外緣才乾淨。
+ * **圖是官方那張**（`img/max-mark.png`），不是自己畫的 SVG：
+ * 那顆符號是空心輪廓加分岔尖角，手工描摹差很多。
+ * 用 mask 而不是 <img>，這樣同一張圖可以上兩種顏色——
+ * 極巨化粉紅、超極巨化紫，遊戲裡也是只有顏色不同。
+ *
+ * 白邊是必要的，不是裝飾：背卡底圖有亮有暗，深色模式又是近黑，
+ * 空心的線條在某些底上會整個糊掉。mask 沒辦法描邊，改用兩層
+ * drop-shadow 疊出一圈——異色的星星也是同一個理由描邊。
  */
 .maxb {
   position: absolute;
@@ -1760,21 +1765,15 @@ body.no-names .cell .no {
   display: block;
   width: 20px;
   height: 20px;
+  background: var(--max-mark);
+  -webkit-mask: url("../img/max-mark.png") center / contain no-repeat;
+  mask: url("../img/max-mark.png") center / contain no-repeat;
+  filter: drop-shadow(0 0 0.8px var(--card)) drop-shadow(0 0 0.8px var(--card));
   transition: opacity 0.12s;
 }
 
-.maxb svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  fill: var(--max-mark);
-  stroke: var(--card);
-  stroke-width: 1.8;
-  paint-order: stroke;
-}
-
-.maxb.gmax svg {
-  fill: var(--gmax-mark);
+.maxb.gmax {
+  background: var(--gmax-mark);
 }
 
 .want-cell:hover .maxb,
@@ -2310,6 +2309,15 @@ body.no-names .cell .no {
 
 .mk.max[aria-pressed="true"] {
   background: var(--max);
+}
+
+/*
+ * 每一種條件都要有自己的底色。漏掉一個不會報錯，會變成**整顆鈕隱形**：
+ * `.mk[aria-pressed="true"]` 把字轉白、邊框轉透明，沒有底色就是
+ * 白字畫在白面板上。超極巨化剛加進來時就漏了這條。
+ */
+.mk.gmax[aria-pressed="true"] {
+  background: var(--gmax);
 }
 
 /* 已經有一模一樣的一筆時閃一下，指出是哪一筆，而不是默默不動 */

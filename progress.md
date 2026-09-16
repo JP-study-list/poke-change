@@ -4,6 +4,46 @@
 
 ---
 
+## 2026-09-16（八）
+- 類型：修正
+- 影響檔案：css/style.css, js/ui.js, js/share.js, img/max-mark.png（新增）,
+  tools/make-max-mark.mjs（新增）, tools/check.mjs, js/version.js,
+  VERSION.md, CLAUDE.md, project-index.md
+- 摘要：修好「按下超極巨化按鈕會消失」，符號改用官方那張圖。版本升 1.08.01。
+- 原因：使用者回報兩件事——符號不對（要我上網抓照片），
+  以及按下超極巨化之後那顆鈕會不見。
+- 按鈕消失：
+  - **不是 DOM 消失，是視覺上隱形**。`.mk[aria-pressed="true"]` 會把字轉白、
+    邊框轉透明，而我只加了 `.mk.max` 的底色，**漏了 `.mk.gmax`**，
+    結果選中之後變成白字畫在白面板上。
+  - **量測與截圖都抓不到這種錯**：DOM 裡那顆鈕好好的，aria-pressed 也對，
+    我前兩輪驗的都是這些。要嘛量 computed background，要嘛比對樣式表。
+  - check 新增「2b2. 條件鈕的底色」讀 `css/style.css` 比對每一種 class，
+    而且**驗過這條測試本身**：把規則拔掉會失敗、補回來會通過。
+- 符號：
+  - **PokeMiners 沒有那顆符號，Bulbapedia 有**（`File:GO_Dynamax_icon.png`）。
+    上一版是照使用者的截圖手工畫 SVG path，形狀差很多——官方那顆是
+    **空心輪廓**，上方分岔成尖角、下方兩條帶子張開、右下還有平行線紋理。
+    這種細節照著截圖畫不出來，該去找原圖就去找。
+  - **細線條要先加粗再縮**。原圖 185×185、線條約 10px，直接縮到畫面上的
+    20px 剩不到 1 像素，抗鋸齒稀釋後 alpha>150 的只剩 10%，
+    分享圖上實測只有 26 個像素有顏色，等於沒畫。
+    `tools/make-max-mark.mjs` 做形態學膨脹（半徑 3）再盒式降採樣到 96×96，
+    **在資產層解決一次**，畫面與 canvas 都受益，不必在每個使用點補救。
+  - 圖只存 alpha（白色 + alpha），顏色由使用端給：畫面用 CSS mask 上色、
+    canvas 用 `source-in`。一張圖出兩種顏色，遊戲裡也是只有顏色不同。
+  - 收進 repo 的理由跟 `img/bg`、`img/extra` 一樣：來源沒有 CORS 標頭。2.7 KB。
+- 驗證：
+  - `node tools/check.mjs` 全部通過。
+  - CDP：超極巨化鈕的底色是 `rgb(156, 0, 85)`（修正前是 `rgba(0, 0, 0, 0)`）；
+    符號的 mask 指向 `img/max-mark.png`，極巨化 `rgb(238, 111, 180)`、
+    超極巨化 `rgb(164, 99, 216)`。
+  - **分享圖從 26 個像素變成粉紅 127／紫 95**，符號真的畫出來了。
+  - 1:1 與 3.5 倍各截一次：加粗前 1:1 下糊成一團淡色，加粗後形狀認得出來。
+- 待辦/已知問題：（無）
+
+---
+
 ## 2026-09-16（七）
 - 類型：新增
 - 影響檔案：js/ui.js, css/style.css, js/share.js, tools/build-dex.mjs,

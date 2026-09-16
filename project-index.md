@@ -150,6 +150,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `tools/build-bg.mjs` | 產生 `js/bgdata.js`。PokeMiners 給代號與圖，Dittobase 給寶可夢清單，Serebii 給日期並墊底，Bulbapedia 只做交叉比對。兩邊叫法不同接不上的走 `DB_MANUAL`／`SEREBII_MANUAL` 人工指名，`resolveMatches` 擋掉兩張卡搶同一筆。另外寫一份 `tools/bg-report.md`。快取在 `tools/.cache/bg/` |
 | `tools/build-max.mjs` | 產生 `js/maxdata.js`。抓 Dittobase 圖鑑頁的 `isDynamax`／`isGigantamax` 旗標，映射到條目 id。**game master 給不出這份名單**（`breadTierGroup` 2467 筆幾乎全有），只能拿它的 `BREAD` 設定佐證。另外寫一份 `tools/max-report.md`。快取在 `tools/.cache/max/` |
 | `tools/check.mjs` | 自我檢查。i18n key、版本號兩個檔沒寫岔、extra 的留白欄位齊全、條目完整性、背卡引用、儲存往返、全部繪製函式、逸出。`--net` 加驗圖片網址 |
+| `tools/make-max-mark.mjs` | 產生 `img/max-mark.png`。抓 Bulbapedia 的官方符號，**先把細線條加粗再縮**——原圖 185px 直接縮到 20px 會糊掉 |
 | `tools/measure-icons.mjs` | 量 `extra.js` 那批圖的主體佔畫布多少、中心偏多少。要連外網。**不自動改檔**，`--list` 印出數字自己貼進 `js/extra.js` |
 
 ### 資源
@@ -158,6 +159,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | --- | --- | --- |
 | `img/bg/` | ✓ | 17 張背卡的本地備援圖，jpg / png / webp 混雜，**寫死檔名前先確認副檔名** |
 | `img/extra/` | ✓ | 5 張上游沒有的裝扮圖。來源沒有 CORS，不收進來就畫不進分享圖 |
+| `img/max-mark.png` | ✓ | 極巨化的官方符號，96×96 只有 alpha。顏色由使用端給（CSS mask／canvas source-in），所以一張圖出兩種顏色。由 `tools/make-max-mark.mjs` 產生 |
 
 寶可夢圖片**不鏡像**，一律直接連外部 CDN。3426 張約 75 MB，
 放進 repo 不划算，而且是 Niantic 素材。
@@ -193,7 +195,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改一欄的上限 | `js/store.js` 的 `MAX_ITEMS` |
 | GO 開放新的寶可夢可以極巨化 | `node tools/build-max.mjs --force`，名單會自己長出來 |
 | 上游補了缺的超極巨化圖 | `node tools/build-dex.mjs --force` 就好，`gmaxIcon` 會自己長出來 |
-| 改極巨化的符號 | 形狀在 `js/ui.js` 的 `MAX_MARK_PATH`（canvas 吃同一個字串），顏色是 `css/style.css` 的 `--max-mark`／`--gmax-mark`，分享圖那份在 `js/share.js` 的 `maxMark`／`gmaxMark`。詳情面板那顆靠 `.d-icon` 定位 |
+| 改極巨化的符號 | 圖是 `img/max-mark.png`（`tools/make-max-mark.mjs` 產生），顏色是 `css/style.css` 的 `--max-mark`／`--gmax-mark`，分享圖那份在 `js/share.js` 的 `maxMark`／`gmaxMark`。詳情面板那顆靠 `.d-icon` 定位 |
 | 超極巨化勾了要換的圖 | `js/godex.js` 的 `gmaxIcon`（由 `build-dex.mjs` 的 `GMAX_ICONS` 掛到本體），畫面走 `dex.iconAttrs(e, shiny, gmax)` |
 | 改清單份數 | `js/store.js` 的 `LIST_COUNT`，分頁樣式在 `css/style.css` 的 `.list-tabs` |
 | 改背卡詳情的卡面圖大小 | `css/style.css` 的 `.card-art`（限高 38vh，寬度 auto） |

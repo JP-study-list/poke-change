@@ -310,6 +310,31 @@ console.log("\n2. 圖鑑條目");
   );
 }
 
+console.log("\n2b2. 條件鈕的底色");
+{
+  /*
+   * 每一種條件鈕都要有自己的底色。
+   *
+   * 漏掉一個不會報錯，會變成**整顆鈕隱形**：`.mk[aria-pressed="true"]`
+   * 把字轉白、邊框轉透明，沒有底色就是白字畫在白面板上。
+   * 超極巨化剛加進來時就漏了，使用者回報「按下去按鈕會不見」才發現。
+   * DOM stub 沒有 CSS，量不到 computed style，所以改成讀樣式表比對。
+   */
+  const css = await readFile(new URL("../css/style.css", import.meta.url), "utf8");
+  const used = [...ui.renderDetail.toString().matchAll(/[dm]mk\("(\w+)", [^,]+, "(\w+)"\)/g)].map(
+    (m) => m[2]
+  );
+  const classes = [...new Set(used.length ? used : ["shiny", "xxl", "xxs", "max", "gmax"])];
+  const missing = classes.filter(
+    (c) => !new RegExp(`\\.mk\\.${c}\\[aria-pressed="true"\\]`).test(css)
+  );
+  ok(
+    `${classes.length} 種條件鈕都有底色`,
+    !missing.length,
+    missing.length ? `${missing.join(", ")} 會變成白字配透明底` : ""
+  );
+}
+
 console.log("\n2c. 極巨化名單");
 {
   const { MAX_IDS } = maxdata;

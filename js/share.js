@@ -34,7 +34,7 @@ import {
   gmaxOffset,
 } from "./dex.js";
 import { findCard, bgSources } from "./backgrounds.js";
-import { MAX_MARK_PATH } from "./ui.js";
+import { MAX_MARK_SRC } from "./ui.js";
 import { formatCode } from "./store.js";
 
 const SCALE = 2;
@@ -281,6 +281,13 @@ export async function buildShareImage(data, opts) {
   const loaded = new Map();
   for (const r of await Promise.all(jobs)) loaded.set(r.it, r);
 
+  /*
+   * 極巨化的符號。本地圖，載不到就不畫那顆——整張圖不該因為
+   * 一個標記掛掉，跟寶可夢圖載不到會退回備援是同一個原則。
+   */
+  const needMark = sections.some((s) => s.items.some((it) => it.max || it.gmax));
+  const markImg = needMark ? await loadImage(MAX_MARK_SRC) : null;
+
   let y = TITLE_H;
 
   for (const sect of sections) {
@@ -376,24 +383,38 @@ export async function buildShareImage(data, opts) {
        */
       /*
        * 極巨化／超極巨化的符號，疊在格子右上角，沒有底。
-       * 吃畫面那顆同一個 path 字串（Path2D 直接收 SVG path data），
-       * 所以兩邊不會走樣。24×24 的 viewBox 縮成 18 個 CSS 像素。
-       * 描邊跟畫面一樣用卡片色，背卡底圖有亮有暗，不描會糊掉。
+       * 跟畫面用同一張官方圖（`img/max-mark.png`），畫面靠 CSS mask 上色，
+       * 這裡靠 `source-in`：先把圖畫進一張離屏 canvas，再用純色蓋上去，
+       * 只有不透明的地方會被填到，等於同一張 mask 出兩種顏色。
+       * 白邊也在離屏那張做，位移四個方向各畫一次——
+       * 背卡底圖有亮有暗，空心的線條不描會糊掉。
        */
-      if (it.max || it.gmax) {
+      if ((it.max || it.gmax) && markImg) {
         const size = 21;
-        const k = size / 24;
-        ctx.save();
-        ctx.translate(bx + box - size + 1, cy - 1);
-        ctx.scale(k, k);
-        const mark = new Path2D(MAX_MARK_PATH);
-        ctx.lineWidth = 1.8;
-        ctx.strokeStyle = C.card;
-        ctx.lineJoin = "round";
-        ctx.stroke(mark);
-        ctx.fillStyle = it.gmax ? C.gmaxMark : C.maxMark;
-        ctx.fill(mark);
-        ctx.restore();
+        const pad = 2;
+        const off = document.createElement("canvas");
+        off.width = off.height = size + pad * 2;
+        const o = off.getContext("2d");
+        for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+          o.drawImage(markImg, pad + dx, pad + dy, size, size);
+        }
+        o.globalCompositeOperation = "source-in";
+        o.fillStyle = C.card;
+        o.fillRect(0, 0, off.width, off.height);
+        o.globalCompositeOperation = "source-over";
+
+        const fg = document.createElement("canvas");
+        fg.width = fg.height = size;
+        const f = fg.getContext("2d");
+        f.drawImage(markImg, 0, 0, size, size);
+        f.globalCompositeOperation = "source-in";
+        f.fillStyle = it.gmax ? C.gmaxMark : C.maxMark;
+        f.fillRect(0, 0, size, size);
+
+        const px = bx + box - size + 1;
+        const py = cy - 1;
+        ctx.drawImage(off, px - pad, py - pad);
+        ctx.drawImage(fg, px, py);
       }
 
       const mid = bx + box / 2;
