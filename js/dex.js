@@ -21,7 +21,7 @@
 
 import { GODEX } from "./godex.js";
 import { extraEntries } from "./extra.js";
-import { MAX_IDS } from "./maxdata.js";
+import { MAX_IDS, GMAX_IDS } from "./maxdata.js";
 import { allBgEntryIds } from "./backgrounds.js";
 import { TYPES } from "./types.js";
 import { imgAttrs } from "./imgchain.js";
@@ -100,13 +100,22 @@ export function fullName(e, lang) {
  * <img> 屬性。
  * @param {object} e 條目
  * @param {boolean} shiny 要異色版本
+ * @param {boolean} gmax 要超極巨化版本
+ *
+ * 超極巨化不是條目而是勾選條件，但它的外觀真的不一樣，
+ * 所以那 13 種的圖掛在本體的 `gmaxIcon`／`gmaxShinyIcon` 上，
+ * 勾起來就換這一張——跟異色同一個機制。
+ * 名單裡有四隻上游還沒有圖（皮卡丘、喵喵、灰塵山、長毛巨魔），
+ * 那幾隻勾了也拿不到圖，備援鏈會退回一般的那張，不會破圖。
  */
-export function iconAttrs(e, shiny) {
+export function iconAttrs(e, shiny, gmax) {
   if (!e) return "";
   // 外部來源的裝扮沒有異色圖，一律顯示一般版
   if (e.art) return imgAttrs([e.art, artUrl(e.dex)]) + zoomAttr(e);
-  const main = shiny && e.shinyIcon ? e.shinyIcon : e.icon;
-  return imgAttrs([goUrl(main), goUrl(e.icon), artUrl(e.dex)]);
+  const normal = shiny && e.shinyIcon ? e.shinyIcon : e.icon;
+  const big = gmax ? (shiny && e.gmaxShinyIcon ? e.gmaxShinyIcon : e.gmaxIcon) : null;
+  const chain = [big, normal, e.icon].filter(Boolean).map(goUrl);
+  return imgAttrs([...chain, artUrl(e.dex)]);
 }
 
 /*
@@ -159,6 +168,16 @@ export const hasShiny = (e) => !!(e && e.shinyIcon);
  */
 const MAX_SET = new Set(MAX_IDS);
 export const canMax = (e) => !!(e && MAX_SET.has(typeof e === "string" ? e : e.id));
+
+/**
+ * 這個條目能不能超極巨化。名單是 canMax 的子集（18 筆）。
+ *
+ * 它曾經是條目（2026-09-16 那半天），現在是勾選條件：
+ * 圖鑑裡一個物種本來就有本體加好幾個裝扮，再多一格排擠掉的是別隻。
+ * 外觀沒有因此消失，勾起來會換成 `gmaxIcon` 那張。
+ */
+const GMAX_SET = new Set(GMAX_IDS);
+export const canGmax = (e) => !!(e && GMAX_SET.has(typeof e === "string" ? e : e.id));
 
 /* ─────────── 搜尋與篩選 ─────────── */
 

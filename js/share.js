@@ -120,7 +120,7 @@ async function loadBg(cardId) {
  * **退回官方立繪時不掛**，那張是滿版的，沿用倍率會整隻爆出格子，
  * 跟畫面上 `__imgfb` 換來源要清掉 `--iz` 是同一件事。
  */
-async function loadSprite(entry, shiny) {
+async function loadSprite(entry, shiny, gmax) {
   if (!entry) return null;
   if (entry.art) {
     const img = await loadImage(entry.art);
@@ -131,9 +131,15 @@ async function loadSprite(entry, shiny) {
     }
     return await loadImage(artUrl(entry.dex));
   }
-  const main = shiny && entry.shinyIcon ? entry.shinyIcon : entry.icon;
+  const normal = shiny && entry.shinyIcon ? entry.shinyIcon : entry.icon;
+  /*
+   * 超極巨化的外觀真的不一樣，勾了就換圖，跟畫面上的 iconAttrs 同一條鏈。
+   * 名單裡有四隻上游還沒有圖，那幾隻 gmaxIcon 是空的，直接落到一般那張。
+   */
+  const big = gmax ? (shiny && entry.gmaxShinyIcon ? entry.gmaxShinyIcon : entry.gmaxIcon) : null;
   return (
-    (await loadImage(goUrl(main))) ||
+    (big && (await loadImage(goUrl(big)))) ||
+    (await loadImage(goUrl(normal))) ||
     (await loadImage(goUrl(entry.icon))) ||
     (await loadImage(artUrl(entry.dex)))
   );
@@ -244,7 +250,7 @@ export async function buildShareImage(data, opts) {
       jobs.push(
         (async () => ({
           it,
-          sprite: await loadSprite(find(it.id), it.shiny),
+          sprite: await loadSprite(find(it.id), it.shiny, it.gmax),
           bgImg: await loadBg(it.bg),
         }))()
       );
@@ -341,12 +347,12 @@ export async function buildShareImage(data, opts) {
       }
 
       /*
-       * 極巨化是右上角的洋紅圓徽章，跟畫面上的格子一致。
+       * 極巨化／超極巨化是右上角的洋紅圓徽章，跟畫面上的格子一致。
        * 畫面那顆在叉出現時會讓位，這裡沒有那個狀態，一律畫。
        * 半徑 8 是照畫面 14px 直徑換算的（這張圖是 2 倍解析度，
        * 但整個 ctx 已經 scale 過，所以用的是 CSS 像素）。
        */
-      if (it.max) {
+      if (it.max || it.gmax) {
         const r = 8;
         const mx = bx + box - r + 1;
         const my = cy + r - 1;
@@ -355,10 +361,11 @@ export async function buildShareImage(data, opts) {
         ctx.fillStyle = C.max;
         ctx.fill();
         ctx.fillStyle = "#fff";
-        ctx.font = `700 10px ${FONT}`;
+        // 兩者互斥，一次只畫一個字。G 比 M 寬，字級小半號才塞得進同一顆圓
+        ctx.font = `700 ${it.gmax ? 9 : 10}px ${FONT}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("M", mx, my + 0.5);
+        ctx.fillText(it.gmax ? "G" : "M", mx, my + 0.5);
       }
 
       const mid = bx + box / 2;

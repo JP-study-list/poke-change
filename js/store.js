@@ -22,8 +22,8 @@
  *
  *   list = {
  *     name: "",                        這一份的名稱
- *     want: [ {id, shiny, xxl, xxs, max, bg}, ... ],   想要的
- *     have: [ {id, shiny, xxl, xxs, max, bg}, ... ],   可以給的
+ *     want: [ {id, shiny, xxl, xxs, max, gmax, bg}, ... ],   想要的
+ *     have: [ {id, shiny, xxl, xxs, max, gmax, bg}, ... ],   可以給的
  *   }
  *
  * ── max 是 2026-09-16 加的，沒有升版本號 ──
@@ -72,7 +72,7 @@ export const current = (book) => book.lists[book.active] || book.lists[0];
 
 /** 一筆新的交換項目。預設想要異色，因為交換的價值就在重骰個體值 */
 export function newItem(id, shiny = true) {
-  return { id, shiny: !!shiny, xxl: false, xxs: false, max: false, bg: "" };
+  return { id, shiny: !!shiny, xxl: false, xxs: false, max: false, gmax: false, bg: "" };
 }
 
 /* ─────────── 訓練家代碼 ─────────── */
@@ -106,9 +106,16 @@ function cleanItem(v) {
     shiny: !!v.shiny,
     xxl: !!v.xxl,
     xxs: !!v.xxs,
-    // 舊紀錄沒有這個欄位，補 false。不檢查條目能不能極巨化：
-    // 名單會隨 GO 更新縮水，拿名單去洗紀錄等於默默改掉使用者存的東西
-    max: !!v.max,
+    /*
+     * 舊紀錄沒有這兩個欄位，補 false。**不檢查條目能不能極巨化**：
+     * 名單會隨 GO 更新縮水，拿名單去洗紀錄等於默默改掉使用者存的東西。
+     *
+     * 兩個互斥：超極巨化本來就蘊含極巨化，畫面上那兩顆鈕點一個會取消
+     * 另一個，手改過的 localStorage 也照這條規則收斂，免得畫面上
+     * 出現兩顆徽章疊在一起。
+     */
+    max: !!v.max && !v.gmax,
+    gmax: !!v.gmax,
     bg: typeof v.bg === "string" ? v.bg.slice(0, 40) : "",
   };
 }

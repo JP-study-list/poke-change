@@ -242,7 +242,24 @@ function breadFromGM(gm) {
   const sour = pick("BREAD_SHARED_SETTINGS")?.breadSettings?.allowedSourdoughPokemon || [];
   const gmax = new Set(sour.map((x) => x.pokemonId.toLowerCase()));
 
-  return { bread, breadForms, gmax };
+  /*
+   * 超極巨化的型態。form 是陣列，顫弦蠑螈高調與低調各一筆，
+   * 沒有型態的寫 FORM_UNSET。跟上面 BREAD_MODE 同一套處理。
+   */
+  const sourForms = [];
+  for (const x of sour) {
+    const species = x.pokemonId.toLowerCase();
+    const forms = x.form && x.form.length ? x.form : [""];
+    for (const f of forms) {
+      const raw = String(f || "").replace(`${x.pokemonId}_`, "");
+      sourForms.push({
+        species,
+        form: !raw || raw === "NORMAL" || raw === "FORM_UNSET" ? "" : raw,
+      });
+    }
+  }
+
+  return { bread, breadForms, gmax, sourForms };
 }
 
 /* ─────────── 合成 ─────────── */
@@ -300,11 +317,49 @@ for (const { species, form } of gm.breadForms) {
 }
 
 // 兩個來源都併完了才排序，順序照圖鑑編號
+const byDex = (a, b) => {
+  const na = Number(a.slice(1).split(".")[0]);
+  const nb = Number(b.slice(1).split(".")[0]);
+  return na - nb || a.localeCompare(b);
+};
 const idList = [...ids].sort((a, b) => {
   const na = Number(a.slice(1).split(".")[0]);
   const nb = Number(b.slice(1).split(".")[0]);
   return na - nb || a.localeCompare(b);
 });
+
+/*
+ * 超極巨化的名單。
+ *
+ * 2026-09-16 下午起它跟極巨化一樣是勾選條件，不是條目了，
+ * 所以這裡也要產一份「哪些條目勾得到超極巨化」。
+ *
+ * 物種以 Dittobase 標已實裝的為準（17 個），型態則看 game master 的
+ * allowedSourdoughPokemon——它給的是 pokemonId 加 form，顫弦蠑螈
+ * 高調與低調都列了，光靠 Dittobase 那一筆掛在物種上的會漏掉低調。
+ * game master 那份有 31 個物種，多出來的是還沒實裝的，用 Dittobase 篩掉。
+ *
+ * **不受「上游有沒有圖」限制**：當條目的時候沒圖就畫不出來，
+ * 現在只是一個旗標，皮卡丘、喵喵、灰塵山與積怨番長那四隻照樣勾得到，
+ * 只是勾了不會換圖（`gmaxIcon` 沒有就維持本體的圖）。
+ */
+const gmaxSpecies = new Set(
+  dittoRows.filter((r) => r.gmax && r.released).map((r) => r.species)
+);
+const gmaxIds = new Set();
+const gmaxUnmatched = [];
+for (const { species, form } of gm.sourForms) {
+  if (!gmaxSpecies.has(species)) continue;
+  const key = species + (form ? "-" + slugify(form) : "");
+  const id = names.get(key);
+  if (!id) {
+    gmaxUnmatched.push(key);
+    continue;
+  }
+  gmaxIds.add(id);
+}
+
+const gmaxList = [...gmaxIds].sort(byDex);
 
 /* ─────────── 交叉比對 ─────────── */
 
@@ -348,6 +403,22 @@ ${idList.map((id) => `  "${id}",`).join("\n")}
 ];
 
 export const MAX_COUNT = MAX_IDS.length;
+
+/**
+ * 勾得到「超極巨化」的條目。MAX_IDS 的子集。
+ *
+ * 物種以 Dittobase 標已實裝的為準，型態看 game master 的
+ * allowedSourdoughPokemon（顫弦蠑螈高調與低調都算）。
+ *
+ * **不受上游有沒有圖限制**：這只是一個旗標，皮卡丘、喵喵、灰塵山與
+ * 積怨番長上游還沒有圖，照樣勾得到，只是勾了不換圖——
+ * 換圖看的是條目自己的 gmaxIcon。
+ */
+export const GMAX_IDS = [
+${gmaxList.map((id) => `  "${id}",`).join("\n")}
+];
+
+export const GMAX_COUNT = GMAX_IDS.length;
 `
 );
 
@@ -364,6 +435,7 @@ const report = [
     dittoRows.filter((r) => (r.dyn || r.gmax) && r.released).length
   }** 筆`,
   `- 對到本站條目 **${idList.length}** 個 id`,
+  `- 其中勾得到超極巨化的 **${gmaxList.length}** 個：\`${gmaxList.join("`, `")}\``,
   `- 對不上的 **${unmatched.length}** 筆${
     unmatched.length ? "（下面列出，補進 `FORM_ALIAS` 就好）" : ""
   }`,
@@ -415,6 +487,7 @@ console.log("\n產生完成 js/maxdata.js");
 console.log(`  Dittobase 條目        ${dittoRows.length}`);
 console.log(`  可極巨化（已實裝）    ${dittoRows.filter((r) => (r.dyn || r.gmax) && r.released).length}`);
 console.log(`  對到條目 id           ${idList.length}`);
+console.log(`  其中勾得到超極巨化    ${gmaxList.length}`);
 console.log(`  對不上                ${unmatched.length}`);
 console.log(`  game master 補進來的  ${fromGM.length}${fromGM.length ? "（" + fromGM.join("、") + "）" : ""}`);
 console.log(`  交叉比對 game master  極巨化 ${gm.bread.size} 個物種，只有它有的 ${onlyGM.length}`);

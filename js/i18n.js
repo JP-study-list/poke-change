@@ -113,6 +113,7 @@ export const STRINGS = {
     markXxl: "XXL",
     markXxs: "XXS",
     markMax: "極巨化",
+    markGmax: "超極巨化",
     markBg: "背卡",
     bgAny: "不指定",
 
@@ -248,6 +249,7 @@ export const STRINGS = {
     markXxl: "XXL",
     markXxs: "XXS",
     markMax: "ダイマックス",
+    markGmax: "キョダイマックス",
     markBg: "背景カード",
     bgAny: "指定なし",
 
@@ -383,6 +385,7 @@ export const STRINGS = {
     markXxl: "XXL",
     markXxs: "XXS",
     markMax: "Dynamax",
+    markGmax: "Gigantamax",
     markBg: "Background",
     bgAny: "Any",
 

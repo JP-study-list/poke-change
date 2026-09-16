@@ -333,41 +333,62 @@ console.log("\n2c. 極巨化名單");
   const costumes = MAX_IDS.filter((id) => byId.get(id).kind === "costume");
   ok("名單裡沒有裝扮", !costumes.length, costumes.slice(0, 5).join(", "));
 
-  /*
-   * 超極巨化本身就是條目，它已經是極巨化了。
-   * 收進名單的話詳情面板會多一顆再勾一次的鈕。
-   */
-  const gmax = MAX_IDS.filter((id) => /GIGANTAMAX/.test(id));
-  ok("名單裡沒有超極巨化條目", !gmax.length, gmax.join(", "));
+  // 條目已經不存在了，名單裡當然也不該有這種 id
+  const gmaxIds = MAX_IDS.filter((id) => /GIGANTAMAX/.test(id));
+  ok("名單裡沒有 GIGANTAMAX 的 id", !gmaxIds.length, gmaxIds.join(", "));
 
   /*
-   * 超極巨化沒有自己的背卡清單，查本體那一份（2026-09-16）。
-   * 背卡的來源不收特殊型態，Max Battle 抓到的一律記成本體 id，
-   * 但那一隻確實可以是超極巨化的個體。
+   * 超極巨化 2026-09-16 下午從條目收回成勾選條件（使用者要求：
+   * 圖鑑裡多一排「妙蛙花 超極巨化」在洗版）。
+   * 這幾條盯著那次改動沒有回頭。
    */
   {
-    const pairs = [
-      ["d3.fGIGANTAMAX", "d3"],
-      ["d6.fGIGANTAMAX", "d6"],
-      // 顫弦蠑螈沒有本體，指名到高調形態
-      ["d849.fGIGANTAMAX", "d849.fAMPED"],
-    ];
-    const bad = pairs.filter(
-      ([g, b]) => bg.cardsFor(g).length !== bg.cardsFor(b).length
-    );
+    const gmaxEntries = dex.ENTRIES.filter((e) => e.form === "GIGANTAMAX");
+    ok("超極巨化不是條目", !gmaxEntries.length, gmaxEntries.map((e) => e.id).join(", "));
+
+    const { GMAX_IDS } = maxdata;
+    ok("超極巨化名單不是空的", GMAX_IDS.length > 0, String(GMAX_IDS.length));
     ok(
-      "超極巨化的背卡跟著本體",
-      !bad.length,
-      bad.map(([g, b]) => `${g} ${bg.cardsFor(g).length} vs ${b} ${bg.cardsFor(b).length}`).join(", ")
+      "超極巨化名單是可極巨化的子集",
+      GMAX_IDS.every((id) => MAX_IDS.includes(id)),
+      GMAX_IDS.filter((id) => !MAX_IDS.includes(id)).join(", ")
     );
-    ok("而且本體真的有背卡可繼承", bg.cardsFor("d6").length > 0);
+    ok("canGmax 跟名單一致", GMAX_IDS.every((id) => dex.canGmax(byId.get(id))));
+    ok("不在名單的不能超極巨化", !dex.canGmax(byId.get("d1")));
 
     /*
-     * 反向不做：背卡詳情那一面不該列出超極巨化，
-     * 否則收集格會憑空多出來，而上游並沒有說那張卡收得到。
+     * 外觀沒有因為收回而消失：那 13 種的圖掛到本體的 gmaxIcon，
+     * 勾起來就換圖。掉了的話勾超極巨化會看不出任何差別。
      */
-    const leaked = [...bg.allBgEntryIds()].filter((i) => /GIGANTAMAX/.test(i));
-    ok("背卡的清單裡沒有超極巨化", !leaked.length, leaked.join(", "));
+    const withIcon = dex.ENTRIES.filter((e) => e.gmaxIcon);
+    ok("有 gmaxIcon 的條目 14 筆", withIcon.length === 14, String(withIcon.length));
+    ok(
+      "gmaxIcon 指向超極巨化的圖",
+      withIcon.every((e) => /\.fGIGANTAMAX\./.test(e.gmaxIcon))
+    );
+    ok(
+      "gmaxIcon 不掛在裝扮上",
+      !withIcon.some((e) => e.kind === "costume"),
+      withIcon.filter((e) => e.kind === "costume").map((e) => e.id).join(", ")
+    );
+
+    /*
+     * 名單比有圖的多：皮卡丘、喵喵、灰塵山與長毛巨魔上游還沒有圖，
+     * 但它現在只是一個旗標，勾得到，只是勾了不換圖。
+     */
+    const noIcon = GMAX_IDS.filter((id) => !byId.get(id).gmaxIcon);
+    ok(`名單裡有 ${noIcon.length} 筆上游還沒有圖`, noIcon.length > 0, noIcon.join(", "));
+
+    // iconAttrs 要真的換圖，這是「勾了看得出來」的唯一機制
+    const v = byId.get("d3");
+    const plain = dex.iconAttrs(v, false, false);
+    const big = dex.iconAttrs(v, false, true);
+    ok("勾超極巨化會換圖", big.includes(v.gmaxIcon) && !plain.includes(v.gmaxIcon));
+    const bigShiny = dex.iconAttrs(v, true, true);
+    ok("異色加超極巨化取異色的那張", bigShiny.includes(v.gmaxShinyIcon));
+    // 沒圖的那幾隻不能破圖，備援鏈要退回一般那張
+    const pika = byId.get("d25");
+    ok("沒有 gmaxIcon 的退回一般圖", dex.iconAttrs(pika, false, true).includes(pika.icon));
   }
 
   // canMax 是畫面唯一的判斷入口，兩邊講的話要一樣
@@ -377,26 +398,6 @@ console.log("\n2c. 極巨化名單");
       !dex.canMax(byId.get("d1.cJAN_2020_NOEVOLVE"))
   );
 
-  /*
-   * 那 13 隻超極巨化是這一版一起加的，它們有自己的圖與 CP。
-   * 掉了就是 build-dex 的排除規則又把它們吃回去了。
-   */
-  const gmaxEntries = dex.ENTRIES.filter((e) => e.form === "GIGANTAMAX");
-  ok("超極巨化條目 13 筆", gmaxEntries.length === 13, String(gmaxEntries.length));
-  ok(
-    "超極巨化都有圖與 CP",
-    gmaxEntries.every((e) => e.icon && e.shinyIcon && e.cp20 && e.cp25 && e.cp50)
-  );
-  ok(
-    "超極巨化的 CP 等於本體",
-    gmaxEntries.every((e) => {
-      const base =
-        byId.get(`d${e.dex}`) ||
-        byId.get(`d${e.dex}.fAMPED`) ||
-        byId.get(`d${e.dex}.fNORMAL`);
-      return base && base.cp20 === e.cp20 && base.cp50 === e.cp50;
-    })
-  );
 }
 
 console.log("\n2b. 篩選");
@@ -533,6 +534,18 @@ console.log("\n4. 儲存往返");
   });
   ok("舊紀錄沒有 max 欄位時補 false", legacy.want[0].max === false);
   ok("舊紀錄其他欄位不受影響", legacy.want[0].shiny === true);
+
+  /*
+   * 極巨化與超極巨化互斥。畫面上兩顆鈕點一個會關掉另一個，
+   * 但 localStorage 使用者改得到，讀進來也要收斂——
+   * 兩個都真的話格子右上角會出現兩顆徽章疊在一起。
+   */
+  const both = store.normalizeList({
+    name: "",
+    want: [{ id: "d6", max: true, gmax: true }],
+    have: [],
+  });
+  ok("兩個都勾時只留超極巨化", both.want[0].gmax === true && both.want[0].max === false);
 
   const round = store.fromJSON(store.toJSON(book));
   ok("匯出匯入是整包", round && round.kind === "book");
@@ -723,6 +736,23 @@ console.log("\n5. 繪製函式");
     ui.renderTrade(withMax, "zh", t);
     const n = (els.app.innerHTML.match(/class="maxb"/g) || []).length;
     if (n !== 1) throw new Error(`徽章有 ${n} 顆，勾了的那一格才該有`);
+  });
+  run("renderTrade 超極巨化的徽章與換圖", () => {
+    const e = dex.find("d6");
+    const book = store.normalize({
+      v: 2,
+      active: 0,
+      lists: [
+        { name: "", want: [{ id: "d6", gmax: true }, { id: "d6" }], have: [] },
+        store.emptyList(),
+        store.emptyList(),
+      ],
+    });
+    ui.renderTrade(book, "zh", t);
+    const html = els.app.innerHTML;
+    const g = (html.match(/class="maxb gmax"/g) || []).length;
+    if (g !== 1) throw new Error(`G 徽章有 ${g} 顆`);
+    if (!html.includes(e.gmaxIcon)) throw new Error("格子沒有換成超極巨化的圖");
   });
   run("renderTrade 帶友情碼", () => ui.renderTrade(book, "zh", t, "499230220284"));
   run("renderTrade 空清單", () => ui.renderTrade(store.emptyBook(), "zh", t));
@@ -989,6 +1019,34 @@ console.log("\n5. 繪製函式");
     });
     if (!/data-draft="max"\s+aria-pressed="true"/.test(els.panel.innerHTML))
       throw new Error("極巨化沒有標起來");
+  });
+
+  /*
+   * 超極巨化的鈕只在名單內出現，而且勾了要換圖加掛徽章——
+   * 使用者要的就是「按下去右上角跳符號」，那是這個功能唯一的回饋。
+   */
+  run("renderDetail 超極巨化：鈕、換圖、徽章", () => {
+    const id = maxdata.GMAX_IDS[0];
+    const e = dex.find(id);
+
+    ui.renderDetail(id, store.emptyList(), "zh", t);
+    let html = els.panel.innerHTML;
+    if (!/data-draft="gmax"/.test(html)) throw new Error(`${id} 沒有超極巨化鈕`);
+    if (html.includes("maxb")) throw new Error("沒勾就不該有徽章");
+
+    ui.renderDetail(id, store.emptyList(), "zh", t, {
+      shiny: false, xxl: false, xxs: false, max: false, gmax: true, bg: "",
+    });
+    html = els.panel.innerHTML;
+    if (!/data-draft="gmax"\s+aria-pressed="true"/.test(html))
+      throw new Error("超極巨化沒有標起來");
+    if (!html.includes(e.gmaxIcon)) throw new Error("勾了沒有換成超極巨化的圖");
+    if (!/class="maxb gmax"/.test(html)) throw new Error("圖上沒有 G 徽章");
+
+    // 不在名單裡的不該長出這顆鈕
+    ui.renderDetail("d1", store.emptyList(), "zh", t);
+    if (/data-draft="gmax"/.test(els.panel.innerHTML))
+      throw new Error("d1 不在名單裡卻有超極巨化鈕");
   });
 
   // 上方那張圖要跟著草稿的異色走，不然勾了異色畫面上沒有任何反應

@@ -168,3 +168,36 @@ export const MAX_IDS = [
 ];
 
 export const MAX_COUNT = MAX_IDS.length;
+
+/**
+ * 勾得到「超極巨化」的條目。MAX_IDS 的子集。
+ *
+ * 物種以 Dittobase 標已實裝的為準，型態看 game master 的
+ * allowedSourdoughPokemon（顫弦蠑螈高調與低調都算）。
+ *
+ * **不受上游有沒有圖限制**：這只是一個旗標，皮卡丘、喵喵、灰塵山與
+ * 積怨番長上游還沒有圖，照樣勾得到，只是勾了不換圖——
+ * 換圖看的是條目自己的 gmaxIcon。
+ */
+export const GMAX_IDS = [
+  "d3",
+  "d6",
+  "d9",
+  "d12",
+  "d25",
+  "d52",
+  "d68",
+  "d94",
+  "d99",
+  "d131",
+  "d143",
+  "d569",
+  "d812",
+  "d815",
+  "d818",
+  "d849.fAMPED",
+  "d849.fLOW_KEY",
+  "d861",
+];
+
+export const GMAX_COUNT = GMAX_IDS.length;

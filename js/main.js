@@ -298,7 +298,7 @@ function save() {
  * 兩邊各自判斷一次安全。
  */
 function newDraft(bg = "") {
-  return { shiny: false, xxl: false, xxs: false, max: false, bg };
+  return { shiny: false, xxl: false, xxs: false, max: false, gmax: false, bg };
 }
 
 /**
@@ -320,7 +320,8 @@ function addItem(id, col) {
       !!x.shiny === !!d.shiny &&
       !!x.xxl === !!d.xxl &&
       !!x.xxs === !!d.xxs &&
-      !!x.max === !!d.max
+      !!x.max === !!d.max &&
+      !!x.gmax === !!d.gmax
   );
   if (same >= 0) {
     state.flash = { col, idx: same };
@@ -338,6 +339,7 @@ function addItem(id, col) {
   item.xxl = !!d.xxl;
   item.xxs = !!d.xxs;
   item.max = !!d.max;
+  item.gmax = !!d.gmax;
   item.bg = d.bg || "";
   list.push(item);
   save();
@@ -378,7 +380,7 @@ function addMany(col, ids, { shiny = false, bg = "", stay = false } = {}) {
     if (!e) continue;
     // 沒有實裝異色的就算開著也只能一般色，重複判斷要拿實際會寫進去的值去比
     const wantShiny = !!shiny && hasShiny(e);
-    // 極巨化跟 XXL／XXS 一樣不做批次，所以這裡比的是「沒有勾」
+    // 極巨化與超極巨化跟 XXL／XXS 一樣不做批次，所以這裡比的是「沒有勾」
     const same = list.some(
       (x) =>
         x.id === id &&
@@ -386,14 +388,15 @@ function addMany(col, ids, { shiny = false, bg = "", stay = false } = {}) {
         !!x.shiny === wantShiny &&
         !x.xxl &&
         !x.xxs &&
-        !x.max
+        !x.max &&
+        !x.gmax
     );
     if (same) {
       dupe++;
       continue;
     }
     const item = store.newItem(id, wantShiny);
-    item.xxl = item.xxs = item.max = false;
+    item.xxl = item.xxs = item.max = item.gmax = false;
     item.bg = bg;
     list.push(item);
     added++;
@@ -436,6 +439,10 @@ function setField(col, idx, field, value) {
   const item = cur()[col][idx];
   if (!item) return;
   item[field] = value;
+  // 極巨化與超極巨化互斥，跟草稿那邊同一條規則
+  if (value && (field === "max" || field === "gmax")) {
+    item[field === "max" ? "gmax" : "max"] = false;
+  }
   save();
 }
 
@@ -678,6 +685,13 @@ document.addEventListener("click", (ev) => {
   if (dmk && state.draft) {
     const f = dmk.dataset.draft;
     state.draft[f] = !state.draft[f];
+    /*
+     * 極巨化與超極巨化互斥：後者本來就蘊含前者，兩個都亮沒有意義，
+     * 而且格子右上角只放得下一顆徽章。開一個就把另一個關掉。
+     */
+    if (state.draft[f] && (f === "max" || f === "gmax")) {
+      state.draft[f === "max" ? "gmax" : "max"] = false;
+    }
     drawDetail();
     return;
   }

@@ -1753,6 +1753,41 @@ body.no-names .cell .no {
   opacity: 0;
 }
 
+/*
+ * 超極巨化用同一顆圓，只換字（M → G）。
+ * 不換顏色：兩者互斥，畫面上一次只看得到一顆，
+ * 再給第二個色只是多一個要記的對應關係。
+ */
+.maxb.gmax {
+  font-size: 8.5px;
+}
+
+/*
+ * 詳情面板上方那張圖的殼。徽章要疊在圖的右上角，
+ * 所以圖不能直接當 flex 子元素，得包一層定出位置。
+ *
+ * 使用者要的是「按下去右上角就跳符號」——勾選當下就看得到，
+ * 不必先加進清單再去交換表找。跟格子裡那顆是同一個 markBadge()。
+ */
+.d-icon {
+  position: relative;
+  flex: none;
+  display: block;
+  line-height: 0;
+}
+
+.d-icon .maxb {
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+  top: 0;
+  right: 0;
+}
+
+.d-icon .maxb.gmax {
+  font-size: 10px;
+}
+
 /* 尺寸在方塊下方，跟名稱同一區 */
 .want-cell .sz {
   display: block;

@@ -4,6 +4,53 @@
 
 ---
 
+## 2026-09-16（六）
+- 類型：重構
+- 影響檔案：tools/build-dex.mjs, js/godex.js, tools/build-max.mjs, js/maxdata.js,
+  js/dex.js, js/store.js, js/ui.js, js/main.js, js/share.js, js/backgrounds.js,
+  js/i18n.js, css/style.css, tools/check.mjs, js/version.js, VERSION.md,
+  CLAUDE.md, project-index.md
+- 摘要：超極巨化從條目收回成勾選條件，勾了換圖，徽章即時跳出來。版本升 1.07.00。
+- 原因：使用者截圖指出圖鑑裡多出一排「妙蛙花 超極巨化」「噴火龍 超極巨化」，
+  要它跟 XXL／XXS／極巨化同一層級；另外要求「按下去圖示右上角就跳符號」。
+- 這是同一天內第二次改變方向，兩次都對，分界點不同：
+  早上放行成條目的理由是「外觀真的變了」，這個判斷本身沒錯；
+  漏掉的是**圖鑑的格子是稀缺資源**——一個物種本來就有本體加好幾個裝扮，
+  再多一格排擠掉的是別隻寶可夢。旗標不佔格子，所以旗標才是對的容器。
+  **外觀沒有因此丟掉**：那 13 種的圖掛到本體的 `gmaxIcon`，勾起來換圖。
+  兩件事同時成立，不必二選一。
+- 決定（都問過使用者）：
+  - **勾了換圖**，跟異色同一個機制（`iconAttrs(e, shiny, gmax)`）。
+  - **兩者互斥**：超極巨化蘊含極巨化，而且格子右上角只放得下一顆徽章。
+    草稿、`setField` 與 `store.cleanItem` 三處都收斂。
+  - **沒加過舊紀錄，不做遷移**。那 13 個 `.fGIGANTAMAX` 的 id 只活了半天。
+- 賺到的一點：**名單不再受「上游有沒有圖」限制**。當條目時沒圖就畫不出來，
+  只能收 13 隻；現在 18 個 id 全部勾得到，皮卡丘、喵喵、灰塵山與長毛巨魔
+  那四隻勾了不換圖而已，上游補圖重跑就自動接上。
+- 連帶刪掉的：`STATS_SAME_AS` 那 13 筆、`FORM_OVERRIDE` 的 GIGANTAMAX 譯名、
+  `backgrounds.js` 的 `GMAX_BASE` 與 `cardsFor` 裡那段退回本體的邏輯
+  （條目沒了就不需要，本體的背卡清單本來就在）。
+- 驗證：
+  - `node tools/check.mjs` 全部通過。條目回到 1460，`gmaxIcon` 14 筆
+    （12 個本體加顫弦蠑螈兩型），**裝扮與複製版都沒誤掛**。
+    新增測試：超極巨化不是條目、名單是可極巨化的子集、canGmax 一致、
+    勾了會換圖、異色加超極巨化取異色那張、沒圖的退回一般圖、
+    兩個都勾時只留超極巨化、詳情的鈕與徽章、交換表的 G 徽章與換圖。
+  - CDP 實跑（關快取、清單在載入前種空）：搜「妙蛙花」剩 3 格
+    （本體、新年裝扮、複製），超極巨化那格不見了；
+    點進去按極巨化 → 徽章 M、`rgb(218, 13, 134)`；再按超極巨化 →
+    徽章變 G、圖換成 `pm3.fGIGANTAMAX.icon.png`、極巨化的 aria-pressed 轉 false；
+    加進清單後格子是 G 徽章加裙子妙蛙花，存進去的是
+    `{id:"d3", max:false, gmax:true}`。
+  - 踩到一次驗證自己的坑：第一次測「加進清單」拿到噴火龍加 M 徽章，
+    那是前一支腳本的殘留——`localStorage.clear()` 之後頁面還在記憶體裡，
+    導覽觸發 `pagehide` 把舊 state 又寫回去了。
+    **要種乾淨的資料得用 `Page.addScriptToEvaluateOnNewDocument`**，
+    在載入前就寫好，不能載入後才清。
+- 待辦/已知問題：（無）
+
+---
+
 ## 2026-09-16（五）
 - 類型：修正
 - 影響檔案：js/backgrounds.js, tools/build-max.mjs, js/maxdata.js,

@@ -17,6 +17,7 @@ import {
   iconAttrs,
   hasShiny,
   canMax,
+  canGmax,
   FILTER_GROUPS,
   applyFilter,
   filterCount,
@@ -541,6 +542,7 @@ function editBlock(col, data, id, e, lang, t, flash) {
         ${mk("xxl", t("markXxl"), "xxl")}
         ${mk("xxs", t("markXxs"), "xxs")}
         ${canMax(e) ? mk("max", t("markMax"), "max") : ""}
+        ${canGmax(e) ? mk("gmax", t("markGmax"), "gmax") : ""}
         <button type="button" class="mk del" data-del="${idx}" data-col="${col}">${esc(
       t("remove")
     )}</button>
@@ -637,7 +639,10 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
         : ""
     }
     <div class="d-head">
-      <img ${iconAttrs(e, d.shiny)} alt="" />
+      <span class="d-icon">
+        <img ${iconAttrs(e, d.shiny, d.gmax)} alt="" />
+        ${markBadge(d, t)}
+      </span>
       <div>
         <div class="d-name">${esc(speciesName(e, lang))}</div>
         ${form ? `<div class="d-form">${esc(form)}</div>` : ""}
@@ -659,6 +664,7 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
       ${dmk("xxl", t("markXxl"), "xxl")}
       ${dmk("xxs", t("markXxs"), "xxs")}
       ${canMax(e) ? dmk("max", t("markMax"), "max") : ""}
+      ${canGmax(e) ? dmk("gmax", t("markGmax"), "gmax") : ""}
     </div>
 
     <p class="d-sect">${esc(t("bgSection"))}</p>
@@ -676,6 +682,24 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
     ${editBlock("want", data, id, e, lang, t, flash)}
     ${editBlock("have", data, id, e, lang, t, flash)}
 `;
+}
+
+/**
+ * 極巨化／超極巨化的徽章。圖的右上角一顆洋紅圓。
+ *
+ * 詳情面板與交換表的格子共用這一顆，所以勾下去看到的東西跟之後
+ * 存在清單裡看到的一模一樣——使用者要的就是「按下去右上角跳符號」。
+ *
+ * 兩者互斥，只會有一顆。M 是極巨化、G 是超極巨化。
+ * 沒有第三種狀態，所以不必擔心兩個字疊在一起。
+ *
+ * @param {{max?:boolean, gmax?:boolean}} v 草稿或清單項目，兩邊欄位同名
+ */
+function markBadge(v, t) {
+  if (!v) return "";
+  if (v.gmax) return `<i class="maxb gmax" title="${esc(t("markGmax"))}">G</i>`;
+  if (v.max) return `<i class="maxb" title="${esc(t("markMax"))}">M</i>`;
+  return "";
 }
 
 /* ─────────── 交換表 ─────────── */
@@ -718,9 +742,9 @@ function tradeCell(item, col, idx, lang, t) {
   )}" data-col="${col}" data-idx="${idx}">
     <span class="want-tile">
       ${bgLayer}
-      <img ${iconAttrs(e, item.shiny)} alt="" loading="lazy" />
+      <img ${iconAttrs(e, item.shiny, item.gmax)} alt="" loading="lazy" />
       ${item.shiny ? '<i class="spark">✦</i>' : ""}
-      ${item.max ? `<i class="maxb" title="${esc(t("markMax"))}">M</i>` : ""}
+      ${markBadge(item, t)}
       <button class="want-del" type="button" data-del="${idx}" data-col="${col}"
               title="${esc(t("remove"))}" aria-label="${esc(t("remove"))}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
