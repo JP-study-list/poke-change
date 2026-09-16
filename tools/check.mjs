@@ -340,6 +340,36 @@ console.log("\n2c. 極巨化名單");
   const gmax = MAX_IDS.filter((id) => /GIGANTAMAX/.test(id));
   ok("名單裡沒有超極巨化條目", !gmax.length, gmax.join(", "));
 
+  /*
+   * 超極巨化沒有自己的背卡清單，查本體那一份（2026-09-16）。
+   * 背卡的來源不收特殊型態，Max Battle 抓到的一律記成本體 id，
+   * 但那一隻確實可以是超極巨化的個體。
+   */
+  {
+    const pairs = [
+      ["d3.fGIGANTAMAX", "d3"],
+      ["d6.fGIGANTAMAX", "d6"],
+      // 顫弦蠑螈沒有本體，指名到高調形態
+      ["d849.fGIGANTAMAX", "d849.fAMPED"],
+    ];
+    const bad = pairs.filter(
+      ([g, b]) => bg.cardsFor(g).length !== bg.cardsFor(b).length
+    );
+    ok(
+      "超極巨化的背卡跟著本體",
+      !bad.length,
+      bad.map(([g, b]) => `${g} ${bg.cardsFor(g).length} vs ${b} ${bg.cardsFor(b).length}`).join(", ")
+    );
+    ok("而且本體真的有背卡可繼承", bg.cardsFor("d6").length > 0);
+
+    /*
+     * 反向不做：背卡詳情那一面不該列出超極巨化，
+     * 否則收集格會憑空多出來，而上游並沒有說那張卡收得到。
+     */
+    const leaked = [...bg.allBgEntryIds()].filter((i) => /GIGANTAMAX/.test(i));
+    ok("背卡的清單裡沒有超極巨化", !leaked.length, leaked.join(", "));
+  }
+
   // canMax 是畫面唯一的判斷入口，兩邊講的話要一樣
   ok(
     "canMax 跟名單一致",

@@ -174,6 +174,25 @@ export function entriesOf(card) {
 }
 
 /**
+ * 超極巨化沒有自己的背卡清單，查本體那一份。
+ *
+ * 背卡的清單來自 Dittobase，而它**不收任何特殊型態**：Max Battle 抓到的
+ * 寶可夢一律記成本體 id，因為抓到的當下本來就是本體外觀。
+ * 但那一隻確實可以是超極巨化的個體——GO Fest 2025 那張無極汰那背卡
+ * 74 隻裡有 68 隻在可極巨化名單裡，那就是一張 Max Battle 的卡。
+ * 同一隻寶可夢、同一個來源，外觀不同不改變它在哪裡抓的。
+ *
+ * 代價是沒有 Max Battle 的活動卡也會出現在下拉裡（2026-09-16，使用者確認
+ * 接受）。要擋得先知道哪幾場活動有 Max Battle，上游沒有這份資料。
+ *
+ * **只做這個方向**：背卡詳情那一面不列超極巨化，否則收集格會憑空多出來，
+ * 而 Dittobase 並沒有說那張卡收得到超極巨化。
+ *
+ * 顫弦蠑螈沒有本體條目，指名到高調形態，跟 build-dex 的 STATS_SAME_AS 一致。
+ */
+const GMAX_BASE = { "d849.fGIGANTAMAX": "d849.fAMPED" };
+
+/**
  * 某個條目可能擁有的所有背卡。
  * @returns {Array<{folder, card, note}>}
  */
@@ -183,6 +202,9 @@ export function cardsFor(entryId) {
     for (const e of entriesOf(card)) {
       if (e.id === entryId) out.push({ folder, card, note: e.note });
     }
+  }
+  if (!out.length && /\.fGIGANTAMAX$/.test(entryId)) {
+    return cardsFor(GMAX_BASE[entryId] || entryId.split(".")[0]);
   }
   return out;
 }

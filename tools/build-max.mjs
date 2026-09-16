@@ -22,11 +22,18 @@
  *
  * ── 為什麼主來源不是 game master ──
  * 一手資料照理說比較可信，但它給不出完整名單：
- *   BREAD_POKEMON_SCALING_SETTINGS 只有 60 個 BREAD_MODE 的物種，
+ *   BREAD_POKEMON_SCALING_SETTINGS 只有 58 個 BREAD_MODE 的物種，
  *   那是「視覺縮放要特別調」的清單，不是「可以極巨化」的清單。
  *   pokemonSettings 的 breadTierGroup 更不能用，2467 筆幾乎全都有，
  *   那是預先排好的強度分級表，跟實裝與否無關。
  * 超極巨化那一半倒是齊的（allowedSourdoughPokemon），所以拿來對。
+ *
+ * ── 但它是名單的第二個來源（2026-09-16 改的）──
+ * 第一版只拿 BREAD_MODE 當佐證，報告列出「只有 game master 有的」三隻：
+ * 幾何雪花、投擲猴、毒電嬰，當時判定是還沒實裝所以不收。
+ * 後來發現前兩隻出現在 GO Fest 2025 那張 Max Battle 背卡的清單裡，
+ * 使用者也確認三隻都真的能極巨化，所以改成**兩邊取聯集**。
+ * 這份清單不完整（只有需要特調縮放的才在），但裡面的是真的。
  *
  * ── 粒度 ──
  * Dittobase 的極巨化條目是物種層級（bulbasaur-dynamax），
@@ -137,6 +144,28 @@ function entryKeyMap() {
 }
 
 /**
+ * 「英文名[-型態]」→ 條目 id。
+ *
+ * game master 只給 pokemonId（英文名大寫），沒有圖鑑編號，
+ * 所以不能共用上面那張帶編號的表。同名不同編號的情況不存在，
+ * 拿英文名當鍵是安全的。裝扮一樣不收。
+ */
+function nameKeyMap() {
+  const map = new Map();
+  const put = (k, id) => {
+    if (!map.has(k)) map.set(k, id);
+  };
+  for (const e of [...GODEX, ...extraEntries()]) {
+    if (e.kind === "costume") continue;
+    const code = e.form || "";
+    const base = slugify(e.en);
+    put(base + (code ? "-" + slugify(code) : ""), e.id);
+    if (code === "NORMAL") put(base, e.id);
+  }
+  return map;
+}
+
+/**
  * Dittobase 與我們對同一個型態的叫法不同時，在這裡一筆一筆指名。
  * 對不上的會列進報告，補進來就好。
  *
@@ -192,10 +221,20 @@ function breadFromGM(gm) {
     pick("BREAD_POKEMON_SCALING_SETTINGS")?.breadPokemonScalingSettings
       ?.visualSettings || [];
   const bread = new Set();
+  const breadForms = [];
   for (const p of scaling) {
     for (const f of p.pokemonFormData || []) {
       for (const v of f.visualData || []) {
-        if (v.breadMode === "BREAD_MODE") bread.add(p.pokemonId.toLowerCase());
+        if (v.breadMode !== "BREAD_MODE") continue;
+        bread.add(p.pokemonId.toLowerCase());
+        /*
+         * 型態代碼帶物種前綴（BULBASAUR_NORMAL），去掉之後 NORMAL
+         * 與 FORM_UNSET 都當本體，其餘才是真的型態。
+         * 這跟 build-dex 解 game master 的型態是同一套。
+         */
+        const raw = String(f.pokemonForm || "").replace(`${p.pokemonId}_`, "");
+        const form = !raw || raw === "NORMAL" || raw === "FORM_UNSET" ? "" : raw;
+        breadForms.push({ species: p.pokemonId.toLowerCase(), form });
       }
     }
   }
@@ -203,7 +242,7 @@ function breadFromGM(gm) {
   const sour = pick("BREAD_SHARED_SETTINGS")?.breadSettings?.allowedSourdoughPokemon || [];
   const gmax = new Set(sour.map((x) => x.pokemonId.toLowerCase()));
 
-  return { bread, gmax };
+  return { bread, breadForms, gmax };
 }
 
 /* ─────────── 合成 ─────────── */
@@ -240,6 +279,27 @@ for (const r of dittoRows) {
   hitRows.push({ ...r, key, id });
 }
 
+/*
+ * game master 的 BREAD_MODE 併進來。Dittobase 漏了幾隻
+ * （2026-09-16 確認的幾何雪花、投擲猴、毒電嬰），這份補得回來。
+ * 它只有「需要特調縮放」的那些，不完整，但裡面的是真的。
+ */
+const names = nameKeyMap();
+const gmUnmatched = [];
+const fromGM = [];
+for (const { species, form } of gm.breadForms) {
+  const key = species + (form ? "-" + slugify(form) : "");
+  const id = names.get(key);
+  if (!id) {
+    gmUnmatched.push(key);
+    continue;
+  }
+  if (SKIP_GMAX(id)) continue;
+  if (!ids.has(id)) fromGM.push(id);
+  ids.add(id);
+}
+
+// 兩個來源都併完了才排序，順序照圖鑑編號
 const idList = [...ids].sort((a, b) => {
   const na = Number(a.slice(1).split(".")[0]);
   const nb = Number(b.slice(1).split(".")[0]);
@@ -321,8 +381,16 @@ const report = [
   onlyGM.length
     ? `**只有 game master 有、Dittobase 沒有的 ${onlyGM.length} 個**：\`${onlyGM.join(
         "`, `"
-      )}\`\n\n這幾筆要自己判斷：可能是還沒實裝就先有了資料（這個站一貫不收），\n也可能是 Dittobase 把它歸在超極巨化那一欄。\n`
+      )}\`\n\n這幾筆**照樣收進名單**（2026-09-16 改的）。第一版把它們當成還沒實裝而排除，\n後來發現其中兩隻出現在 GO Fest 2025 那張 Max Battle 背卡的清單裡，\n使用者也確認確實能極巨化。下次多出新的要回頭確認一次，\n這份清單只有「需要特調縮放」的才在，不完整但裡面的是真的。\n`
     : "兩邊一致。\n",
+  fromGM.length
+    ? `只靠 game master 才進名單的 **${fromGM.length}** 個條目：\`${fromGM.join("`, `")}\`\n`
+    : "",
+  gmUnmatched.length
+    ? `game master 有 BREAD_MODE 但對不到條目的 ${gmUnmatched.length} 個：\`${gmUnmatched.join(
+        "`, `"
+      )}\`\n`
+    : "",
   "### 超極巨化",
   "",
   `game master \`allowedSourdoughPokemon\` **${gm.gmax.size}** 個物種，`,
@@ -348,6 +416,7 @@ console.log(`  Dittobase 條目        ${dittoRows.length}`);
 console.log(`  可極巨化（已實裝）    ${dittoRows.filter((r) => (r.dyn || r.gmax) && r.released).length}`);
 console.log(`  對到條目 id           ${idList.length}`);
 console.log(`  對不上                ${unmatched.length}`);
+console.log(`  game master 補進來的  ${fromGM.length}${fromGM.length ? "（" + fromGM.join("、") + "）" : ""}`);
 console.log(`  交叉比對 game master  極巨化 ${gm.bread.size} 個物種，只有它有的 ${onlyGM.length}`);
 console.log(`                        超極巨化 ${gm.gmax.size} 對 ${dittoGmax.size}`);
 console.log("\n報告 tools/max-report.md");
