@@ -77,6 +77,22 @@ export const KB_ENTRIES = [
         url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/38-lucky-pokemon/",
         official: true,
       },
+      /*
+       * 社群來源。個體值下限 12/12/12 與星星沙子減半這兩個數字
+       * **官方從來沒有公布過**，但它正是使用者最想知道的事。
+       * 巴哈那篇（2026-07-13）與英文社群的 wiki、幾個攻略站講的一致，
+       * 三邊獨立對得起來才寫進去，頁面上也標成社群說法。
+       */
+      {
+        label: "巴哈姆特 Pokémon GO 哈啦板：亮晶晶寶可夢交換大全（2026-07-13）",
+        url: "https://forum.gamer.com.tw/C.php?bsn=29659&snA=47444",
+        official: false,
+      },
+      {
+        label: "Pokémon GO Wiki（Fandom）：Lucky Pokémon",
+        url: "https://pokemongo.fandom.com/wiki/Lucky_Pok%C3%A9mon",
+        official: false,
+      },
     ],
   },
 ];
