@@ -3138,6 +3138,17 @@ body.no-names .cell .no {
 }
 
 /*
+ * 列標題（`<th scope="row">`）是內容不是欄位名，所以走一般內文的樣子。
+ * 不覆寫的話對照表最左邊那一欄會變成一排小灰字，比右邊的值還難讀。
+ */
+.kb-body th[scope="row"] {
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  text-transform: none;
+}
+
+/*
  * 出處。**逐條列，而且官方與社群分得出來**——查不到官方出處的不是
  * 不能寫，是要講明白。圖鑑只能不列，頁面寫得出這句話，差別在這裡。
  */

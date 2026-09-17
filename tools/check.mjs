@@ -301,6 +301,25 @@ console.log("\n1d. 知識");
       }
     }
     ok("中文段落沒有在句中換行", !hits.length, hits.join("，"));
+
+    /*
+     * **知識頁之間的連結要指到真的存在的一則。**
+     * 內文裡寫的是 `../<slug>/`（從 `kb/<slug>/index.html` 看出去正好是
+     * 隔壁那一則），slug 打錯就是一條死連結——**畫面上看起來完全正常**，
+     * 點下去才 404，而寫的人多半不會去點自己剛寫的連結。
+     * 圖片是 `../img/檔名`，結尾不是斜線，不會被這條抓到。
+     */
+    const slugs = new Set(KB_ENTRIES.map((e) => e.slug));
+    const bad = [];
+    for (const f of srcFiles) {
+      if (!f.endsWith(".html") || f.startsWith("_")) continue;
+      const body = await readFile(new URL(f, srcDir), "utf8");
+      for (const m of body.matchAll(/href="\.\.\/([^"\/]+)\/"/g)) {
+        if (!slugs.has(m[1])) bad.push(`${f} → ${m[1]}`);
+        if (m[1] === f.slice(0, -5)) bad.push(`${f} 連到自己`);
+      }
+    }
+    ok("知識頁之間的連結都指到存在的一則", !bad.length, bad.join("，"));
   }
 
   /*

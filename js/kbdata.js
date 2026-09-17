@@ -95,6 +95,45 @@ export const KB_ENTRIES = [
       },
     ],
   },
+  {
+    slug: "lucky-friends",
+    title: "亮晶晶好朋友",
+    summary: "交換時兩隻都變亮晶晶。要先是正港好朋友，每天只有第一次互動才判定，而且交換完就解除",
+    cat: "trade",
+    updated: "2026-09-18",
+    /*
+     * **機率刻意不寫進內容**（2026-09-18 使用者拍板）。官方沒公布過，
+     * 社群測出來的從 1% 到 5% 都有，彼此對不起來，連整理得最完整的
+     * 英文社群都直說精確機率沒有人找到過。挑一個數字寫等於幫讀者
+     * 算一個假的期望值。
+     *
+     * **社群來源只列讀得到原文的那一個。** 「每天第一次互動才判定」
+     * 另外在 Fandom 與 sportskeeda 交叉比對過，說法一致，
+     * 但那兩個站擋爬蟲（402／405）拿不到原文——**沒讀過的不列進來源**。
+     */
+    sources: [
+      {
+        label: "Niantic 說明中心：亮晶晶好朋友（FAQ 1485）",
+        url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/1485-lucky-friends/",
+        official: true,
+      },
+      {
+        label: "Niantic 說明中心：朋友名單 & 友誼等級（FAQ 2847）",
+        url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/2847-friend-list-friendship-levels-1614900279/",
+        official: true,
+      },
+      {
+        label: "Niantic 說明中心：「亮晶晶首飾」是什麼？（FAQ 4945）",
+        url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/4945-what-is-the-lucky-trinket/",
+        official: true,
+      },
+      {
+        label: "Pokémon GO Hub：Lucky Friends 機制整理（2020-11-26 更新）",
+        url: "https://pokemongohub.net/post/guide/lucky-friends-feature-overview/",
+        official: false,
+      },
+    ],
+  },
 ];
 
 export const KB_COUNT = KB_ENTRIES.length;
