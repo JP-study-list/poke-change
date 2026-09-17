@@ -1,2 +1,5 @@
 # 上游原始資料的快取，由 tools/build-dex.mjs 下載，約 25 MB
 /tools/.cache/
+
+# macOS Finder 在每個資料夾留的檢視設定檔，從來沒有被 commit 過
+.DS_Store
