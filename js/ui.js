@@ -94,6 +94,14 @@ export function renderChrome(t, lang, disp = {}) {
   )}`;
 
   $("#langs").innerHTML = LANG_BTNS(lang);
+
+  /*
+   * 搜尋字串的語言。跟介面語言分開，因為那串字是給**對方**貼進
+   * 遊戲的，關鍵字得是對方遊戲的語言（「異色」在日文介面搜不到）。
+   */
+  $("#strLangTitle").textContent = t("strLang");
+  $("#strLangHint").textContent = t("strLangHint");
+  $("#strLangs").innerHTML = STR_LANG_BTNS(disp.goLang || "auto", t);
   $("#dataActions").innerHTML = `
     <button type="button" data-act="export">${esc(t("export"))}</button>
     <button type="button" data-act="import">${esc(t("import"))}</button>
@@ -113,6 +121,21 @@ const LANG_BTNS = (cur) =>
         l.code === cur
       }">${esc(l.label)}</button>`
   ).join("");
+
+/*
+ * 搜尋字串的語言選擇器。比介面語言多一個「跟介面」，而且那是預設——
+ * 台灣人跟台灣人換是常態，需要指定對方語言的是少數，所以這一項
+ * 收在設定裡，交換表那一列一個像素都不動。
+ */
+const STR_LANG_BTNS = (cur, t) =>
+  [{ code: "auto", label: t("strLangAuto") }, ...LANG_LIST]
+    .map(
+      (l) =>
+        `<button type="button" data-golang="${l.code}" aria-pressed="${
+          l.code === cur
+        }">${esc(l.label)}</button>`
+    )
+    .join("");
 
 /*
  * 三個檢視的圖示。手機的底部 bar 只放得下圖示加一行小字，

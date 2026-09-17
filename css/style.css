@@ -326,6 +326,14 @@ select {
   color: var(--ink);
 }
 
+/*
+ * 設定面板裡的那一條（搜尋字串語言）。頂部列那條的寬度由 header 收住，
+ * 這裡的容器是整個面板寬，不改成 inline-flex 會拉出一條橫跨面板的凹槽。
+ */
+.langs.seg-fit {
+  display: inline-flex;
+}
+
 /* ─────────── 資訊列 ─────────── */
 
 /*

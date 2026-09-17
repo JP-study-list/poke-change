@@ -66,6 +66,7 @@ function installDom() {
     "filterBtn", "filterN", "fpicked", "fpanel", "gearBtn", "settings", "closeX", "settingsX",
     "searchbar", "importFile", "listName", "shareBtn", "pickFoot",
     "displayTitle", "displayOpts", "trainerCode", "verLine",
+    "strLangTitle", "strLangHint", "strLangs",
   ]) {
     els[id] = mk(id);
   }
@@ -830,39 +831,196 @@ console.log("\n4. 儲存往返");
 
 console.log("\n4b. 搜尋字串");
 {
-  const { searchString, dexNumbers, SEARCH_MAX } = gostring;
+  const { searchString, dexNumbers, SEARCH_MAX, STR_LANGS } = gostring;
+  const str = (items, lang = "zh") => searchString(items, lang).str;
+  // newItem 的第二個參數是 shiny，而且**預設 true**，基底要自己關掉
+  const item = (id, extra = {}) => ({ ...store.newItem(id, false), ...extra });
 
-  ok("空清單回空字串", searchString([]) === "" && searchString(undefined) === "");
+  ok("空清單回空字串", str([]) === "" && str(undefined) === "");
 
   ok("編號升序、逗號連接",
-     searchString([store.newItem("d150"), store.newItem("d1"), store.newItem("d25")])
-       === "1,25,150");
+     str([item("d150"), item("d1"), item("d25")]) === "1,25,150");
 
   /*
-   * 同一隻的不同裝扮、型態與條件在字串裡是同一個編號。
-   * 這是刻意的：搜尋指定不了裝扮，對方要做的就是翻自己所有的皮卡丘。
+   * 同一隻的不同裝扮與型態在字串裡是同一個編號。這是刻意的：
+   * 搜尋指定不了裝扮，對方要做的就是翻自己所有的皮卡丘。
+   * **但條件不會塌**：沒條件那格會把有條件那格吸收掉（25 涵蓋異色的 25）。
    */
-  const pikas = [
-    store.newItem("d25"),
-    store.newItem("d25.cHALLOWEEN_2017"),
-    { ...store.newItem("d25"), shiny: true },
-  ];
-  ok("同編號只出現一次", searchString(pikas) === "25");
+  ok("同編號只出現一次",
+     str([item("d25"), item("d25.cHALLOWEEN_2017"), item("d25", { shiny: true })]) === "25");
 
   ok("型態塌回本體編號",
-     searchString([store.newItem("d487.fORIGIN"), store.newItem("d487.fALTERED")]) === "487");
+     str([item("d487.fORIGIN"), item("d487.fALTERED")]) === "487");
 
   /*
    * 圖鑑更新拿掉某個 id 之後，格子牆畫不出那一格，字串裡也不該冒出編號。
-   * 拿一個一定查不到的 id 驗。
    */
   ok("查不到的條目跳過",
-     searchString([store.newItem("d25"), { id: "d99999", shiny: false }]) === "25");
+     str([item("d25"), { id: "d99999" }]) === "25");
 
   ok("編號一律跟圖鑑要，不從 id 拆",
-     dexNumbers([store.newItem("d25.cHALLOWEEN_2017")])[0] === dex.find("d25").dex);
+     dexNumbers([item("d25.cHALLOWEEN_2017")])[0] === dex.find("d25").dex);
 
   ok("SEARCH_MAX 是數字", typeof SEARCH_MAX === "number" && SEARCH_MAX > 0);
+
+  /*
+   * ── 條件 ──
+   * 逐隻條件靠分配律塞進一行：
+   *   4 ∨ 19 ∨ (異色 ∧ 7) = (異色 ∨ 4 ∨ 19) ∧ (7 ∨ 4 ∨ 19)
+   * 這個形狀是整個功能的地基，寫死在測試裡，改壞了要當場看得見。
+   */
+  ok("條件進得了同一行",
+     str([item("d4"), item("d19.fALOLA"), item("d7", { shiny: true })])
+       === "異色,4,19&7,4,19");
+
+  /*
+   * 同一組條件的那幾隻共用一個選項，不是一隻一個——
+   * 一隻一個會從 2 個子句變成 4 個，字串長度接近翻倍。
+   */
+  ok("同一組條件的共用一個子句",
+     str([item("d1"), item("d4", { shiny: true }), item("d7", { shiny: true })])
+       === "異色,1&4,7,1");
+
+  ok("全部都有同一個條件時 base 是空的",
+     str([item("d4", { shiny: true }), item("d7", { shiny: true })]) === "異色&4,7");
+
+  /* 六個條件都要有自己的關鍵字。漏掉會在字串裡變成 undefined */
+  for (const [field, word] of [
+    ["shiny", "異色"], ["xxl", "XXL"], ["xxs", "XXS"],
+    ["purified", "淨化"], ["max", "極巨化"], ["gmax", "超極巨化"],
+  ]) {
+    ok(`條件 ${field} 的關鍵字`, str([item("d25", { [field]: true })]) === `${word}&25`);
+  }
+  ok("背卡只看有沒有，不看是哪一張",
+     str([item("d25", { bg: "go-fest-2025" })]) === "背卡&25");
+
+  /* 三語：關鍵字要跟著對方的遊戲語言換，編號不換 */
+  ok("日文關鍵字", str([item("d25", { shiny: true })], "ja") === "色違い&25");
+  ok("英文關鍵字", str([item("d25", { shiny: true })], "en") === "shiny&25");
+  ok("認不得的語言退回繁中", str([item("d25", { shiny: true })], "xx") === "異色&25");
+  ok("三個語言都有關鍵字", STR_LANGS.length === 3);
+
+  /*
+   * ── 降級 ──
+   * GO 的搜尋框是單行輸入，多行貼進去會被黏成一串，所以寧可放掉條件
+   * 也不換行。條件太多時從隻數最少的那一組開始放，最壞退回純編號。
+   */
+  {
+    const many = [];
+    // 每一種條件各給一批，湊到一定會爆的程度
+    for (const f of ["shiny", "xxl", "xxs", "purified", "max", "gmax"]) {
+      for (let i = 0; i < 6; i++) many.push(item(`d${100 + many.length}`, { [f]: true }));
+    }
+    const res = searchString(many, "zh");
+    ok("爆掉時只出一行", !res.str.includes("\n"));
+    ok("爆掉時字串仍在上限內", res.str.length <= SEARCH_MAX);
+    ok("爆掉時有講幾隻被放掉了", res.dropped > 0);
+    ok("放掉條件不會少掉任何一隻",
+       dexNumbers(many).every((n) => res.str.split(/[,&]/).includes(String(n))));
+  }
+
+  /* 沒爆就不該報 dropped，不然使用者會以為自己少了東西 */
+  {
+    const res = searchString([item("d4"), item("d7", { shiny: true })], "zh");
+    ok("沒爆就不報放掉", res.dropped === 0 && res.count === 2);
+  }
+
+  /* 同一份清單按兩次要一模一樣，不然會讓人以為程式壞了 */
+  {
+    const list = [
+      item("d25", { shiny: true }), item("d1"), item("d150", { max: true }),
+      item("d7", { shiny: true, bg: "go-fest-2025" }),
+    ];
+    ok("同一份清單產出穩定", str(list) === str([...list].reverse()) );
+  }
+
+  /*
+   * ── 對拍 ──
+   * 這一段是整個功能的正確性保證，不是補充測試。
+   *
+   * 分配律轉出來的字串長得跟原清單完全不像（`異色,4,19&7,4,19`），
+   * 肉眼看不出對不對，逐例寫死又只能蓋到寫得出來的那幾種。所以這裡
+   * **枚舉每一種可能的寶可夢狀態**（編號 × 條件的所有子集），拿字串的
+   * 真值跟清單的原意逐一比對。
+   *
+   * 兩種期待不一樣：
+   *   沒降級 → 完全等價，多一隻少一隻都是錯
+   *   降級了 → 只准多不准少。放掉條件的方向是安全的（對方多翻幾隻），
+   *            漏掉才是災難——他不會知道自己漏了。
+   *
+   * 求值照 GO 的語法：`&` 是且、`,` 是或，而且 `,` 綁得比較緊，
+   * 所以整串就是「每個以 & 分開的群組裡至少中一個」。
+   */
+  {
+    const WORD = {
+      shiny: "異色", xxl: "XXL", xxs: "XXS",
+      purified: "淨化", max: "極巨化", gmax: "超極巨化", bg: "背卡",
+    };
+    const lit = (l, st) => (/^[0-9]+$/.test(l) ? st.dex === Number(l) : st.has.has(l));
+    const strTrue = (text, st) =>
+      text.split("&").every((g) => g.split(",").some((l) => lit(l, st)));
+    // 清單的原意：某一格的編號對得上，而且那一格要的條件對方全都有
+    const listTrue = (items, st) =>
+      items.some((it) => {
+        const e = dex.find(it.id);
+        if (!e || e.dex !== st.dex) return false;
+        return Object.keys(WORD).every(
+          (f) => !(f === "bg" ? it.bg : it[f]) || st.has.has(WORD[f])
+        );
+      });
+
+    const compare = (name, items) => {
+      const res = searchString(items, "zh");
+      const words = [...new Set(Object.values(WORD))];
+      const dexes = [...new Set(dexNumbers(items)), 99999];
+      let miss = 0; // 清單要、字串搜不到（絕對不允許）
+      let extra = 0; // 字串搜得到、清單沒要（降級時允許）
+      for (const d of dexes) {
+        for (let m = 0; m < 1 << words.length; m++) {
+          const st = {
+            dex: d,
+            has: new Set(words.filter((_, i) => m & (1 << i))),
+          };
+          const want = listTrue(items, st);
+          const got = strTrue(res.str, st);
+          if (want && !got) miss++;
+          else if (!want && got) extra++;
+        }
+      }
+      ok(`${name}：一隻都不會漏`, miss === 0, `${miss} 種狀態搜不到`);
+      ok(
+        `${name}：${res.dropped ? "放掉條件後只多不少" : "語意完全等價"}`,
+        res.dropped ? true : extra === 0,
+        `${extra} 種多出來的狀態`
+      );
+    };
+
+    compare("截圖那三格", [
+      item("d4"), item("d19.fALOLA"), item("d7", { shiny: true }),
+    ]);
+    compare("兩種條件", [
+      item("d1"), item("d25"), item("d4", { shiny: true }),
+      item("d7", { shiny: true }), item("d6", { max: true }),
+    ]);
+    compare("條件疊在同一格", [
+      item("d1"), item("d94", { shiny: true, bg: "go-fest-2025" }),
+      item("d150", { xxl: true }), item("d143", { purified: true }),
+    ]);
+    compare("同一隻既有無條件格也有異色格", [
+      item("d25"), item("d25", { shiny: true }), item("d7", { shiny: true }),
+    ]);
+    compare("全部都要異色", [
+      item("d4", { shiny: true }), item("d7", { shiny: true }),
+    ]);
+    {
+      // 一定會爆、必須降級的那種
+      const many = [];
+      for (const f of ["shiny", "xxl", "xxs", "purified", "max", "gmax"])
+        for (let i = 0; i < 6; i++)
+          many.push(item(`d${100 + many.length}`, { [f]: true }));
+      compare("爆掉而降級的", many);
+    }
+  }
 }
 
 console.log("\n5. 繪製函式");

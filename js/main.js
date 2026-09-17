@@ -14,7 +14,7 @@ import { CARDS as BG_CARDS, cardAllows } from "./backgrounds.js";
 import * as store from "./store.js";
 import * as ui from "./ui.js";
 import { buildShareImage } from "./share.js";
-import { searchString, SEARCH_MAX } from "./gostring.js";
+import { searchString, STR_LANGS } from "./gostring.js";
 
 /** 背卡總張數。資訊列要顯示，算一次就好 */
 const CARD_TOTAL = BG_CARDS.length;
@@ -24,6 +24,12 @@ const CARD_TOTAL = BG_CARDS.length;
 const state = {
   book: store.emptyBook(), // 三份清單，外加目前在看第幾份
   lang: DEFAULT_LANG,
+  /*
+   * 搜尋字串裡的關鍵字要用哪一國的字。「auto」是跟介面語言走，也是預設。
+   * **跟 lang 分開存**：那串字是給對方貼進他自己的遊戲的，
+   * 我的介面是繁中不代表對方的遊戲也是。
+   */
+  goLang: "auto",
   view: "dex", // dex / trade / bg
   filter: emptyFilter(), // 五個群組，組間 AND、組內 OR
   /*
@@ -114,6 +120,7 @@ function loadPref() {
     // 舊的偏好沒有這個欄位，沒寫過就當成要顯示
     state.names = p.names !== false;
     state.code = store.cleanCode(p.code);
+    if (p.goLang === "auto" || STR_LANGS.includes(p.goLang)) state.goLang = p.goLang;
   } catch {
     /* 讀不到就用預設，不是錯誤 */
   }
@@ -130,6 +137,7 @@ function savePref() {
         big: state.big,
         names: state.names,
         code: state.code,
+        goLang: state.goLang,
       })
     );
   } catch {
@@ -153,6 +161,7 @@ function draw() {
     big: state.big,
     names: state.names,
     dark: document.body.classList.contains("dark"),
+    goLang: state.goLang,
   });
   ui.renderViews(state.view, t);
 
@@ -555,27 +564,31 @@ function listLabel(i) {
  * 退回藏起來的 textarea 加 execCommand。
  */
 async function copyColumn(col) {
-  const str = searchString(cur()[col]);
-  if (!str) return;
+  /*
+   * 關鍵字要用**對方遊戲**的語言。預設跟介面走，因為台灣人跟台灣人
+   * 換是常態；要傳給日本人的那次去設定改一下，值會記著。
+   */
+  const lang = state.goLang === "auto" ? state.lang : state.goLang;
+  const res = searchString(cur()[col], lang);
+  if (!res.str) return;
 
-  const ok = await writeClipboard(str);
+  const ok = await writeClipboard(res.str);
   if (!ok) {
     ui.toast(t("copyFailed"));
     return;
   }
 
   /*
-   * 太長只提醒不切。搜尋框確實有上限（社群的清箱工具會自動分段），
-   * 但 Niantic 沒公開數字，SEARCH_MAX 是還沒實測的保守值。
-   * 拿一個猜的數字去切字串，切錯了是靜默少一半；讓使用者自己看一眼，
-   * 錯了至少看得見。
+   * toast 要把兩件事講出來，不然使用者不會知道自己拿到的是什麼：
+   *   dropped  有幾隻的條件為了塞進一行被放掉了（搜出來會多幾隻，但不會漏）
+   *   long     連純編號都超過 SEARCH_MAX，只能請他自己看一眼結尾
+   * 後者不切字串：那個上限是還沒實測的保守值，拿猜的數字去切，
+   * 切錯了是靜默少一半；讓使用者看得見，錯了至少發現得了。
    */
-  const n = str.split(",").length;
-  ui.toast(
-    str.length > SEARCH_MAX
-      ? `${t("copiedStr", n)} · ${t("copyLong")}`
-      : t("copiedStr", n)
-  );
+  const parts = [t("copiedStr", res.count)];
+  if (res.dropped) parts.push(t("copyDropped", res.dropped));
+  if (res.long) parts.push(t("copyLong"));
+  ui.toast(parts.join(" · "));
 }
 
 /** 寫剪貼簿。成功回 true，兩條路都失敗回 false */
@@ -669,6 +682,18 @@ document.addEventListener("click", (ev) => {
     savePref();
     draw();
     drawDetail();
+    return;
+  }
+
+  /*
+   * 搜尋字串的語言。只重畫設定面板那一條，不必動整個畫面——
+   * 它不影響任何已經畫出來的東西，只影響下一次按複製產出什麼。
+   */
+  const goLang = el("[data-golang]");
+  if (goLang) {
+    state.goLang = goLang.dataset.golang;
+    savePref();
+    draw();
     return;
   }
 
