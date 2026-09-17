@@ -12,11 +12,12 @@
 index.html  →  <script type="module" src="./js/main.js">  →  main.js  →  各模組
 ```
 
-`index.html` 是骨架：頂部列（標題、三個檢視、語言、齒輪與設定面板）、
+`index.html` 是骨架：頂部列（標題、檢視切換、語言、齒輪與設定面板）、
 資訊列、搜尋列（含篩選漏斗與面板）、內容容器、右欄、toast。
 所有內容由 `js/ui.js` 在執行時填入。無 build、無 bundler、無 npm。
 
 版面是兩欄：內容與右欄。**沒有側欄**，導覽在頂部列，900 以下掉成貼底的 bar。
+知識是第四個檢視，但它**沒有右欄**：點一格是連到 `kb/<slug>/` 那一頁靜態 HTML。
 右欄（`#sheet`）**三個檢視一律彈出**，平常 `display: none`，
 點開東西才靠 `is-open` 打開；形態是**置中的視窗**，900 以下也置中，只是留白縮窄。
 常駐右欄（`rail-pop`／`rail-off`／1200 那段）2026-09-14 拿掉了。
@@ -36,10 +37,12 @@ main.js ──┬─► i18n.js      語言字典 + makeT()
           ├─► share.js ──┬─► dex.js
           │              └─► backgrounds.js
           ├─► gostring.js ─► dex.js   把一欄變成 GO 的搜尋字串
+          ├─► kbdata.js   知識的 metadata（只為了判斷是不是空的）
           └─► ui.js ─────┬─► dex.js
                          ├─► types.js        屬性顏色
                          ├─► backgrounds.js  背卡查詢
                          ├─► store.js        MAX_ITEMS
+                         ├─► kbdata.js       知識的格子牆
                          └─► version.js      設定面板底下那行版本號
 
 dex.js ──┬─► godex.js       自動產生的圖鑑資料
@@ -59,6 +62,7 @@ backgrounds.js ──┬─► bgdata.js    自動產生的背卡骨架
 tools/build-dex.mjs ──► costumes.js（裝扮譯名）
 tools/build-bg.mjs ───► bgseries.js, bgevents.js（產生 bgdata.js）
 tools/build-bgflags.mjs ► backgrounds.js, dex.js（產生 bgflags.js）
+tools/build-kb.mjs ───► kbdata.js, i18n.js（＋ kb/_src/，產生 kb/<slug>/index.html）
 tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑）
 ```
 
@@ -69,7 +73,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 層 | 檔案 | 特徵 |
 | --- | --- | --- |
-| 資料 | `godex.js` `extra.js` `costumes.js` `backgrounds.js` `types.js` `i18n.js` `maxdata.js` `shadowdata.js` `bgflags.js` | 純資料，不碰 DOM |
+| 資料 | `godex.js` `extra.js` `costumes.js` `backgrounds.js` `types.js` `i18n.js` `maxdata.js` `shadowdata.js` `bgflags.js` `kbdata.js` | 純資料，不碰 DOM |
 | 存取 | `dex.js` `store.js` `gostring.js` | 查詢與讀寫，不碰 DOM |
 | 繪製 | `ui.js` `share.js` | 把資料變成畫面，不決定資料怎麼變 |
 | 協調 | `main.js` | 保管 state、綁事件、串起以上三層 |
@@ -82,7 +86,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 檔案 | 用途 | 備註 |
 | --- | --- | --- |
-| `index.html` | 頁面骨架，149 行 | 設定面板要加區塊 → 在 `#settings` 的 `.modal-scroll` 內加 `<section class="side-block">`。圖示一律 inline SVG，不用文字符號 |
+| `index.html` | 頁面骨架，174 行 | 設定面板要加區塊 → 在 `#settings` 的 `.modal-scroll` 內加 `<section class="side-block">`。圖示一律 inline SVG，不用文字符號 |
 | `css/style.css` | 全部樣式 | 設計 token 全在 `:root`。**深色不是反色**，`body.dark` 是另一套值。**斷點只有一個：900px**（1200 那個是常駐右欄用的，2026-09-14 一起拿掉了） |
 
 ### 資料層
@@ -99,7 +103,8 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `js/bgevents.js` | `HAND_EVENTS` | 手工維護的 21 張，有三語名、註記、寶可夢清單與本地備援圖。會逐欄覆蓋骨架。其中 30 週年那四張只蓋名稱與日期，清單等活動辦完 |
 | `js/bgseries.js` | `SERIES` `seriesInfo` `seriesOrder` | 23 個收納夾的三語名與顯示順序 |
 | `js/types.js` | `TYPES` `typeInfo` | 18 種屬性的代表色與三語名 |
-| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 137 個 key，必須完全一致。**遊戲內的搜尋關鍵字不在這裡**，那是遊戲的字，在 `gostring.js` |
+| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 148 個 key，必須完全一致。**遊戲內的搜尋關鍵字不在這裡**，那是遊戲的字，在 `gostring.js` |
+| `js/kbdata.js` | `KB_CATS` `KB_ENTRIES` `KB_COUNT` | 知識條目的 metadata（slug、標題、摘要、分類、更新日、來源）。**手動維護**，跟上面那幾個自動產生的不一樣。內文不在這裡，在 `kb/_src/<slug>.html`；格子牆只讀這個檔，畫一面牆不必載入任何內文。**目前是空陣列**，所以第四顆檢視鈕與頁尾那條連結都不畫、`kb/` 底下也沒有產出 |
 | `js/version.js` | `VERSION` `VERSION_DATE` | 版本號。**畫面唯一認的值**，`VERSION.md` 是給人看的紀錄，兩邊必須一致，`check.mjs` 會驗 |
 
 ### 存取層
@@ -116,7 +121,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 檔案 | 用途 |
 | --- | --- |
-| `js/ui.js` | 全部繪製函式。三個檢視共用 |
+| `js/ui.js` | 全部繪製函式。四個檢視共用 |
 | `js/share.js` | 分享圖。方格牆版面，兩區上下排列，canvas 畫 PNG，2 倍解析度，深色模式輸出深色版 |
 
 `ui.js` 依檢視分區：
@@ -127,6 +132,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 圖鑑 | `renderFilterBar` `renderFilterPanel` `visibleEntries` `renderGrid` `renderDetail` |
 | 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` `renderPicker` `growPicker` `renderPickFoot` `pickHidden` `renderCopy` |
 | 背卡 | `renderBg` `renderCardDetail` `renderBgFoot` |
+| 知識 | `renderKb` `kbCatName` |
 
 ### 協調層
 
@@ -166,6 +172,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `tools/build-bgflags.mjs` | 產生 `js/bgflags.js`。解析 Bulbapedia 的 Background (GO)，抽出逐隻的暗影／極巨化／超極巨化角標。卡片對照 `CARD_MANUAL` 與型態後綴 `SUFFIX` 都是人工指名，**指名前逐張比對過清單內容**。報告在 `tools/bgflags-report.md`，會列出對不到的（多半是我們的卡片清單缺那一隻）。快取在 `tools/.cache/bgflags/` |
 | `tools/make-purified-mark.mjs` | 產生 `img/purified-mark.png`。抓 PokeMiners 的 `Images/Rocket/ic_purified.png`，**不是旁邊的 `_filter` 版**（那是圓底的篩選標籤版）。**不膨脹**：它是實心星芒，線條本來就夠粗 |
 | `tools/png.mjs` | PNG 讀寫與影像處理（膨脹、降採樣）。`make-max-mark` 與 `make-purified-mark` 共用，只處理 8-bit RGBA，不是通用函式庫 |
+| `tools/build-kb.mjs` | 產生 `kb/<slug>/index.html` 與索引頁 `kb/index.html`。讀 `js/kbdata.js` 的 metadata 與 `kb/_src/<slug>.html` 的內文片段，套共用的殼。`--check` 只比對不寫檔（`check.mjs` 走這條，抓「改了內文忘記重跑」）。**不連外網、沒有快取。** `SITE` 常數填了才會長出 canonical 與 `og:url`，等待辦 C |
 | `tools/check.mjs` | 自我檢查。i18n key、版本號兩個檔沒寫岔、extra 的留白欄位齊全、條目完整性、背卡引用、儲存往返、全部繪製函式、逸出。`--net` 加驗圖片網址 |
 | `tools/make-max-mark.mjs` | 產生 `img/max-mark.png`。抓 Bulbapedia 的官方符號，**先把細線條加粗再縮**——原圖 185px 直接縮到 20px 會糊掉 |
 | `tools/measure-icons.mjs` | 量 `extra.js` 那批圖的主體佔畫布多少、中心偏多少。要連外網。**不自動改檔**，`--list` 印出數字自己貼進 `js/extra.js` |
@@ -177,6 +184,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `img/bg/` | ✓ | 17 張背卡的本地備援圖，jpg / png / webp 混雜，**寫死檔名前先確認副檔名** |
 | `img/extra/` | ✓ | 5 張上游沒有的裝扮圖。來源沒有 CORS，不收進來就畫不進分享圖 |
 | `img/purified-mark.png` | ✓ | 淨化的官方符號，64×64 只有 alpha。顏色由使用端給（`--pur-mark` / canvas），由 `tools/make-purified-mark.mjs` 產生 |
+| `kb/img/` | ✓ | 知識頁的內文插圖。規格在該目錄的 `README.md`：720px 寬、單張 200KB 以內、命名 `<slug>-<序號>`。理由跟 `img/bg` 不同——**靜態頁的圖必須跟頁面一起送出去** |
 | `img/max-mark.png` | ✓ | 極巨化的官方符號，96×96 只有 alpha。顏色由使用端給（CSS mask／canvas source-in），所以一張圖出兩種顏色。由 `tools/make-max-mark.mjs` 產生 |
 
 寶可夢圖片**不鏡像**，一律直接連外部 CDN。3426 張約 75 MB，
@@ -218,6 +226,11 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改詳情面板的順序 | `js/ui.js` 的 `renderDetail`，由上到下就是操作順序 |
 | 改詳情面板底部的加入鈕 | `js/ui.js` 的 `addBtn`。**從加號進來時只畫那一欄那顆**，由 `renderDetail` 的第七個參數 `from`（欄位字串）決定，main.js 傳 `state.pick.col`。圖鑑點進來沒有欄的脈絡，兩顆都留 |
 | 改一欄的上限 | `js/store.js` 的 `MAX_ITEMS` |
+| 寫一則新的知識 | `js/kbdata.js` 加一筆 → 寫 `kb/_src/<slug>.html` → `node tools/build-kb.mjs` → `node tools/check.mjs`。**slug 一旦發布就不能改**，它是網址 |
+| 改知識頁的殼或 SEO 件 | `tools/build-kb.mjs` 的 `shell()`，改完**重跑一次全部都會換掉**，不必手改 N 個檔 |
+| 網域到手要補 canonical | `tools/build-kb.mjs` 頂端的 `SITE` 填上去再重跑，`canonical` 與 `og:url` 會自己長出來 |
+| 改知識格子牆或文章排版 | `js/ui.js` 的 `renderKb` + `css/style.css` **檔尾**那一整區（含它自己的 `@media`） |
+| 加一個知識分類 | `js/kbdata.js` 的 `KB_CATS`、`js/i18n.js` 的 `kbCat*`（三語）、`js/ui.js` 的 `KB_CAT_KEY`，三處要一致 |
 | 改搜尋字串的內容或格式 | `js/gostring.js`。鈕在 `js/ui.js` 的 `tradeColumn`，確認彈窗是 `js/ui.js` 的 `renderCopy`，開窗與實際複製在 `js/main.js` 的 `openCopy` / `doCopy`。**改演算法一定要跑 check 的 4b 對拍** |
 | 改複製前那個確認彈窗 | `js/ui.js` 的 `renderCopy`（標題、提醒、字串、底部那顆鈕），樣式是 `css/style.css` 的 `.copy-head` / `.copy-warn` / `.copy-str`。字串框的斷行**必須是 `word-break: break-all`**，換成 `overflow-wrap: anywhere` 會排出孤字 |
 | 改搜尋字串的固定開頭 | `js/gostring.js` 的 `KEYWORDS.*.traded` 與 `searchString` 裡的 `head`。改了要跟著看 `budget` 與 check 4b 的「交換來的一律搜不到」 |

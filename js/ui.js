@@ -4,7 +4,7 @@
  * 只把資料變成畫面，不決定資料怎麼變。
  * 不碰 localStorage、不改 state，那是 main.js 的事。
  *
- * 三個檢視共用這個檔：圖鑑、交換表、背卡。
+ * 四個檢視共用這個檔：圖鑑、交換表、背卡、知識。
  */
 
 import {
@@ -37,6 +37,7 @@ import {
   folderName,
 } from "./backgrounds.js";
 import { MAX_ITEMS, formatCode } from "./store.js";
+import { KB_ENTRIES, KB_CATS } from "./kbdata.js";
 import { VERSION, VERSION_DATE } from "./version.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -107,6 +108,13 @@ export function renderChrome(t, lang, disp = {}) {
     <button type="button" data-act="import">${esc(t("import"))}</button>
     <button type="button" class="danger" data-act="reset">${esc(t("reset"))}</button>`;
 
+  /*
+   * 頁尾那條到知識頁的連結。骨架裡寫死繁中（爬蟲讀初始 HTML），
+   * 這裡依介面語言覆蓋。**沒有內容就整條藏起來**，跟第四顆檢視鈕同一個判斷。
+   */
+  $("#kbFoot").hidden = !KB_ENTRIES.length;
+  $("#kbFootLink").textContent = t("kbFooter");
+
   // 版本號。只有標籤翻譯，號碼與日期三語共用同一個寫法
   $("#verLine").textContent = `${t("version")} ${VERSION} · ${VERSION_DATE}`;
 }
@@ -146,6 +154,8 @@ const VIEW_ICONS = {
   dex: `<rect x="3.5" y="3.5" width="7" height="7" rx="1.6" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.6" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.6" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.6" />`,
   trade: `<path d="M4 9h13l-3.5-3.5M20 15H7l3.5 3.5" />`,
   bg: `<rect x="2.5" y="4.5" width="19" height="15" rx="2.5" /><path d="M2.5 15.5l5-4.5 4 3.5 3.5-3 6.5 5.5" /><circle cx="8.5" cy="9" r="1.6" />`,
+  /* 攤開的書。兩半各自往外彎，中間那條是書脊 */
+  kb: `<path d="M12 6.5C10.5 5 8.3 4.3 4 4.3v13.4c4.3 0 6.5 0.7 8 2.2 1.5-1.5 3.7-2.2 8-2.2V4.3c-4.3 0-6.5 0.7-8 2.2z" /><path d="M12 6.5v13.4" />`,
 };
 
 /*
@@ -228,13 +238,22 @@ function dispGroup(key, label, opts, cur) {
   </div>`;
 }
 
-/** 檢視切換。桌機在頂部列，900 以下是貼底的 bar，同一段 DOM */
+/**
+ * 檢視切換。桌機在頂部列，900 以下是貼底的 bar，同一段 DOM。
+ *
+ * **知識那一顆在沒有內容時不畫**：點進去是一片空白比沒有那顆鈕更難解釋，
+ * 跟「空的那一欄不畫鉛筆」同一個理由。第一則進 `js/kbdata.js` 就自己出現。
+ *
+ * 四格排得下，2026-09-18 量過：三語 × 320~430 五種寬度零裁切零換行，
+ * bar 高度不變。數字在 CLAUDE.md 的「三件先知道的代價」第 1 點。
+ */
 export function renderViews(view, t) {
   const items = [
     ["dex", t("viewDex")],
     ["trade", t("viewTrade")],
     ["bg", t("viewBg")],
   ];
+  if (KB_ENTRIES.length) items.push(["kb", t("viewKb")]);
   $("#views").innerHTML = items
     .map(
       ([k, label]) =>
@@ -1468,6 +1487,62 @@ export function renderBgFoot(n, t, shiny) {
        }>${esc(t("bgAddHave", n))}</button>
      </div>`
   );
+}
+
+/* ─────────── 知識 ─────────── */
+
+/**
+ * 分類代碼對到 i18n 的 key。
+ * 寫成表不寫成字串拼接，`check.mjs` 才驗得出 `KB_CATS` 與這裡沒有寫岔。
+ */
+const KB_CAT_KEY = {
+  trade: "kbCatTrade",
+  search: "kbCatSearch",
+};
+
+export const kbCatName = (cat, t) =>
+  KB_CAT_KEY[cat] ? t(KB_CAT_KEY[cat]) : cat;
+
+/** 格子牆的排序：先照 `KB_CATS` 的順序分群，同一群保持 kbdata 裡的順序 */
+const kbSorted = () =>
+  KB_ENTRIES.map((e, i) => ({ e, i })).sort((a, b) => {
+    const ga = KB_CATS.indexOf(a.e.cat);
+    const gb = KB_CATS.indexOf(b.e.cat);
+    return ga === gb ? a.i - b.i : ga - gb;
+  }).map(({ e }) => e);
+
+/**
+ * 知識檢視的格子牆。
+ *
+ * **一格是一條真的連結，不是 `<button>`**：它指向一頁真的 HTML
+ * （`kb/<slug>/`），中鍵開新分頁、右鍵複製連結都要能用。
+ * 點擊不經過 main.js 的委派，瀏覽器自己走。
+ *
+ * **格子裡沒有圖**，這是這個站唯一純文字的格子牆。知識沒有一張能代表它
+ * 的圖，硬塞一張佔了位置卻講不出內容；摘要那一行才是這面牆的內容，
+ * 少了它就只剩一份目錄，看不出值不值得點進去。插圖在內文裡（`kb/img/`）。
+ *
+ * 內容目前只有繁中（待辦 A 的決定），所以標題與摘要不吃 `lang`；
+ * 分類與更新日是介面文字，跟著 `t` 走。
+ */
+export function renderKb(t) {
+  if (!KB_ENTRIES.length) {
+    $("#app").innerHTML = `<p class="dim pad">${esc(t("kbEmpty"))}</p>`;
+    return;
+  }
+
+  const cards = kbSorted()
+    .map(
+      (e) => `<a class="kb-card" href="kb/${esc(e.slug)}/">
+      <span class="kb-cat" data-cat="${esc(e.cat)}">${esc(kbCatName(e.cat, t))}</span>
+      <span class="kb-t">${esc(e.title)}</span>
+      <span class="kb-s">${esc(e.summary)}</span>
+      <span class="kb-d">${esc(t("kbUpdated", e.updated))}</span>
+    </a>`
+    )
+    .join("");
+
+  $("#app").innerHTML = `<div class="kb-grid">${cards}</div>`;
 }
 
 export { MAX_ITEMS };

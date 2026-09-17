@@ -15,9 +15,13 @@ import * as store from "./store.js";
 import * as ui from "./ui.js";
 import { buildShareImage } from "./share.js";
 import { searchString, STR_LANGS } from "./gostring.js";
+import { KB_ENTRIES } from "./kbdata.js";
 
 /** 背卡總張數。資訊列要顯示，算一次就好 */
 const CARD_TOTAL = BG_CARDS.length;
+
+/** 知識的則數。**是 0 的時候第四顆檢視鈕與頁尾那條連結都不畫** */
+const KB_COUNT = KB_ENTRIES.length;
 
 /* ─────────── state ─────────── */
 
@@ -30,7 +34,7 @@ const state = {
    * 我的介面是繁中不代表對方的遊戲也是。
    */
   goLang: "auto",
-  view: "dex", // dex / trade / bg
+  view: "dex", // dex / trade / bg / kb
   filter: emptyFilter(), // 五個群組，組間 AND、組內 OR
   /*
    * 現在哪一個面板開著：null、"filter" 或 "settings"。
@@ -211,12 +215,23 @@ function draw() {
       t
     );
     ui.renderTrade(state.book, state.lang, t, state.code, state.edit);
-  } else {
+  } else if (state.view === "bg") {
     ui.renderInfoBar(
       { title: t("viewBg"), stats: [t("bgCount", CARD_TOTAL)] },
       t
     );
     ui.renderBg(state.bg, state.lang, t);
+  } else {
+    /*
+     * 知識。**這個檢視沒有右欄**：點一格是連到 `kb/<slug>/` 那一頁，
+     * 不是開詳情。內容要被搜尋引擎讀到，就必須寫在 HTML 裡，
+     * 而 SPA 送出去的是空殼——這是它獨立成靜態頁的整個理由。
+     */
+    ui.renderInfoBar(
+      { title: t("viewKb"), stats: [t("kbCount", KB_COUNT)] },
+      t
+    );
+    ui.renderKb(t);
   }
 
   /*

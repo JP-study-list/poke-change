@@ -22,8 +22,11 @@
       </div>
 
       <!--
-        三個檢視。桌機排在頂部列裡，900 以下同一段 DOM 變成貼底的 bar，
+        檢視切換。桌機排在頂部列裡，900 以下同一段 DOM 變成貼底的 bar，
         跟右欄與那兩個面板同一個手法：位置只有一處，形態靠 CSS 切換。
+
+        **知識那一顆在 js/kbdata.js 是空的時候不畫**，所以現在只有三顆。
+        四顆排得下，2026-09-18 在 320~430 五種寬度量過。
       -->
       <nav class="views" id="views"></nav>
 
@@ -80,6 +83,18 @@
           <div class="pop fpanel" id="fpanel" hidden></div>
         </div>
         <div id="app"></div>
+
+        <!--
+          知識頁的入口。**存在的理由是爬蟲**：第四個檢視的格子牆是 JS 畫的，
+          爬蟲讀不到，那些靜態頁就沒有任何一條真的連結指過去。
+          文字寫死繁中讓爬蟲直接讀得到，`renderChrome` 再依介面語言覆蓋。
+
+          **沒有內容時 hidden**：`js/kbdata.js` 是空的就沒有東西可連，
+          跟第四顆檢視鈕同一個判斷，第一則進來兩個一起出現。
+        -->
+        <p class="kb-foot" id="kbFoot" hidden>
+          <a href="./kb/" id="kbFootLink">知識：Pokémon GO 交換的規則與眉角</a>
+        </p>
       </main>
 
       <!--

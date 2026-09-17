@@ -30,6 +30,24 @@ export const STRINGS = {
     viewDex: "圖鑑",
     viewTrade: "交換表",
     viewBg: "背卡",
+    viewKb: "知識",
+
+    /*
+     * 知識檢視。**kb 開頭那幾個有一半是給靜態頁的殼用的**
+     * （`tools/build-kb.mjs` 會 import 這個檔，取繁中那一份），
+     * 靜態頁目前只做繁中，但三語 key 一致那條檢查管的是介面，
+     * 所以日英也要有，不能只寫繁中。
+     */
+    kbCatTrade: "交換",
+    kbCatSearch: "搜尋",
+    kbCount: "%s 則",
+    kbEmpty: "還沒有內容",
+    kbUpdated: "更新 %s",
+    kbFooter: "知識：Pokémon GO 交換的規則與眉角",
+    kbHome: "首頁",
+    kbSourceTitle: "資料來源",
+    kbOfficialTag: "官方",
+    kbCommunityTag: "社群說法，非官方",
 
     grpKind: "種類",
     grpType: "屬性",
@@ -182,6 +200,18 @@ export const STRINGS = {
     viewDex: "図鑑",
     viewTrade: "交換リスト",
     viewBg: "背景カード",
+    viewKb: "知識",
+
+    kbCatTrade: "交換",
+    kbCatSearch: "検索",
+    kbCount: "%s 件",
+    kbEmpty: "まだ記事がありません",
+    kbUpdated: "更新 %s",
+    kbFooter: "知識：ポケモンGO 交換のしくみ",
+    kbHome: "ホーム",
+    kbSourceTitle: "出典",
+    kbOfficialTag: "公式",
+    kbCommunityTag: "非公式（コミュニティ情報）",
 
     grpKind: "種類",
     grpType: "タイプ",
@@ -334,6 +364,18 @@ export const STRINGS = {
     viewDex: "Dex",
     viewTrade: "Trade List",
     viewBg: "Backgrounds",
+    viewKb: "Guide",
+
+    kbCatTrade: "Trading",
+    kbCatSearch: "Search",
+    kbCount: "%s articles",
+    kbEmpty: "Nothing here yet",
+    kbUpdated: "Updated %s",
+    kbFooter: "Guide: how trading works in Pokémon GO",
+    kbHome: "Home",
+    kbSourceTitle: "Sources",
+    kbOfficialTag: "Official",
+    kbCommunityTag: "Community, not official",
 
     grpKind: "Kind",
     grpType: "Type",

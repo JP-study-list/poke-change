@@ -1216,11 +1216,13 @@ node tools/measure-icons.mjs # 驗 extra.js 的 fill/offX/offY 跟圖片對得�
 node tools/build-max.mjs --force # 重抓可極巨化名單，報告在 tools/max-report.md
 node tools/build-shadow.mjs --force  # 重抓可淨化名單，報告在 tools/shadow-report.md
 node tools/build-bgflags.mjs --force # 重抓背卡旗標，報告在 tools/bgflags-report.md
+node tools/build-kb.mjs      # 產生知識的靜態頁（改了內文或殼就要重跑）
+node tools/build-kb.mjs --check  # 只比對不寫檔，check.mjs 走的就是這條
 ```
 
 涵蓋：三語 i18n key 一致性、版本號格式與兩個檔沒寫岔、條目欄位完整與
-id 不重複、背卡引用與 id 回歸、儲存往返、全部繪製函式（含 1478 筆詳情
-逐一繪製）、HTML 逸出。
+id 不重複、背卡引用與 id 回歸、知識條目的 slug 與欄位（外加 `kb/` 的產出
+有沒有過期）、儲存往返、全部繪製函式（含 1478 筆詳情逐一繪製）、HTML 逸出。
 
 DOM stub 在 `tools/check.mjs` 裡面，需要新的元素 id 時加進去就好。
 
@@ -1252,6 +1254,7 @@ js/bgseries.js        收納夾譯名
 js/imgchain.js        圖片備援鏈（dex 與 backgrounds 共用）
 js/types.js           屬性顏色與名稱
 js/i18n.js            繁中／日／英字典
+js/kbdata.js          知識條目的 metadata（手動維護，目前是空的）
 js/version.js         版本號（畫面唯一認的值）
 js/ui.js              全部繪製函式
 js/main.js            進入點、狀態、事件
@@ -1260,6 +1263,9 @@ js/gostring.js        把一欄變成 GO 的搜尋字串
 img/bg/               背卡的本地備援圖（17 張，進 git）
 img/extra/            上游沒有的裝扮圖（5 張，進 git）
 img/purified-mark.png 淨化的官方符號（進 git）
+kb/_src/              知識的內文片段（**底線開頭，Jekyll 才不會公開**）
+kb/img/              知識的內文插圖（進 git，規格在該目錄的 README）
+kb/<slug>/index.html  產生的知識頁（不要手改）
 tools/build-dex.mjs   產生圖鑑資料
 tools/build-max.mjs   產生可極巨化名單
 tools/build-shadow.mjs   產生可淨化名單
@@ -1267,6 +1273,7 @@ tools/build-bgflags.mjs  產生背卡條件旗標
 tools/build-bg.mjs    產生背卡骨架
 tools/make-purified-mark.mjs  產生淨化符號
 tools/png.mjs         PNG 讀寫（兩支 make-*-mark 共用）
+tools/build-kb.mjs    產生知識的靜態頁
 tools/check.mjs       自我檢查
 tools/measure-icons.mjs  量 extra.js 那批圖的留白
 docs/go-search-syntax.md  GO 搜尋語法抄錄（參考用，程式沒用到）
@@ -1275,7 +1282,8 @@ progress.md           開發歷史（給我看的，逐次改動）
 VERSION.md            版本紀錄（給使用者看的，一版一筆）
 ```
 
-**三個檢視**（桌機在頂部列，手機在貼底的 bar）：圖鑑、交換表、背卡
+**四個檢視**（桌機在頂部列，手機在貼底的 bar）：圖鑑、交換表、背卡、知識。
+**知識那一顆在 `js/kbdata.js` 是空的時候不會畫**，所以目前畫面上只有三顆。
 
 ### 目前規模
 
@@ -1290,18 +1298,20 @@ VERSION.md            版本紀錄（給使用者看的，一版一筆）
 | 可淨化的條目 | 480 |
 | 有背卡條件旗標的卡 | 12（107 個標記） |
 | 收納夾 / 背卡 / 收集格 | 23 / 240 / 1579 |
-| 介面文字 | 三語各 137 個 key |
+| 介面文字 | 三語各 148 個 key |
 | 有 IV100 CP 的條目 | 1460（全部） |
 
-### 知識檢視【規劃中，2026-09-18 討論定案，尚未動工】
+### 知識檢視【地基 2026-09-18 做完（A-2），內容還沒進】
 
-> **這一節寫的是還沒做的東西。** `kb/`、`js/kbdata.js`、`tools/build-kb.mjs`
-> 現在都不存在，不要去找。動工前先回頭讀這一節，別重新發明一次。
+> **地基在了，內容是空的。** `js/kbdata.js` 現在是空陣列，
+> 所以**第四顆檢視鈕與頁尾那條連結都不會畫，`kb/` 底下也沒有任何產出**——
+> 這是刻意的，沒有內容就沒有入口。第一則進 kbdata 就整套長出來。
+> 寫內容前先讀這一節。
 
 **是什麼**：第四個檢視，一面格子牆，一格一則寶可夢知識。
-**點格子不是開右欄**，是連到那一則自己的網頁 `/kb/<slug>/`。
+**點格子不是開右欄**，是連到那一則自己的網頁 `kb/<slug>/`。
 
-**為什麼要獨立的頁**（使用者指定，理由是 SEO）：現在 `index.html` 只有 149 行
+**為什麼要獨立的頁**（使用者指定，理由是 SEO）：`index.html` 只有 180 行
 骨架，內容全部是 JS 執行後才填的，爬蟲與分享預覽拿到的是空殼。
 知識頁要被搜尋得到，內容就必須**直接寫在 HTML 裡**。
 GitHub Pages 根目錄本來就能放任意多個 .html，架構上不衝突：
@@ -1310,8 +1320,69 @@ SPA 照舊，靜態頁是新長出來的一層。
 **內容分兩半存**：
 - `js/kbdata.js` —— metadata（slug、標題、摘要、分類、更新日、來源清單）。
   **格子牆只讀這個**，畫格子不必載入內文。
-- `kb/src/<slug>.html` —— 內文，**純 HTML 片段**，不套殼。
-- `tools/build-kb.mjs` 讀兩邊套上共用的殼，輸出 `kb/<slug>/index.html`。
+- `kb/_src/<slug>.html` —— 內文，**純 HTML 片段**，不套殼。
+- `tools/build-kb.mjs` 讀兩邊套上共用的殼，輸出 `kb/<slug>/index.html`
+  與索引頁 `kb/index.html`。
+
+**寫一則的四個動作**：`js/kbdata.js` 加一筆 → 寫 `kb/_src/<slug>.html` →
+`node tools/build-kb.mjs` → `node tools/check.mjs`。
+
+#### 做地基時定下來的幾件事
+
+- **內文源的目錄是 `_src` 不是 `src`**。GitHub Pages 會把 repo 裡每一個檔案
+  都當網頁送出去，裸片段被索引到就是一頁沒有 title、沒有樣式、內容卻跟
+  正規頁一樣的重複內容。**Pages 預設跑 Jekyll，而 Jekyll 不發布底線開頭的
+  目錄**，改個名就擋掉了。**所以不要在這個 repo 加 `.nojekyll`**，
+  那會關掉 Jekyll，`_src` 立刻全部公開。
+
+- **爬蟲要有一條真的路走進來**。格子牆是 JS 畫的，爬蟲讀不到，
+  那些靜態頁就沒有任何連結指過去。所以是三段：`index.html` 頁尾一條
+  `<a href="./kb/">`（`#kbFoot`，寫死繁中讓爬蟲直接讀得到，
+  `renderChrome` 再依語言覆蓋）→ `kb/index.html` 索引頁 →
+  每一則。每一則的麵包屑再指回去。**這三段少一段就等於沒做 SEO。**
+
+- **格子是 `<a>` 不是 `<button>`**。中鍵開新分頁、右鍵複製連結都要能用，
+  而且它指向的是一頁真的 HTML。check 有一條盯著。
+
+- **一則都沒有就不產出任何檔案**。產一頁寫著「還沒有內容」的索引頁上線，
+  等於給搜尋引擎一頁空的。
+
+- **`canonical`、`og:url` 與 `og:image` 目前不寫**（2026-09-18 使用者拍板）。
+  三個都要絕對網址，而網域還沒買（待辦 C）。填現在的 GitHub Pages 子路徑
+  等於之後全部要改一次。`tools/build-kb.mjs` 頂端的 `SITE` 常數填了就長出來，
+  改一行重跑。其餘連結一律相對路徑，搬家不用改。
+
+- **深色那段 inline script 放在 `<body>` 之後的第一行**，不是 `<head>` 裡：
+  head 裡 `document.body` 還不存在，而 style.css 那兩千行深色全部掛在
+  `body.dark` 底下。同步 script 會擋住繪製，所以不會先閃一下白的。
+
+- **靜態頁吃同一份 `css/style.css`**，不開 `kb.css`。為的是拿到 `:root`
+  那組 token 與深色，另開一個檔等於深色要同步兩處。知識的樣式整段
+  （含自己的 `@media`）放在 style.css 檔尾自成一區。
+
+- **`.kb-note` 的底色用 `--card` 不是 `--sunk`**。深色的 `--sunk`（#0b0b0b）
+  比畫布（#101010）**更暗**，整段會變成頁面上一個黑洞。
+
+- **行內代碼一定要 `<code>`**。搜尋語法那一則整篇都是 `,` 與 `&`，
+  不給它自己的樣子就跟旁邊的標點混在一起——實測截圖裡真的看不出來。
+
+- **寬表格自己包一層 `<div class="kb-scroll">`**。內文是手寫的，
+  CSS 沒辦法替它加容器，不包的話手機上整頁會被撐出橫向捲動。
+
+- **插圖一定要 `<figcaption>`**，而且 `<img>` 要寫死 `width` 與 `height`。
+  圖說是給看不到圖的人唯一的內容；沒寫尺寸的話圖載進來整頁會往下跳（CLS）。
+  圖放 `kb/img/`（**進 git**，跟 `img/bg` 同一類例外），規格在
+  `kb/img/README.md`：720px 寬、單張 200KB 以內、命名 `<slug>-<序號>`。
+
+- **分類目前只有兩個**（`trade` 交換、`search` 搜尋），在 `js/kbdata.js`
+  的 `KB_CATS`，譯名在 `js/i18n.js` 的 `kbCat*`，對照表在 `js/ui.js` 的
+  `KB_CAT_KEY`。三處要一致，check 有一條盯著。
+  **`data-cat` 目前不上色**——兩個分類多兩個顏色 token 換不到辨識度，
+  屬性先留著。
+
+- **check 會驗產出有沒有過期**（`build-kb.mjs --check`）。改了內文卻忘記
+  重跑的話，線上那頁就一直是舊的，而那是**看不出來的**：頁面好好地在，
+  只是內容過期。
 
 **刻意不做 Markdown 解析器**。這個站沒有 npm，得自己刻一個，那是 bug 溫床
 （逸出、表格、巢狀清單）。寫內文時多打幾個 `<p>` 的代價遠比維護一個
@@ -1397,14 +1468,16 @@ SPA 照舊，靜態頁是新長出來的一層。
 **A 知識檢視**（第四個檢視 + `/kb/` 靜態頁）。規格已定案，見上面「知識檢視」
 那一節，還沒動工。**用頁面拆：一則知識就是一個計劃**，做完一則就能上線一則，
 不必等五則齊。A-3 到 A-7 每一則的工作都一樣：查官方繁中出處 → 使用者審 →
-寫 `kb/src/<slug>.html` → 重跑 build-kb。**成本在查證不在程式。**
+寫 `kb/_src/<slug>.html` → 重跑 build-kb。**成本在查證不在程式。**
 
 - ~~**A-1** 量手機底部 bar 3 格變 4 格排不排得下~~（2026-09-18 量完，字母退休不回收）。
   **結論：排得下，A-2 不必為版面做任何事**，數字見上面「三件先知道的代價」第 1 點
-- **A-2** 地基：`tools/build-kb.mjs` + 共用的殼 + `js/kbdata.js` + 第四個檢視的
-  格子牆 + i18n 補「知識」。SEO 件（`<title>`、description、canonical、`og:*`、
-  麵包屑、讀 pref 套深色的 inline script）寫在殼裡，一次做完五則都有。
-  用假資料就驗得起來，不必等內容
+- ~~**A-2** 地基~~（2026-09-18 做完，字母退休不回收）。`tools/build-kb.mjs`、
+  共用的殼、`js/kbdata.js`、第四個檢視、i18n 與 check 都在了。
+  **canonical、`og:url` 與 `og:image` 刻意沒做**，等 C；
+  其餘 SEO 件（`<title>`、description、`og:title`/`og:description`/`og:type`、
+  麵包屑、爬蟲入口、深色 inline script）寫在殼裡，五則共用。
+  細節見上面「知識檢視」那一節
 - **A-3** `lucky-trinket` 亮晶晶首飾。官方 FAQ 4945，**五則裡出處最齊的**
 - **A-4** `lucky-friends` 亮晶晶好朋友。官方 FAQ 1485，就在 4945 隔壁
 - **A-5** `search-syntax` 搜尋術語規則。`docs/go-search-syntax.md` 已有底稿，

@@ -8,6 +8,7 @@
  *   1. 三語 i18n key 完全一致
  *   1b. 版本號的格式，以及 VERSION.md 與 js/version.js 沒有寫岔
  *   1c. extra.js 那批圖都有 fill，放大倍率算得出來
+ *   1d. 知識條目的欄位與 slug，以及 kb/ 的產出沒有過期
  *   2. 圖鑑條目欄位完整、id 不重複
  *   3. 背卡引用的條目都存在
  *   4. 儲存讀取往返後資料不變
@@ -98,6 +99,7 @@ function installDom() {
     "searchbar", "importFile", "listName", "shareBtn", "pickFoot",
     "displayTitle", "displayOpts", "trainerCode", "verLine",
     "strLangTitle", "strLangHint", "strLangs",
+    "kbFoot", "kbFootLink",
   ]) {
     els[id] = mk(id);
   }
@@ -137,6 +139,8 @@ const maxdata = await import("../js/maxdata.js");
 const shadowdata = await import("../js/shadowdata.js");
 const { BG_FLAGS } = await import("../js/bgflags.js");
 const gostring = await import("../js/gostring.js");
+const kbdata = await import("../js/kbdata.js");
+const buildKb = await import("./build-kb.mjs");
 
 /** 背卡檢視的狀態，畫面測試用。收合狀態不影響資料正確性，給預設值就好 */
 const BG_STATE = { query: "", scope: "all", open: new Set() };
@@ -200,6 +204,75 @@ console.log("\n1c. extra 的圖片留白");
   ok(`${zoomed.length} 筆需要放大`, zoomed.length === withArt.length - 1, "只有曠野地帶那張是滿版的");
   const over = zoomed.filter((e) => dex.iconZoom(e) > 3);
   ok("倍率都不超過 3", !over.length, over.map((e) => `${e.id} ${dex.iconZoom(e)}`).join(","));
+}
+
+console.log("\n1d. 知識");
+{
+  const { KB_ENTRIES, KB_CATS } = kbdata;
+  // 繪製那一區才有 t，這裡自己造一個
+  const t = makeT("zh");
+
+  /*
+   * slug 就是網址那一段。**一旦發布就不能改**——外部連結會全部斷掉，
+   * 搜尋引擎累積的權重也歸零，跟條目 id 同一個道理。
+   * 這裡只擋形狀不對的，改動擋不了，那要靠人。
+   */
+  const badSlug = KB_ENTRIES.filter((e) => !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(e.slug || ""));
+  ok("slug 都是小寫英數與連字號", !badSlug.length, badSlug.map((e) => e.slug).join(","));
+
+  const seen = new Set();
+  const dup = KB_ENTRIES.filter((e) => (seen.has(e.slug) ? true : (seen.add(e.slug), false)));
+  ok("slug 不重複", !dup.length, dup.map((e) => e.slug).join(","));
+
+  const badField = KB_ENTRIES.filter(
+    (e) => !e.title || !e.summary || !e.cat || !e.updated || !Array.isArray(e.sources)
+  );
+  ok("欄位都齊全", !badField.length, badField.map((e) => e.slug).join(","));
+
+  const badCat = KB_ENTRIES.filter((e) => !KB_CATS.includes(e.cat));
+  ok("分類都在 KB_CATS 裡", !badCat.length, badCat.map((e) => `${e.slug}=${e.cat}`).join(","));
+
+  const badDate = KB_ENTRIES.filter((e) => !/^\d{4}-\d{2}-\d{2}$/.test(e.updated || ""));
+  ok("更新日是 YYYY-MM-DD", !badDate.length, badDate.map((e) => e.slug).join(","));
+
+  /*
+   * **至少要有一條來源。** 查不到官方出處的不是不能寫，是要在頁面上
+   * 標成社群說法（`official: false`）——圖鑑只能不列，知識頁寫得出這句話。
+   * 一條都沒有就是兩者皆非，那種頁不該上線。
+   */
+  const noSrc = KB_ENTRIES.filter((e) => !e.sources?.length || e.sources.some((x) => !x.label));
+  ok("每一則至少一條來源，而且都有名稱", !noSrc.length, noSrc.map((e) => e.slug).join(","));
+
+  /*
+   * 分類的譯名。`ui.js` 的 `kbCatName` 查不到時會原樣回傳分類代碼，
+   * 畫面上就會冒出一個 `trade`，很醜但不會壞——所以要靠這條抓。
+   */
+  const noName = KB_CATS.filter((c) => ui.kbCatName(c, t) === c);
+  ok(`${KB_CATS.length} 個分類都有譯名`, !noName.length, noName.join(","));
+
+  /*
+   * **產出沒有過期。** 改了 `kb/_src/` 的內文或殼卻忘記重跑 build-kb 的話，
+   * 線上那一頁就一直是舊的，而那是**看不出來的**：頁面好好地在，只是內容
+   * 過期了。所以拿 build 的結果跟磁碟上的逐檔比。
+   */
+  const { files, problems } = await buildKb.buildAll();
+  ok("內文與 kbdata 對得起來", !problems.length, problems.join("；"));
+
+  const stale = [];
+  for (const [path, content] of files) {
+    let disk = null;
+    try {
+      disk = await readFile(path, "utf8");
+    } catch {
+      /* 還沒產生 */
+    }
+    if (disk !== content) stale.push(path.split("/poke-change/")[1] || path);
+  }
+  ok(
+    files.size ? `kb/ 的 ${files.size} 個產出都是最新的` : "kbdata 是空的，kb/ 不該有產出",
+    !stale.length,
+    stale.join("，") + "（跑 node tools/build-kb.mjs）"
+  );
 }
 
 console.log("\n2. 圖鑑條目");
@@ -1632,6 +1705,105 @@ console.log("\n5. 繪製函式");
     ui.renderBg({ ...BG_STATE, scope: "global" }, "zh", t)
   );
   run("toast", () => ui.toast("hi"));
+
+  /*
+   * 知識檢視。**空與非空兩種都要驗**：交付時 kbdata 是空的，
+   * 所以「有內容」那條路平常沒有人走到，等第一則進來才發現壞掉就太晚了。
+   * 假資料直接 push 進 KB_ENTRIES（ui.js 拿的是同一個陣列參考），驗完還原。
+   */
+  run("renderKb 空的時候", () => {
+    ui.renderKb(t);
+    if (!els.app.innerHTML.includes(t("kbEmpty"))) throw new Error("沒有畫出空狀態");
+  });
+
+  run("renderViews 沒有知識內容就不畫那顆鈕", () => {
+    ui.renderViews("dex", t);
+    if (els.views.innerHTML.includes('data-view="kb"'))
+      throw new Error("kbdata 是空的，第四顆鈕不該出現");
+  });
+
+  {
+    const fake = {
+      slug: "check-sample",
+      title: "假的一則 <script>",
+      summary: "驗繪製用的，跑完就還原",
+      cat: kbdata.KB_CATS[0],
+      updated: "2026-09-18",
+      sources: [{ label: "來源", url: "https://example.com", official: true }],
+    };
+    kbdata.KB_ENTRIES.push(fake);
+
+    run("renderKb 有內容", () => {
+      ui.renderKb(t);
+      const html = els.app.innerHTML;
+      if (!html.includes('href="kb/check-sample/"')) throw new Error("格子不是連到那一頁");
+      if (!html.includes(ui.kbCatName(fake.cat, t))) throw new Error("分類沒有畫出來");
+    });
+
+    /*
+     * 格子是 `<a>` 不是 `<button>`：中鍵開新分頁、右鍵複製連結都要能用，
+     * 而且它指向一頁真的 HTML。寫成 button 的話那些全部沒有。
+     */
+    run("知識的格子是真的連結", () => {
+      ui.renderKb(t);
+      if (!/<a class="kb-card"/.test(els.app.innerHTML))
+        throw new Error("格子必須是 <a>");
+    });
+
+    run("renderViews 有內容就畫第四顆鈕", () => {
+      ui.renderViews("kb", t);
+      const html = els.views.innerHTML;
+      if (!html.includes('data-view="kb"')) throw new Error("第四顆鈕不見了");
+      if (!html.includes('data-view="kb" aria-pressed="true"'))
+        throw new Error("在知識檢視時那顆鈕沒有標成選中");
+    });
+
+    run("renderChrome 有內容時頁尾那條連結要露出來", () => {
+      ui.renderChrome(t, "zh");
+      if (els.kbFoot.hidden) throw new Error("有內容卻藏著爬蟲的入口");
+    });
+
+    // 標題是手寫的，一樣會被逸出——它跟寶可夢名稱走同一條路
+    run("知識的標題有逸出", () => {
+      ui.renderKb(t);
+      if (els.app.innerHTML.includes("<script>")) throw new Error("標題沒有逸出");
+    });
+
+    /*
+     * 靜態頁的殼。內文是我們自己手寫的 HTML **刻意不逸出**（它就是內容），
+     * 但 metadata 一律要逸出——它會進 <title> 與 meta content，
+     * 一個引號就把標籤切斷了。
+     */
+    run("build-kb 的殼把 metadata 逸出", () => {
+      const html = buildKb.renderPage(fake, "<p>內文</p>", t, "交換");
+      /*
+       * **不能拿 `includes("<script>")` 當判準**：殼裡本來就有讀深色偏好
+       * 的那一段 inline script，這條會永遠成立。要找的是逸出後的樣子。
+       */
+      if (!html.includes("&lt;script&gt;")) throw new Error("標題沒有逸出");
+      if (!html.includes("<p>內文</p>")) throw new Error("內文不該被逸出");
+      for (const need of [
+        '<html lang="zh-Hant">',
+        '<meta name="description"',
+        'property="og:title"',
+        'property="og:type" content="article"',
+        'class="kb-crumb"',
+        'class="kb-src"',
+      ]) {
+        if (!html.includes(need)) throw new Error(`殼裡少了 ${need}`);
+      }
+      // canonical 與 og:url 等待辦 C 才啟用，現在不該出現
+      if (html.includes("canonical") || html.includes("og:url"))
+        throw new Error("SITE 還是空的，不該長出 canonical");
+    });
+
+    kbdata.KB_ENTRIES.length = 0;
+  }
+
+  run("renderChrome 沒有內容時頁尾那條連結藏著", () => {
+    ui.renderChrome(t, "zh");
+    if (!els.kbFoot.hidden) throw new Error("沒有內容卻露出一條連到空頁的連結");
+  });
 
   /*
    * 同一隻寶可夢可以配不同背卡各收一筆，詳情面板要把那幾筆都列出來，

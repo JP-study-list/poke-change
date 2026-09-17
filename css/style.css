@@ -124,6 +124,7 @@
   --fs-md: 15px;
   --fs-lg: 17px;
   --fs-xl: 20px;
+  --fs-2xl: 26px; /* 只有知識頁的 h1 用得到。:root 的字級註解本來就寫到 26 */
 
   /* 小型大寫。段落標題與控制列共用，抄 Letterboxd 那條細線上的標籤 */
   --caps: 600 var(--fs-xs) / 1 system-ui, sans-serif;
@@ -2853,5 +2854,374 @@ body.no-names .cell .no {
 
   .rail-scroll {
     padding: 20px 18px 24px;
+  }
+}
+
+/* ═══════════ 知識 ═══════════
+ *
+ * 這一整段是第四個檢視與那些靜態頁共用的，**放在檔尾自成一區**，
+ * 連自己的手機覆寫都關在下面那個 @media 裡面。
+ * 上面那個 900 的大 block 已經收尾了，把知識的幾條插進去只會讓
+ * 兩件不相干的事交錯在一起；同一個 media query 寫兩次是合法的。
+ *
+ * 靜態頁（`kb/<slug>/index.html`）吃的就是這一份 style.css，
+ * 為的是拿到 :root 那組 token 與 body.dark 那兩千行深色——
+ * 另開一個 kb.css 等於深色要同步兩處。代價是靜態頁載進一份
+ * 它用不到的 SPA 樣式，幾 KB，換掉一個會寫岔的地方划算。
+ */
+
+/*
+ * 格子牆。**這是全站唯一純文字的格子牆**，知識沒有一張能代表它的圖。
+ * 一格是一條真的 <a>，不是 button：中鍵開新分頁、右鍵複製連結都要能用。
+ */
+.kb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+/*
+ * 格子本身。索引頁（kb/index.html）那份清單長得一模一樣，
+ * 所以兩個選擇器共用一條規則，不是抄兩份。
+ */
+.kb-card,
+.kb-item > a {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 132px;
+  padding: 14px 16px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: inherit;
+  text-decoration: none;
+}
+
+.kb-card:hover,
+.kb-item > a:hover {
+  border-color: var(--gold);
+}
+
+/*
+ * 分類標籤。`data-cat` 目前不上色——只有兩個分類，多兩個顏色 token
+ * 換不到什麼辨識度。屬性先留著，之後分類多了要上色時 CSS 就位。
+ */
+.kb-cat {
+  font: var(--caps);
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  text-transform: uppercase;
+}
+
+.kb-t {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+/* 摘要那一行才是這面牆的內容。只有標題的話看不出值不值得點進去 */
+.kb-s {
+  font-size: var(--fs-13);
+  line-height: 1.55;
+  color: var(--ink2);
+}
+
+.kb-d {
+  margin-top: auto;
+  padding-top: 4px;
+  font-size: var(--fs-xs);
+  color: var(--dim);
+}
+
+/*
+ * SPA 頁尾那條到 kb/ 的連結。**存在的理由是爬蟲**，所以它是一條
+ * 真的 <a> 而不是那顆檢視鈕；對人來說它只是一行低調的小字。
+ */
+.kb-foot {
+  padding: 8px 16px 28px;
+  text-align: center;
+  font-size: var(--fs-13);
+}
+
+.kb-foot a {
+  color: var(--dim);
+}
+
+/* ── 靜態頁 ── */
+
+.kb-top {
+  border-bottom: 1px solid var(--line);
+  background: var(--card);
+}
+
+.kb-crumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  font-size: var(--fs-13);
+  color: var(--dim);
+}
+
+.kb-crumb a {
+  color: var(--ink2);
+}
+
+/* 分隔符用 ::before 產生，不寫進 HTML：它是裝飾，讀屏不該把它唸出來 */
+.kb-crumb > * + *::before {
+  content: "›";
+  margin-right: 8px;
+  color: var(--dim);
+}
+
+.kb-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 28px 20px 64px;
+}
+
+.kb-page h1 {
+  margin: 6px 0 10px;
+  font-size: var(--fs-2xl);
+  line-height: 1.3;
+}
+
+.kb-lead {
+  font-size: var(--fs-md);
+  line-height: 1.6;
+  color: var(--ink2);
+}
+
+.kb-meta {
+  margin-top: 10px;
+  font-size: var(--fs-xs);
+  color: var(--dim);
+}
+
+/*
+ * 內文。行高比全站的 1.6 再鬆一點：這裡是一整篇要讀完的字，
+ * 不是格子上的標籤。
+ */
+.kb-body {
+  margin-top: 26px;
+  font-size: var(--fs-md);
+  line-height: 1.8;
+}
+
+.kb-body h2 {
+  margin: 34px 0 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hair);
+  font-size: var(--fs-lg);
+}
+
+.kb-body h2:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.kb-body p,
+.kb-body ul,
+.kb-body ol,
+.kb-body figure,
+.kb-body table {
+  margin-bottom: 16px;
+}
+
+.kb-body ul,
+.kb-body ol {
+  padding-left: 22px;
+}
+
+.kb-body li {
+  margin-bottom: 4px;
+}
+
+.kb-body a {
+  color: var(--gold-ink);
+}
+
+.kb-body strong {
+  font-weight: 700;
+}
+
+/*
+ * 插圖。**`<figcaption>` 不是裝飾**，它是給看不到圖的人唯一的內容，
+ * 所以它有自己的地位（一條金線），不是一行縮在角落的灰字。
+ */
+.kb-body figure {
+  margin-top: 22px;
+}
+
+.kb-body img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.kb-body figcaption {
+  margin-top: 8px;
+  padding-left: 10px;
+  border-left: 2px solid var(--gold);
+  font-size: var(--fs-13);
+  line-height: 1.6;
+  color: var(--ink2);
+}
+
+/*
+ * 沒有官方出處的那幾條。整段挑出來，讀的人一眼看得出這條的份量不同。
+ *
+ * 底色用 `--card` 不是 `--sunk`：深色的 `--sunk`（#0b0b0b）比畫布
+ * （#101010）**更暗**，整段會變成頁面上一個黑洞。`--card` 兩套都是
+ * 「比畫布亮一階」，淺色是白、深色是 #191919，方向一致。
+ */
+.kb-note {
+  padding: 12px 14px;
+  border-left: 3px solid var(--gold);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--card);
+  font-size: var(--fs-base);
+}
+
+/*
+ * 行內代碼。搜尋語法那一則整篇都是 `,` 與 `&`，不給它自己的樣子
+ * 就跟旁邊的標點混在一起——上一版的截圖裡真的看不出哪個是符號。
+ */
+.kb-body code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--sunk);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92em;
+}
+
+/*
+ * 寬表格自己包一層 `<div class="kb-scroll">`。
+ * 內文是手寫的 HTML，CSS 沒辦法替它加一層容器，所以這是寫內文時的
+ * 責任，範本裡有寫。不包的話手機上整頁會被撐出橫向捲動。
+ */
+.kb-scroll {
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.kb-scroll > table {
+  margin-bottom: 0;
+}
+
+.kb-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-base);
+}
+
+.kb-body th,
+.kb-body td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--hair);
+  text-align: left;
+}
+
+.kb-body th {
+  font: var(--caps);
+  color: var(--dim);
+  text-transform: uppercase;
+}
+
+/*
+ * 出處。**逐條列，而且官方與社群分得出來**——查不到官方出處的不是
+ * 不能寫，是要講明白。圖鑑只能不列，頁面寫得出這句話，差別在這裡。
+ */
+.kb-src {
+  margin-top: 44px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.kb-src h2 {
+  font: var(--caps);
+  color: var(--dim);
+  text-transform: uppercase;
+}
+
+.kb-src ol {
+  margin-top: 12px;
+  padding-left: 20px;
+  font-size: var(--fs-13);
+  line-height: 1.9;
+}
+
+.kb-src a {
+  color: var(--gold-ink);
+}
+
+.kb-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font: var(--caps);
+  line-height: 1.7;
+  text-transform: uppercase;
+}
+
+.kb-tag.official {
+  border: 1px solid var(--have);
+  color: var(--have);
+}
+
+/* 社群那顆用金色不用紅：它不是錯誤，是「這條的來源份量不同」 */
+.kb-tag.community {
+  border: 1px solid var(--gold);
+  color: var(--gold-ink);
+}
+
+/* 索引頁的清單。項目符號拿掉，格子自己就是項目 */
+.kb-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 26px;
+  list-style: none;
+}
+
+@media (max-width: 900px) {
+  /*
+   * 欄數講死，不推算。`minmax` 推出來的欄數會跟著螢幕寬度飄，
+   * 這跟寶可夢格子那條是同一個理由。
+   */
+  .kb-grid,
+  .kb-list {
+    grid-template-columns: 1fr;
+  }
+
+  .kb-grid {
+    padding: 12px;
+  }
+
+  .kb-card,
+  .kb-item > a {
+    min-height: 0;
+  }
+
+  .kb-page {
+    padding: 22px 16px 48px;
+  }
+
+  .kb-page h1 {
+    font-size: var(--fs-xl);
+  }
+
+  .kb-crumb {
+    padding: 10px 16px;
   }
 }
