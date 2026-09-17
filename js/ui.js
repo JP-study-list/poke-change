@@ -18,6 +18,7 @@ import {
   hasShiny,
   canMax,
   canGmax,
+  canPurify,
   FILTER_GROUPS,
   applyFilter,
   filterCount,
@@ -518,7 +519,12 @@ function editBlock(col, data, id, e, lang, t, flash) {
 
   const block = ({ item, idx }) => {
     // keep：舊紀錄可能帶著現在不合的組合，自己選著的那張一律留在選項裡
-    const cards = cardsFor(id, { max: item.max || item.gmax, keep: item.bg });
+    const cards = cardsFor(id, {
+      purified: item.purified,
+      max: item.max,
+      gmax: item.gmax,
+      keep: item.bg,
+    });
     const groups = groupCards(cards);
     const mk = (field, label, cls) =>
       `<button type="button" class="mk ${cls}" data-field="${field}"
@@ -551,6 +557,7 @@ function editBlock(col, data, id, e, lang, t, flash) {
         ${mk("xxs", t("markXxs"), "xxs")}
         ${canMax(e) ? mk("max", t("markMax"), "max") : ""}
         ${canGmax(e) ? mk("gmax", t("markGmax"), "gmax") : ""}
+        ${canPurify(e) ? mk("purified", t("markPurified"), "purified") : ""}
         <button type="button" class="mk del" data-del="${idx}" data-col="${col}">${esc(
       t("remove")
     )}</button>
@@ -600,13 +607,13 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
    * 列出來的每一張都是實際上組不出來的組合。
    * 草稿不必傳 keep：勾下去那一刻 main.js 就把不合的那張退成「不指定」了。
    */
-  const cards = cardsFor(id, { max: d.max || d.gmax });
+  const cards = cardsFor(id, { purified: d.purified, max: d.max, gmax: d.gmax });
   /*
    * 一張都不剩時仍然畫出區塊，只有「不指定」那一列。
    * 換成「目前沒有活動背卡」會被讀成「這隻寶可夢沒有背卡」，
    * 但它其實有，只是極巨化配不上——那句話留給真的沒有背卡的條目。
    */
-  const bgBlock = cards.length || d.max || d.gmax
+  const bgBlock = cards.length || d.max || d.gmax || d.purified
     ? `<div class="bg-list">
         <button type="button" class="bg-row none" data-pick=""
                 aria-pressed="${!d.bg}">
@@ -684,6 +691,7 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
       ${dmk("xxs", t("markXxs"), "xxs")}
       ${canMax(e) ? dmk("max", t("markMax"), "max") : ""}
       ${canGmax(e) ? dmk("gmax", t("markGmax"), "gmax") : ""}
+      ${canPurify(e) ? dmk("purified", t("markPurified"), "purified") : ""}
     </div>
 
     <p class="d-sect">${esc(t("bgSection"))}</p>
@@ -718,24 +726,29 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
  * canvas 那邊用 `source-in` 做同一件事，見 js/share.js。
  */
 export const MAX_MARK_SRC = "./img/max-mark.png";
+export const PURIFIED_MARK_SRC = "./img/purified-mark.png";
 
 /**
- * 極巨化／超極巨化的徽章。圖的右上角一顆圓，裡面是官方那顆符號。
+ * 極巨化／超極巨化／淨化的徽章。圖的右上角一顆官方符號。
  *
  * 詳情面板與交換表的格子共用這一顆，所以勾下去看到的東西跟之後
  * 存在清單裡看到的一模一樣——使用者要的就是「按下去右上角跳符號」。
  *
- * 兩者互斥，只會有一顆。
+ * **三者互斥，只會有一顆。** 那一角一次只放得下一個東西，
+ * 而三種狀態在遊戲裡本來就不會同時發生（見 store.js 的 cleanItem）。
  *
- * @param {{max?:boolean, gmax?:boolean}} v 草稿或清單項目，兩邊欄位同名
+ * 淨化用另一張圖（青色星芒），所以 class 不同；極巨化那兩個共用
+ * 同一張圖只換顏色，遊戲裡也是這樣。
+ *
+ * @param {{max?:boolean, gmax?:boolean, purified?:boolean}} v 草稿或清單項目，兩邊欄位同名
  */
 function markBadge(v, t) {
   if (!v) return "";
-  const kind = v.gmax ? "gmax" : v.max ? "max" : null;
+  const kind = v.gmax ? "gmax" : v.max ? "max" : v.purified ? "purified" : null;
   if (!kind) return "";
-  return `<i class="maxb${kind === "gmax" ? " gmax" : ""}" title="${esc(
-    t(kind === "gmax" ? "markGmax" : "markMax")
-  )}"></i>`;
+  const cls = kind === "purified" ? "purb" : kind === "gmax" ? "maxb gmax" : "maxb";
+  const key = kind === "purified" ? "markPurified" : kind === "gmax" ? "markGmax" : "markMax";
+  return `<i class="${cls}" title="${esc(t(key))}"></i>`;
 }
 
 /* ─────────── 交換表 ─────────── */

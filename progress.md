@@ -4,6 +4,95 @@
 
 ---
 
+## 2026-09-17
+- 類型：新增
+- 影響檔案：js/shadowdata.js（新）, js/bgflags.js（新）, tools/build-shadow.mjs（新）,
+  tools/build-bgflags.mjs（新）, tools/make-purified-mark.mjs（新）, tools/png.mjs（新）,
+  img/purified-mark.png（新）, js/dex.js, js/backgrounds.js, js/store.js, js/ui.js,
+  js/main.js, js/share.js, js/i18n.js, css/style.css, tools/build-max.mjs,
+  tools/make-max-mark.mjs, tools/check.mjs, js/version.js, VERSION.md,
+  CLAUDE.md, project-index.md
+- 摘要：新增「淨化」交換條件；背卡的條件過濾從卡片層級白名單改成逐隻。版本升 1.09.00。
+- 原因：使用者要求加淨化這個類別，符號用 GO 自己的，跟極巨化互斥。
+  查證過程中發現上一版的背卡過濾粒度是錯的，使用者拍板一起改（B 方案）。
+
+- 查證（先討論、後動工）：
+  - **淨化名單意外便宜**：`isShadow` 早就在 `build-max.mjs` 的正則裡，
+    Dittobase 的暗影是獨立條目（`bulbasaur-shadow`），519 筆、480 筆已實裝，
+    **裝扮 0 筆、超級進化 0 筆**，57 筆帶型態。使用者選的「照資料走」
+    自然就排除了裝扮，不必另外寫規則。
+  - **game master 的 `pokemonSettings.shadow` 不能當名單**：1015 筆，
+    連「2019 秋季妙蛙種子」這種裝扮都有一整組淨化費用。跟 `breadTierGroup`
+    同一類，有設定不等於實裝，所以只當佐證，差異寫進報告。
+  - **暗影確實能帶背卡**。Bulbapedia 的 Background (GO) 圖例寫得很白：
+    標了暗影圖示的那一隻「can be obtained with the corresponding background
+    as a Shadow Pokémon」。解析整頁得到 36 個暗影標記、63 個極巨標記，
+    跟頁面上 `<img>` 的實際數量對得起來（扣掉六段圖例剛好），沒有漏也沒有重複。
+  - **那份資料同時打臉 1.08.03 的白名單**：隊長三張卡各有一百多筆，
+    Bulbapedia 只標了 6 隻能極巨化。整張放行會多出九十幾隻，整張濾掉會
+    少掉那 6 隻——使用者當初回報的「妙蛙花勾極巨化還列出隊長卡」，
+    兩種做法都答不對，因為能極巨化的是妙蛙**種子**不是妙蛙花。
+
+- 做法：
+  - `tools/build-shadow.mjs` → `js/shadowdata.js`，480 筆。共用
+    `tools/.cache/max/` 那份 Dittobase 快取，同一個頁面不重抓。
+    尼多蘭兩筆靠 `FORM_ALIAS` 指名（英文名帶性別符號，slugify 會吃掉）。
+  - `tools/build-bgflags.mjs` → `js/bgflags.js`，12 張卡、107 個標記。
+    卡片對照 `CARD_MANUAL` **每一筆都逐張比對過清單內容才寫進來**，
+    不是照名字猜——build-bg 踩過那個坑（巴黎兩張的編號是交叉的）。
+  - `cardsFor(id, { purified, max, gmax, keep })` 改查逐隻旗標，
+    `MAX_BATTLE_CARDS` 與 `isMaxBattle` 退場，換成 `cardAllows(卡, 條目, 種類)`。
+  - 三方互斥（`EXCLUSIVE` 常數）走三條路：草稿、`setField`、`cleanItem`。
+    `item.purified` **不升儲存版本號**，跟 `max` 同一個理由。
+  - 符號：PokeMiners 的 `Images/Rocket/ic_purified.png`，
+    **不是旁邊的 `ic_purified_filter.png`**（那是圓底的篩選標籤版，
+    跟刪除鈕撞臉，極巨化那顆踩過）。**不膨脹**——它是實心星芒不是空心輪廓，
+    縮到 20px 還有 33.5% 實心，極巨化那顆膨脹完才 28.5%。
+    PNG 編解碼抽成 `tools/png.mjs` 兩支共用，**重構後重跑 make-max-mark
+    產出的圖位元組相同**（md5 bff07a18… 不變）。
+  - 顏色另挑：官方那個淺青 rgb(180,237,240) 當實心底白字只有 1.3:1。
+    `--pur` #0f7d8c（白字 4.85:1，對照 --max 的 4.79）、
+    `--pur-mark` #1aa8bd（2.85 / 6.69，對照 --max-mark 的 2.77 / 6.86）。
+  - 篩選「其他」那組加三個：可淨化 480、可極巨化 151、可超極巨化 20。
+
+- **補了三隻漏掉的極巨化**（`MANUAL_MAX`）：壺壺、勾魂眼、吼吼鯨。
+  check 的「旗標跟條件名單一致」失敗才抓出來——Bulbapedia 說 Dark Skies
+  那張卡上這三隻可以極巨化，我們的名單沒有。Dittobase 連
+  `shuckle-dynamax` 這種條目都沒有，game master 的 BREAD 縮放清單也沒有，
+  **兩邊一起漏**。pokemon.com 的 Dark Skies 陣容表寫得明明白白：
+  8/18 有 Dynamax Shuckle 與 Dynamax Sableye，8/21–22 有 Wailmer。
+  這是 CLAUDE.md 記過的前例重演（上一輪是幾何雪花、投擲猴、毒電嬰），
+  那時留下的規矩就是「下次多出新的要回頭問過，不要默默排除」。
+
+- 驗證：
+  - `node tools/check.mjs` 全部通過。新增 15 條（淨化名單 6、儲存 6、
+    繪製 2、旗標一致性 3，另把白名單那 8 條改寫成逐隻）。
+    **兩個變異都驗過**：markBadge 拿掉 purified 分支 → 徽章那兩條失敗；
+    `cardsFor` 短路掉 purified → 過濾那兩條失敗。還原後全部通過。
+  - 旗標那三條盯得比舊版緊：旗標的卡要存在、**旗標的條目要真的在那張卡的
+    清單裡**（不在就是死資料，`cardsFor` 永遠查不到）、**旗標要跟條件名單
+    一致**（就是這條抓出漏掉的三隻）。
+  - CDP 實跑（關快取，舊紀錄在載入前注入）：妙蛙種子詳情五顆鈕、勾淨化
+    → 徽章 rgb(26,168,189)、背卡 7 → 4 只剩隊長三張；再勾極巨化 → 淨化
+    自動關掉、徽章換成 maxb、**背卡剩 Dark Skies 加隊長三張**（這就是
+    這一版修的東西）；交換表格子符號正確；分享圖淺色與深色都畫出三顆
+    不同符號（青／粉／紫），超極巨化那格還換了圖；篩選計數 480／151／20；
+    390px 手機五顆鈕一行放得下，沒有橫向捲動。
+
+- 待辦/已知問題：
+  - **超極巨化御三家的背卡查到了，但補不進去**。Bulbapedia 標了
+    Delightful Days 與 GO Fest 2025 實體場三張各帶一隻超極巨化御三家
+    （轟擂金剛猩／閃焰王牌／千面避役，GOFESTMAX 兌換碼的限時研究）。
+    **卡在我們的卡片清單沒有牠們**——那份來自 Dittobase，而它不收
+    超極巨化。要補得先把牠們加進 `js/bgevents.js`，而且**逐隻補不是整張卡**。
+    報告 `tools/bgflags-report.md` 列出全部 9 筆這種缺口
+    （還有拉普拉斯、卡比獸與長毛巨魔）。
+  - Bulbapedia 只收錄 77 張卡，我們有 240 張。**沒收錄的卡一律沒有旗標**，
+    勾了條件就一張都不剩。這是逐隻化的代價，跟白名單「只會長」同一類，
+    但分母大得多。
+
+---
+
 ## 2026-09-16（十）
 - 類型：修正
 - 影響檔案：js/backgrounds.js, js/ui.js, js/main.js, tools/check.mjs,

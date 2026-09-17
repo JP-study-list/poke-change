@@ -34,7 +34,7 @@ import {
   gmaxOffset,
 } from "./dex.js";
 import { findCard, bgSources } from "./backgrounds.js";
-import { MAX_MARK_SRC } from "./ui.js";
+import { MAX_MARK_SRC, PURIFIED_MARK_SRC } from "./ui.js";
 import { formatCode } from "./store.js";
 
 const SCALE = 2;
@@ -77,6 +77,8 @@ const LIGHT = {
   gmax: "#9c0055",
   maxMark: "#ee6fb4",
   gmaxMark: "#a463d8",
+  pur: "#0f7d8c",
+  purMark: "#1aa8bd",
 };
 
 const DARK = {
@@ -96,6 +98,8 @@ const DARK = {
   gmax: "#9c0055",
   maxMark: "#ee6fb4",
   gmaxMark: "#a463d8",
+  pur: "#0f7d8c",
+  purMark: "#1aa8bd",
 };
 
 const FONT = "'Noto Sans TC', 'Hiragino Sans', system-ui, sans-serif";
@@ -288,6 +292,10 @@ export async function buildShareImage(data, opts) {
   const needMark = sections.some((s) => s.items.some((it) => it.max || it.gmax));
   const markImg = needMark ? await loadImage(MAX_MARK_SRC) : null;
 
+  /* 淨化是另一張圖（青色星芒），形狀跟極巨化那顆完全不同 */
+  const needPur = sections.some((s) => s.items.some((it) => it.purified));
+  const purImg = needPur ? await loadImage(PURIFIED_MARK_SRC) : null;
+
   let y = TITLE_H;
 
   for (const sect of sections) {
@@ -382,21 +390,30 @@ export async function buildShareImage(data, opts) {
        * 但整個 ctx 已經 scale 過，所以用的是 CSS 像素）。
        */
       /*
-       * 極巨化／超極巨化的符號，疊在格子右上角，沒有底。
+       * 極巨化／超極巨化／淨化的符號，疊在格子右上角，沒有底。
+       * 三者互斥，所以只會有一顆；淨化用另一張圖，形狀本來就不同。
        * 跟畫面用同一張官方圖（`img/max-mark.png`），畫面靠 CSS mask 上色，
        * 這裡靠 `source-in`：先把圖畫進一張離屏 canvas，再用純色蓋上去，
        * 只有不透明的地方會被填到，等於同一張 mask 出兩種顏色。
        * 白邊也在離屏那張做，位移四個方向各畫一次——
        * 背卡底圖有亮有暗，空心的線條不描會糊掉。
        */
-      if ((it.max || it.gmax) && markImg) {
+      const badge =
+        it.gmax && markImg
+          ? { img: markImg, color: C.gmaxMark }
+          : it.max && markImg
+            ? { img: markImg, color: C.maxMark }
+            : it.purified && purImg
+              ? { img: purImg, color: C.purMark }
+              : null;
+      if (badge) {
         const size = 21;
         const pad = 2;
         const off = document.createElement("canvas");
         off.width = off.height = size + pad * 2;
         const o = off.getContext("2d");
         for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
-          o.drawImage(markImg, pad + dx, pad + dy, size, size);
+          o.drawImage(badge.img, pad + dx, pad + dy, size, size);
         }
         o.globalCompositeOperation = "source-in";
         o.fillStyle = C.card;
@@ -406,9 +423,9 @@ export async function buildShareImage(data, opts) {
         const fg = document.createElement("canvas");
         fg.width = fg.height = size;
         const f = fg.getContext("2d");
-        f.drawImage(markImg, 0, 0, size, size);
+        f.drawImage(badge.img, 0, 0, size, size);
         f.globalCompositeOperation = "source-in";
-        f.fillStyle = it.gmax ? C.gmaxMark : C.maxMark;
+        f.fillStyle = badge.color;
         f.fillRect(0, 0, size, size);
 
         const px = bx + box - size + 1;

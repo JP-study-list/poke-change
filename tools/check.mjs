@@ -102,6 +102,8 @@ const store = await import("../js/store.js");
 const bg = await import("../js/backgrounds.js");
 const extra = await import("../js/extra.js");
 const maxdata = await import("../js/maxdata.js");
+const shadowdata = await import("../js/shadowdata.js");
+const { BG_FLAGS } = await import("../js/bgflags.js");
 
 /** 背卡檢視的狀態，畫面測試用。收合狀態不影響資料正確性，給預設值就好 */
 const BG_STATE = { query: "", scope: "all", open: new Set() };
@@ -457,52 +459,148 @@ console.log("\n2c. 極巨化名單");
   );
 
   /*
-   * Max Battle 白名單（1.08.03）。
+   * 背卡旗標（1.09.00 改成逐隻）。
    *
-   * 極巨化只能從 Max Battle 抓到，所以勾了極巨化之後背卡只剩這幾張。
-   * **id 打錯會靜默失效**：那張卡不會被認成 Max Battle，於是勾了極巨化
-   * 的選單裡少一張，畫面上完全看不出異狀——跟漏掉條件鈕底色同一類的洞，
-   * 所以在這裡釘住。
+   * 有些組合在遊戲裡湊不出來：極巨化只能從 Max Battle 抓到，
+   * 淨化只能從火箭隊或暗影團戰抓到。**旗標打錯會靜默失效**：
+   * 那一筆永遠查不到，於是勾了條件的選單裡少一張，畫面上完全看不出
+   * 異狀——跟漏掉條件鈕底色同一類的洞，所以在這裡釘住。
    */
   const cardById = new Map(bg.allCards().map(({ card }) => [card.id, card]));
-  for (const id of bg.MAX_BATTLE_CARDS) {
-    ok(`Max Battle 白名單的 ${id} 真的存在`, cardById.has(id));
+  {
+    const bad = [];
+    const notOnCard = [];
+    const cantDo = [];
+    for (const [cardId, f] of Object.entries(BG_FLAGS)) {
+      const card = cardById.get(cardId);
+      if (!card) {
+        bad.push(cardId);
+        continue;
+      }
+      const onCard = new Set(bg.entriesOf(card).map((e) => e.id));
+      for (const [kind, ids] of Object.entries(f)) {
+        for (const id of ids) {
+          if (!onCard.has(id)) notOnCard.push(`${cardId}/${id}`);
+          const can =
+            kind === "purified"
+              ? dex.canPurify(id)
+              : kind === "gmax"
+                ? dex.canGmax(id)
+                : dex.canMax(id);
+          if (!can) cantDo.push(`${cardId}/${id}（${kind}）`);
+        }
+      }
+    }
+    ok("旗標的卡都存在", !bad.length, bad.join(", "));
+    /*
+     * 旗標指的那一筆必須真的在那張卡的清單裡。對不上就是死資料：
+     * `cardsFor` 是從卡的清單找條目，清單裡沒有的那一筆永遠不會被列出來。
+     */
+    ok("旗標的條目都在那張卡的清單裡", !notOnCard.length, notOnCard.join(", "));
+    /*
+     * 旗標說這一隻能極巨化／淨化，名單就得同意。兩邊來源不同
+     * （旗標來自 Bulbapedia、名單來自 Dittobase），對不上表示其中一邊過期了。
+     * 尤其**裝扮不該出現**：名單是物種層級的，裝扮一律勾不到這些條件。
+     */
+    ok("旗標跟條件名單一致", !cantDo.length, cantDo.join(", "));
   }
 
   /*
-   * 白名單那幾張的清單本來就是該場 Max Battle 的陣容，所以「勾了極巨化
-   * 還剩得下來的卡」必須非空——一張都不剩表示白名單跟條目對不上了。
-   * d3（妙蛙花，可超極巨化）在 Max Finale 的輪替陣容裡。
+   * 勾了極巨化之後剩下的卡必須非空，而且每一張都真的標了這一隻。
+   * d1（妙蛙種子）在 Dark Skies 的 Max Battle 陣容與隊長三張卡上。
    */
-  const vCards = bg.cardsFor("d3", { max: true });
+  const vCards = bg.cardsFor("d1", { max: true });
   ok(
-    "勾極巨化後妙蛙花只剩 Max Battle 的卡",
-    vCards.length > 0 && vCards.every(({ card }) => bg.isMaxBattle(card.id)),
+    "勾極巨化後妙蛙種子只剩標了牠的卡",
+    vCards.length > 0 && vCards.every(({ card }) => bg.cardAllows(card.id, "d1", "max")),
     vCards.map(({ card }) => card.id).join(", ")
   );
 
   /*
-   * 反向：不過濾時那些野生卡要在。這條擋的是「過濾寫死成永遠生效」，
-   * 那會讓沒勾極巨化的人也選不到背卡。
+   * **這一版修正的東西，兩個方向都釘住。**
+   *
+   * 1.08.03 用卡片層級的白名單，隊長那三張整張被濾掉，於是妙蛙種子
+   * 勾了極巨化也看不到它們——但 Bulbapedia 標了那三張卡的妙蛙種子
+   * 確實能極巨化。反過來，使用者當初回報的是妙蛙**花**勾極巨化還列出
+   * 隊長卡，那個要繼續不列。同一張卡、同一個編號、不同條目，
+   * 答案相反——這就是白名單答不對的原因。
    */
-  const vAll = bg.cardsFor("d3");
+  ok(
+    "妙蛙種子勾極巨化留得下隊長卡",
+    vCards.some(({ card }) => card.id === "team-leader-blue")
+  );
+  ok(
+    "妙蛙花勾超極巨化不會列出隊長卡",
+    !bg.cardsFor("d3", { gmax: true }).some(({ card }) => card.id.startsWith("team-leader"))
+  );
+
+  /*
+   * 反向：不過濾時那些野生卡要在。這條擋的是「過濾寫死成永遠生效」，
+   * 那會讓沒勾任何條件的人也選不到背卡。
+   */
+  const vAll = bg.cardsFor("d1");
   ok(
     "沒勾極巨化時野生卡還在",
-    vAll.length > vCards.length && vAll.some(({ card }) => !bg.isMaxBattle(card.id))
+    vAll.length > vCards.length && vAll.some(({ card }) => !bg.cardAllows(card.id, "d1", "max"))
   );
 
   /*
    * keep 是舊紀錄的出口：1.08.03 之前存下的「極巨化 + 野生卡」，
    * 濾掉的話下拉會顯示「不指定」、格子上卻還畫著那張卡，改不掉。
    */
-  const wild = vAll.find(({ card }) => !bg.isMaxBattle(card.id)).card.id;
+  const wild = vAll.find(({ card }) => !bg.cardAllows(card.id, "d1", "max")).card.id;
   ok(
     "keep 會留下自己已經選著的那張",
-    bg.cardsFor("d3", { max: true, keep: wild }).some(({ card }) => card.id === wild)
+    bg.cardsFor("d1", { max: true, keep: wild }).some(({ card }) => card.id === wild)
   );
 
-  // 雷吉那張是五星團戰給的，不是 Max Battle。收進白名單就會多出不存在的組合
-  ok("雷吉那張沒被當成 Max Battle", !bg.isMaxBattle("go-fest-2025"));
+  /*
+   * 淨化這一半。鳳王的暗影版在 GO Tour 金版那張與 2025 曠野地帶那張上，
+   * 而它出現在別的卡上時是一般個體。
+   */
+  const pur = bg.cardsFor("d250", { purified: true });
+  ok(
+    "勾淨化後鳳王只剩標了牠的卡",
+    pur.length > 0 && pur.every(({ card }) => bg.cardAllows(card.id, "d250", "purified")),
+    pur.map(({ card }) => card.id).join(", ")
+  );
+  ok("勾淨化會濾掉沒標的卡", bg.cardsFor("d250").length > pur.length);
+
+  // 雷吉那張是五星團戰給的，沒有任何 Max Battle 旗標
+  ok("雷吉那張沒有極巨化旗標", !BG_FLAGS["go-fest-2025"]);
+}
+
+console.log("\n2c2. 淨化名單");
+{
+  const { SHADOW_IDS } = shadowdata;
+  const byId = new Map(dex.ENTRIES.map((e) => [e.id, e]));
+
+  ok("名單不是空的", SHADOW_IDS.length > 0, String(SHADOW_IDS.length));
+
+  const missing = SHADOW_IDS.filter((id) => !byId.has(id));
+  ok("名單上的條目都還在圖鑑裡", !missing.length, missing.join(", "));
+
+  ok("名單沒有重複", new Set(SHADOW_IDS).size === SHADOW_IDS.length);
+
+  /*
+   * **裝扮一律不收**。火箭隊給的不會是裝扮版，Dittobase 那 519 筆
+   * 暗影條目也一筆裝扮都沒有。收了會讓「2020 新年妙蛙種子」長出
+   * 一個它不該有的勾選框。
+   */
+  const costume = SHADOW_IDS.filter((id) => byId.get(id)?.kind === "costume");
+  ok("名單裡沒有裝扮", !costume.length, costume.join(", "));
+
+  ok(
+    "canPurify 跟名單一致",
+    SHADOW_IDS.every((id) => dex.canPurify(byId.get(id))) &&
+      !dex.canPurify(byId.get("d25"))
+  );
+
+  /*
+   * 皮卡丘沒有暗影版（GO 從來沒給過），拿它當反例。
+   * 這條擋的是「canPurify 寫死成永遠為真」，那會讓一千多筆全長出勾選框。
+   */
+  ok("不在名單的不能淨化", !dex.canPurify("d25") && !dex.canPurify("d999999"));
 }
 
 console.log("\n2b. 篩選");
@@ -616,6 +714,7 @@ console.log("\n4. 儲存往返");
   first.want.push({ ...store.newItem("d150"), xxl: true });
   first.want.push({ ...store.newItem("d6"), max: true });
   first.have.push(store.newItem("d25.cHALLOWEEN_2017", false));
+  first.have.push({ ...store.newItem("d1"), purified: true });
   first.name = "測試清單";
   book.lists[2].want.push(store.newItem("d1"));
   book.active = 2;
@@ -627,6 +726,7 @@ console.log("\n4. 儲存往返");
   ok("目前看哪一份會保留", back.active === 2);
   ok("三份各自獨立", back.lists[1].want.length === 0 && back.lists[2].want.length === 1);
   ok("極巨化會往返保留", back.lists[0].want[1].max === true);
+  ok("淨化會往返保留", back.lists[0].have[1].purified === true);
 
   /*
    * max 是 2026-09-16 加的欄位，沒有升儲存版本號，
@@ -651,6 +751,26 @@ console.log("\n4. 儲存往返");
     have: [],
   });
   ok("兩個都勾時只留超極巨化", both.want[0].gmax === true && both.want[0].max === false);
+
+  /*
+   * 淨化跟那兩個也互斥（1.09.00）。收斂順序是超極巨化 → 極巨化 → 淨化。
+   *
+   * 這不只是畫面問題：暗影寶可夢不能參加 Max Battle，而極巨化只能從
+   * 那裡抓到，所以「淨化又極巨化」這個狀態在遊戲裡根本不存在。
+   * 一樣是 localStorage 使用者改得到，讀進來要收斂。
+   */
+  const pm = store.normalizeList({ name: "", want: [{ id: "d1", purified: true, max: true }], have: [] });
+  ok("淨化與極巨化都勾時只留極巨化", pm.want[0].max === true && pm.want[0].purified === false);
+  const pg = store.normalizeList({ name: "", want: [{ id: "d1", purified: true, gmax: true }], have: [] });
+  ok("淨化與超極巨化都勾時只留超極巨化", pg.want[0].gmax === true && pg.want[0].purified === false);
+  const po = store.normalizeList({ name: "", want: [{ id: "d1", purified: true }], have: [] });
+  ok("只勾淨化時留得住", po.want[0].purified === true);
+
+  /*
+   * purified 跟 max 一樣沒有升儲存版本號，舊紀錄讀進來補 false。
+   * 升 v 反而會讓舊版整包讀不到，代價只是這個旗標給舊版讀會被洗掉。
+   */
+  ok("舊紀錄沒有 purified 欄位時補 false", legacy.want[0].purified === false);
 
   const round = store.fromJSON(store.toJSON(book));
   ok("匯出匯入是整包", round && round.kind === "book");
@@ -1188,6 +1308,54 @@ console.log("\n5. 繪製函式");
     ui.renderDetail("d1", store.emptyList(), "zh", t);
     if (/data-draft="gmax"/.test(els.panel.innerHTML))
       throw new Error("d1 不在名單裡卻有超極巨化鈕");
+  });
+
+  /*
+   * 淨化的鈕只在名單內出現，勾了要掛徽章。
+   *
+   * 徽章是**另一個 class**（`purb` 不是 `maxb`）：淨化的符號是青色星芒，
+   * 形狀跟極巨化那顆完全不同，不是同一張圖換顏色。寫錯 class 的話
+   * CSS 那條 mask 對不上，畫面上會變成一個看不見的方塊。
+   */
+  run("renderDetail 淨化：鈕、徽章", () => {
+    const id = shadowdata.SHADOW_IDS[0];
+
+    ui.renderDetail(id, store.emptyList(), "zh", t);
+    let html = els.panel.innerHTML;
+    if (!/data-draft="purified"/.test(html)) throw new Error(`${id} 沒有淨化鈕`);
+    if (html.includes("purb")) throw new Error("沒勾就不該有徽章");
+
+    ui.renderDetail(id, store.emptyList(), "zh", t, {
+      shiny: false, xxl: false, xxs: false, max: false, gmax: false, purified: true, bg: "",
+    });
+    html = els.panel.innerHTML;
+    if (!/data-draft="purified"\s+aria-pressed="true"/.test(html))
+      throw new Error("淨化沒有標起來");
+    if (!/class="purb"/.test(html)) throw new Error("圖上沒有淨化徽章");
+    if (/class="maxb/.test(html)) throw new Error("淨化不該掛極巨化那顆徽章");
+
+    // 不在名單裡的不該長出這顆鈕。皮卡丘沒有暗影版
+    ui.renderDetail("d25", store.emptyList(), "zh", t);
+    if (/data-draft="purified"/.test(els.panel.innerHTML))
+      throw new Error("d25 不在名單裡卻有淨化鈕");
+  });
+
+  /*
+   * 勾了淨化之後，背卡清單只剩標了這一隻的那幾張，而且區塊仍然畫出來。
+   * 換成「目前沒有活動背卡」會被讀成「這隻寶可夢沒有背卡」，
+   * 但牠其實有，只是淨化配不上——那句話留給真的沒有背卡的條目。
+   */
+  run("renderDetail 勾淨化會濾掉配不上的背卡", () => {
+    const id = "d250"; // 鳳王：暗影版在 GO Tour 金版與 2025 曠野地帶那兩張上
+    ui.renderDetail(id, store.emptyList(), "zh", t);
+    const before = (els.panel.innerHTML.match(/data-pick="/g) || []).length;
+
+    ui.renderDetail(id, store.emptyList(), "zh", t, {
+      shiny: false, xxl: false, xxs: false, max: false, gmax: false, purified: true, bg: "",
+    });
+    const after = (els.panel.innerHTML.match(/data-pick="/g) || []).length;
+    if (!(after > 0)) throw new Error("勾了淨化之後一張都不剩");
+    if (!(before > after)) throw new Error(`沒有濾掉任何卡（${before} → ${after}）`);
   });
 
   // 上方那張圖要跟著草稿的異色走，不然勾了異色畫面上沒有任何反應

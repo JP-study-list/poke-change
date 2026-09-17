@@ -10,7 +10,7 @@
 
 import { LANGS, DEFAULT_LANG, makeT } from "./i18n.js";
 import { emptyFilter, filterCount, knownItems, find, hasShiny } from "./dex.js";
-import { CARDS as BG_CARDS, isMaxBattle } from "./backgrounds.js";
+import { CARDS as BG_CARDS, cardAllows } from "./backgrounds.js";
 import * as store from "./store.js";
 import * as ui from "./ui.js";
 import { buildShareImage } from "./share.js";
@@ -288,18 +288,30 @@ function save() {
 /* ─────────── 操作 ─────────── */
 
 /**
+ * 一次只能亮一個的那幾個條件。
+ *
+ * 超極巨化本來就蘊含極巨化；淨化與那兩個在遊戲裡湊不出來——
+ * 暗影寶可夢不能參加 Max Battle，而極巨化只能從那裡抓到。
+ * 而且格子右上角只放得下一顆徽章。
+ *
+ * 三條路都吃這一份：草稿、已加入那筆的 setField，
+ * 還有 store.js 的 cleanItem（localStorage 使用者改得到）。
+ */
+const EXCLUSIVE = ["max", "gmax", "purified"];
+
+/**
  * 面板上那份條件草稿。
  *
- * 五個條件一律從「沒有」開始。異色曾經在有異色圖時預設勾起來，
+ * 六個條件一律從「沒有」開始。異色曾經在有異色圖時預設勾起來，
  * 但大多數交換談的是一般色，預設勾著等於每次都要先取消；
  * 而且詳情面板上方那張圖現在跟著這個值走，一開就是異色會看錯是哪一隻。
  *
- * max 不管條目能不能極巨化都帶著。不能極巨化的條目根本不會畫出那顆鈕
- * （`ui.js` 看 `canMax`），草稿裡多一個永遠是 false 的欄位比讓
- * 兩邊各自判斷一次安全。
+ * max 與 purified 不管條目能不能都帶著。不能的條目根本不會畫出那顆鈕
+ * （`ui.js` 看 `canMax` / `canPurify`），草稿裡多一個永遠是 false 的
+ * 欄位比讓兩邊各自判斷一次安全。
  */
 function newDraft(bg = "") {
-  return { shiny: false, xxl: false, xxs: false, max: false, gmax: false, bg };
+  return { shiny: false, xxl: false, xxs: false, max: false, gmax: false, purified: false, bg };
 }
 
 /**
@@ -322,7 +334,8 @@ function addItem(id, col) {
       !!x.xxl === !!d.xxl &&
       !!x.xxs === !!d.xxs &&
       !!x.max === !!d.max &&
-      !!x.gmax === !!d.gmax
+      !!x.gmax === !!d.gmax &&
+      !!x.purified === !!d.purified
   );
   if (same >= 0) {
     state.flash = { col, idx: same };
@@ -341,6 +354,7 @@ function addItem(id, col) {
   item.xxs = !!d.xxs;
   item.max = !!d.max;
   item.gmax = !!d.gmax;
+  item.purified = !!d.purified;
   item.bg = d.bg || "";
   list.push(item);
   save();
@@ -381,7 +395,7 @@ function addMany(col, ids, { shiny = false, bg = "", stay = false } = {}) {
     if (!e) continue;
     // 沒有實裝異色的就算開著也只能一般色，重複判斷要拿實際會寫進去的值去比
     const wantShiny = !!shiny && hasShiny(e);
-    // 極巨化與超極巨化跟 XXL／XXS 一樣不做批次，所以這裡比的是「沒有勾」
+    // 極巨化、超極巨化與淨化跟 XXL／XXS 一樣不做批次，所以這裡比的是「沒有勾」
     const same = list.some(
       (x) =>
         x.id === id &&
@@ -390,14 +404,15 @@ function addMany(col, ids, { shiny = false, bg = "", stay = false } = {}) {
         !x.xxl &&
         !x.xxs &&
         !x.max &&
-        !x.gmax
+        !x.gmax &&
+        !x.purified
     );
     if (same) {
       dupe++;
       continue;
     }
     const item = store.newItem(id, wantShiny);
-    item.xxl = item.xxs = item.max = item.gmax = false;
+    item.xxl = item.xxs = item.max = item.gmax = item.purified = false;
     item.bg = bg;
     list.push(item);
     added++;
@@ -440,11 +455,15 @@ function setField(col, idx, field, value) {
   const item = cur()[col][idx];
   if (!item) return;
   item[field] = value;
-  // 極巨化與超極巨化互斥，跟草稿那邊同一條規則
-  if (value && (field === "max" || field === "gmax")) {
-    item[field === "max" ? "gmax" : "max"] = false;
-    // 極巨化只能從 Max Battle 抓到，野生或團戰的卡配不上，退回「不指定」
-    if (item.bg && !isMaxBattle(item.bg)) item.bg = "";
+  // 三個互斥，跟草稿那邊同一條規則
+  if (value && EXCLUSIVE.includes(field)) {
+    for (const f of EXCLUSIVE) if (f !== field) item[f] = false;
+    /*
+     * 條件與背卡配不上的話退回「不指定」。極巨化只能從 Max Battle 抓到、
+     * 淨化只能從火箭隊或暗影團戰抓到，野生或團戰拿到的卡湊不出這些組合。
+     * 留著的話畫面上會有一個點不到、也取消不掉的選取。
+     */
+    if (item.bg && !cardAllows(item.bg, item.id, field)) item.bg = "";
   }
   save();
 }
@@ -689,18 +708,19 @@ document.addEventListener("click", (ev) => {
     const f = dmk.dataset.draft;
     state.draft[f] = !state.draft[f];
     /*
-     * 極巨化與超極巨化互斥：後者本來就蘊含前者，兩個都亮沒有意義，
-     * 而且格子右上角只放得下一顆徽章。開一個就把另一個關掉。
+     * 三個互斥：超極巨化本來就蘊含極巨化，而淨化跟極巨化在遊戲裡
+     * 湊不出來（暗影寶可夢不能參加 Max Battle）。而且格子右上角
+     * 只放得下一顆徽章。開一個就把另外兩個關掉。
      */
-    if (state.draft[f] && (f === "max" || f === "gmax")) {
-      state.draft[f === "max" ? "gmax" : "max"] = false;
+    if (state.draft[f] && EXCLUSIVE.includes(f)) {
+      for (const x of EXCLUSIVE) if (x !== f) state.draft[x] = false;
       /*
-       * 極巨化只能從 Max Battle 抓到，所以野生或團戰拿到的背卡配不上。
-       * 下面那份清單跟著縮成只剩 Max Battle 的卡，已經選著的那張
+       * 下面那份背卡清單跟著縮成配得上的那幾張，已經選著的那張
        * 如果不在裡面就退回「不指定」——留著的話畫面上會有一個
        * 點不到、也取消不掉的選取。
        */
-      if (state.draft.bg && !isMaxBattle(state.draft.bg)) state.draft.bg = "";
+      if (state.draft.bg && !cardAllows(state.draft.bg, state.openId, f))
+        state.draft.bg = "";
     }
     drawDetail();
     return;

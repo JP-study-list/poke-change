@@ -22,6 +22,7 @@
 import { GODEX } from "./godex.js";
 import { extraEntries } from "./extra.js";
 import { MAX_IDS, GMAX_IDS } from "./maxdata.js";
+import { SHADOW_IDS } from "./shadowdata.js";
 import { allBgEntryIds } from "./backgrounds.js";
 import { TYPES } from "./types.js";
 import { imgAttrs } from "./imgchain.js";
@@ -215,6 +216,19 @@ export const canMax = (e) => !!(e && MAX_SET.has(typeof e === "string" ? e : e.i
 const GMAX_SET = new Set(GMAX_IDS);
 export const canGmax = (e) => !!(e && GMAX_SET.has(typeof e === "string" ? e : e.id));
 
+/**
+ * 這個條目能不能淨化。
+ *
+ * 名單其實是「有沒有暗影版」——能變成暗影的，淨化之後就是淨化版。
+ * **只做淨化不做暗影**：暗影寶可夢在 GO 裡不能交換，淨化之後才能，
+ * 所以對一份交換清單來說「暗影」這個選項沒有意義。
+ *
+ * 名單由 tools/build-shadow.mjs 產生，來源與比對見 tools/shadow-report.md。
+ * 只有本體與型態變化，沒有裝扮——火箭隊給的不會是裝扮版。
+ */
+const SHADOW_SET = new Set(SHADOW_IDS);
+export const canPurify = (e) => !!(e && SHADOW_SET.has(typeof e === "string" ? e : e.id));
+
 /* ─────────── 搜尋與篩選 ─────────── */
 
 /** 地區型代碼，用來做「只看地區型」的篩選 */
@@ -314,8 +328,29 @@ export const FILTER_GROUPS = {
     options: [
       ["shiny", hasShiny],
       ["bg", hasBgCard],
+      /*
+       * 三個交換條件也能拿來篩（2026-09-17，使用者要求）。
+       *
+       * 這一組講的是「這個條目身上可以帶什麼」，異色與背卡本來就在這裡，
+       * 淨化、極巨化與超極巨化是同一類問題，少了它們就得自己記
+       * 一千多筆裡哪些勾得到。
+       *
+       * 超極巨化是極巨化的子集，兩個都選等於只看超極巨化那 20 筆——
+       * 組內是 OR，所以實際上是「極巨化或超極巨化」，也就是極巨化那 148 筆。
+       * 這不算錯，只是選了等於沒選，不必特別擋。
+       */
+      ["purified", canPurify],
+      ["max", canMax],
+      ["gmax", canGmax],
     ],
-    labelOf: (k) => ({ shiny: "filterShiny", bg: "filterBg" })[k],
+    labelOf: (k) =>
+      ({
+        shiny: "filterShiny",
+        bg: "filterBg",
+        purified: "filterPurified",
+        max: "filterMax",
+        gmax: "filterGmax",
+      })[k],
   },
 };
 

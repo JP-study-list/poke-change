@@ -54,6 +54,9 @@ export const STRINGS = {
     filterCostume: "裝扮",
     filterRegional: "地區型",
     filterShiny: "有異色",
+    filterPurified: "可淨化",
+    filterMax: "可極巨化",
+    filterGmax: "可超極巨化",
     filterLegendary: "傳說",
 
     dexNo: "圖鑑編號",
@@ -115,6 +118,7 @@ export const STRINGS = {
     markXxs: "XXS",
     markMax: "極巨化",
     markGmax: "超極巨化",
+    markPurified: "淨化",
     markBg: "背卡",
     bgAny: "不指定",
 
@@ -191,6 +195,9 @@ export const STRINGS = {
     filterCostume: "コスチューム",
     filterRegional: "リージョンフォーム",
     filterShiny: "色違いあり",
+    filterPurified: "リトレーン可",
+    filterMax: "ダイマックス可",
+    filterGmax: "キョダイマックス可",
     filterLegendary: "伝説",
 
     dexNo: "図鑑番号",
@@ -252,6 +259,7 @@ export const STRINGS = {
     markXxs: "XXS",
     markMax: "ダイマックス",
     markGmax: "キョダイマックス",
+    markPurified: "リトレーン",
     markBg: "背景カード",
     bgAny: "指定なし",
 
@@ -328,6 +336,9 @@ export const STRINGS = {
     filterCostume: "Costumes",
     filterRegional: "Regional",
     filterShiny: "Shiny released",
+    filterPurified: "Can be purified",
+    filterMax: "Can Dynamax",
+    filterGmax: "Can Gigantamax",
     filterLegendary: "Legendary",
 
     dexNo: "Dex No.",
@@ -390,6 +401,7 @@ export const STRINGS = {
     markXxs: "XXS",
     markMax: "Dynamax",
     markGmax: "Gigantamax",
+    markPurified: "Purified",
     markBg: "Background",
     bgAny: "Any",
 

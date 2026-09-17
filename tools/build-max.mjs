@@ -276,6 +276,27 @@ const keys = entryKeyMap();
  */
 const SKIP_GMAX = (id) => /\.fGIGANTAMAX$/.test(id);
 
+/**
+ * 兩個資料源都漏掉、但官方公告白紙黑字有的。**一筆一筆指名。**
+ *
+ * 2026-09-17 加的三隻，來源是 pokemon.com 的 Dark Skies 陣容表
+ * （GO Fest 2025，8/18–8/23「每一隻登場過的極巨化寶可夢都會回來」）：
+ *   8/18      Dynamax Shuckle、Dynamax Sableye
+ *   8/21–22   Wailmer
+ * Dittobase 連 `shuckle-dynamax` 這種條目都沒有，game master 的
+ * BREAD 縮放清單（70 個物種）也沒有它們——**兩邊一起漏**。
+ *
+ * 是 Bulbapedia 的背卡角標抓出來的：Dark Skies 那張卡上這三隻標了
+ * 極巨化圖示，跟我們的名單對不起來，check 的「旗標跟條件名單一致」
+ * 因此失敗。**這正是 CLAUDE.md 記過的前例重演**：上一輪是幾何雪花、
+ * 投擲猴與毒電嬰，第一版判成還沒實裝而排除，後來發現它們就在
+ * Max Battle 背卡的清單裡。那時留下的規矩是「下次多出新的要回頭問過，
+ * 不要默默排除」。
+ *
+ * 之後 Dittobase 補上了，這裡可以刪掉——聯集不會因此變少。
+ */
+const MANUAL_MAX = new Set(["d213", "d302", "d320"]);
+
 const unmatched = [];
 const ids = new Set();
 const hitRows = [];
@@ -316,7 +337,11 @@ for (const { species, form } of gm.breadForms) {
   ids.add(id);
 }
 
-// 兩個來源都併完了才排序，順序照圖鑑編號
+// 官方公告有、兩個資料源都漏的那幾隻
+const manualAdded = [...MANUAL_MAX].filter((id) => !ids.has(id));
+for (const id of MANUAL_MAX) ids.add(id);
+
+// 三個來源都併完了才排序，順序照圖鑑編號
 const byDex = (a, b) => {
   const na = Number(a.slice(1).split(".")[0]);
   const nb = Number(b.slice(1).split(".")[0]);
@@ -464,6 +489,11 @@ const report = [
   `\n名單本身不是從這兩份來的，而是「圖鑑裡有 \`gmaxIcon\` 的條目」——\n`,
   `game master 說這個型態可以、而且上游真的有圖。這樣勾得到就一定換得了圖。\n`,
   "",
+  manualAdded.length
+    ? `### 人工指名\n\n兩個資料源都漏、但官方公告有的 **${manualAdded.length}** 個：\`${manualAdded.join(
+        "`, `"
+      )}\`\n\n來源是 pokemon.com 的 Dark Skies 陣容表（2026-09-17 查）。\nDittobase 沒有這幾筆的極巨化條目，game master 的 BREAD 縮放清單也沒有。\n是背卡旗標（Bulbapedia）對不起來才抓出來的。之後上游補上就可以刪掉。\n`
+    : "",
   "## 名單",
   "",
   "```",
@@ -480,6 +510,7 @@ console.log(`  可極巨化（已實裝）    ${dittoRows.filter((r) => (r.dyn |
 console.log(`  對到條目 id           ${idList.length}`);
 console.log(`  其中勾得到超極巨化    ${gmaxList.length}`);
 console.log(`  對不上                ${unmatched.length}`);
+console.log(`  人工指名補進來的      ${manualAdded.length}${manualAdded.length ? "（" + manualAdded.join("、") + "）" : ""}`);
 console.log(`  game master 補進來的  ${fromGM.length}${fromGM.length ? "（" + fromGM.join("、") + "）" : ""}`);
 console.log(`  交叉比對 game master  極巨化 ${gm.bread.size} 個物種，只有它有的 ${onlyGM.length}`);
 console.log(`                        超極巨化 ${gm.gmax.size} 對 ${dittoGmax.size}`);

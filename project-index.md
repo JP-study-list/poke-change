@@ -44,17 +44,20 @@ main.js ──┬─► i18n.js      語言字典 + makeT()
 dex.js ──┬─► godex.js       自動產生的圖鑑資料
          ├─► extra.js       手動補的條目
          ├─► maxdata.js     可極巨化的名單（canMax 查這個）
+         ├─► shadowdata.js  可淨化的名單（canPurify 查這個）
          ├─► backgrounds.js 「有背卡可拿」這個篩選條件要用
          ├─► imgchain.js    圖片備援鏈
          └─► types.js       屬性篩選的選項清單
 
 backgrounds.js ──┬─► bgdata.js    自動產生的背卡骨架
+                 ├─► bgflags.js   哪張卡的哪一隻能帶哪個條件（cardAllows 查這個）
                  ├─► bgevents.js  手工維護的背卡
                  ├─► bgseries.js  收納夾譯名與順序
                  └─► imgchain.js  圖片備援鏈
 
 tools/build-dex.mjs ──► costumes.js（裝扮譯名）
 tools/build-bg.mjs ───► bgseries.js, bgevents.js（產生 bgdata.js）
+tools/build-bgflags.mjs ► backgrounds.js, dex.js（產生 bgflags.js）
 tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑）
 ```
 
@@ -65,7 +68,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 
 | 層 | 檔案 | 特徵 |
 | --- | --- | --- |
-| 資料 | `godex.js` `extra.js` `costumes.js` `backgrounds.js` `types.js` `i18n.js` | 純資料，不碰 DOM |
+| 資料 | `godex.js` `extra.js` `costumes.js` `backgrounds.js` `types.js` `i18n.js` `maxdata.js` `shadowdata.js` `bgflags.js` | 純資料，不碰 DOM |
 | 存取 | `dex.js` `store.js` | 查詢與讀寫，不碰 DOM |
 | 繪製 | `ui.js` `share.js` | 把資料變成畫面，不決定資料怎麼變 |
 | 協調 | `main.js` | 保管 state、綁事件、串起以上三層 |
@@ -88,21 +91,23 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `js/godex.js` | `GODEX` `GODEX_COUNT` | **自動產生，不要手改。** 1431 個條目，含 dex / 型態 / 裝扮 / 三語名 / 屬性 / 稀有度 / 圖檔名 / 有無異色 / IV100 的 `cp20` `cp25` `cp50` |
 | `js/extra.js` | `PIKA_EXTRA` `DB_EXTRA` `ALIAS` `MISSING_ICON` `extraEntries()` | 手動補 godex 缺的 29 筆：22 種 Choggor 的裝扮皮卡丘、5 種只有 Dittobase 有圖的裝扮，以及沒有 GO 圖示的捷拉奧拉與纏紅鶴。每筆帶 `fill`／`offX`／`offY`，那批圖四周有透明留白，不補這三個值會小一半，數字由 `tools/measure-icons.mjs` 量 |
 | `js/costumes.js` | `COSTUME_NAMES` `costumeName()` | 裝扮的三語譯名。**遊戲內裝扮沒有官方名稱**，只能自己取，這是唯一來源 |
-| `js/maxdata.js` | `MAX_IDS` `MAX_COUNT` `GMAX_IDS` `GMAX_COUNT` | **自動產生，不要手改。** `MAX_IDS` 148 個可極巨化的條目 id，`GMAX_IDS` 是其中 20 個可超極巨化的（等於圖鑑裡有 `gmaxIcon` 的條目）。決定詳情面板要畫哪幾顆條件鈕，由 `dex.canMax()` / `canGmax()` 查。Dittobase 與 game master 的 `BREAD_MODE` 取聯集，報告在 `tools/max-report.md` |
+| `js/maxdata.js` | `MAX_IDS` `MAX_COUNT` `GMAX_IDS` `GMAX_COUNT` | **自動產生，不要手改。** `MAX_IDS` 151 個可極巨化的條目 id，`GMAX_IDS` 是其中 20 個可超極巨化的（等於圖鑑裡有 `gmaxIcon` 的條目）。決定詳情面板要畫哪幾顆條件鈕，由 `dex.canMax()` / `canGmax()` 查。Dittobase 與 game master 的 `BREAD_MODE` 取聯集，再加 `MANUAL_MAX` 那三筆官方公告有、兩邊都漏的（壺壺、勾魂眼、吼吼鯨），報告在 `tools/max-report.md` |
+| `js/shadowdata.js` | `SHADOW_IDS` `SHADOW_COUNT` | **自動產生，不要手改。** 480 個可淨化的條目 id，由 `dex.canPurify()` 查。名單其實是「有沒有暗影版」——能變成暗影的淨化之後就是淨化版。**只做淨化不做暗影**：暗影在 GO 裡不能交換。只有本體與型態，沒有裝扮。主來源 Dittobase 的 `isShadow`，game master 的 `shadow` 設定只當佐證（1015 筆過度包含，連裝扮都有），報告在 `tools/shadow-report.md` |
+| `js/bgflags.js` | `BG_FLAGS` | **自動產生，不要手改。** 12 張卡、107 個標記，「這張卡的這一隻能不能帶淨化／極巨化／超極巨化」。1.09.00 取代卡片層級的 `MAX_BATTLE_CARDS`——隊長那三張卡各一百多筆裡只有 6 隻能極巨化，整張放行或整張濾掉都答不對。來源是 Bulbapedia 的逐隻角標，**只涵蓋 77 張卡裡的那 12 張，沒收錄的卡一律沒有旗標** |
 | `js/bgdata.js` | `BG_CARDS` `BG_CARD_COUNT` | **自動產生，不要手改。** 240 張背卡骨架，含代號、上游檔名、收納夾、英文名、日期、特效層旗標與寶可夢清單 |
 | `js/bgevents.js` | `HAND_EVENTS` | 手工維護的 21 張，有三語名、註記、寶可夢清單與本地備援圖。會逐欄覆蓋骨架。其中 30 週年那四張只蓋名稱與日期，清單等活動辦完 |
 | `js/bgseries.js` | `SERIES` `seriesInfo` `seriesOrder` | 23 個收納夾的三語名與顯示順序 |
 | `js/types.js` | `TYPES` `typeInfo` | 18 種屬性的代表色與三語名 |
-| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 121 個 key，必須完全一致 |
+| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 126 個 key，必須完全一致 |
 | `js/version.js` | `VERSION` `VERSION_DATE` | 版本號。**畫面唯一認的值**，`VERSION.md` 是給人看的紀錄，兩邊必須一致，`check.mjs` 會驗 |
 
 ### 存取層
 
 | 檔案 | 匯出 | 用途 |
 | --- | --- | --- |
-| `js/backgrounds.js` | `CARDS` `FOLDERS` `findCard` `bgUrl` `bgAttrs` `bgSources` `cardName` `folderName` `allCards` `entriesOf` `cardsFor` `allBgEntryIds` `totalCardSlots` `MAX_BATTLE_CARDS` `isMaxBattle` | 合併骨架與手工資料，240 張背卡 / 23 個收納夾 / 1579 個收集格 |
+| `js/backgrounds.js` | `CARDS` `FOLDERS` `findCard` `bgUrl` `bgAttrs` `bgSources` `cardName` `folderName` `allCards` `entriesOf` `cardsFor` `allBgEntryIds` `totalCardSlots` `cardAllows` | 合併骨架與手工資料，240 張背卡 / 23 個收納夾 / 1579 個收集格 |
 | `js/imgchain.js` | `imgAttrs` | 圖片備援鏈。dex 與 backgrounds 共用，獨立成檔是為了不讓那兩個檔繞成一圈 |
-| `js/dex.js` | `ENTRIES` `find` `fullName` `speciesName` `formName` `iconAttrs` `hasShiny` `search` `FILTER_GROUPS` `GROUP_KEYS` `emptyFilter` `normalizeFilter` `applyFilter` `filterCount` `goUrl` `artUrl` | 合併 godex 與 extra，1460 個條目。負責名稱組合、搜尋、篩選、圖片備援鏈 |
+| `js/dex.js` | `ENTRIES` `find` `fullName` `speciesName` `formName` `iconAttrs` `hasShiny` `canMax` `canGmax` `canPurify` `search` `FILTER_GROUPS` `GROUP_KEYS` `emptyFilter` `normalizeFilter` `applyFilter` `filterCount` `goUrl` `artUrl` | 合併 godex 與 extra，1460 個條目。負責名稱組合、搜尋、篩選、圖片備援鏈 |
 | `js/store.js` | `emptyList` `emptyBook` `current` `newItem` `normalize` `normalizeList` `load` `save` `flush` `clearList` `toJSON` `fromJSON` `exportName` `cleanCode` `formatCode` `MAX_ITEMS` `COLUMNS` `LIST_COUNT` | localStorage 讀寫。三份清單裝在一個 key 裡，`current()` 取目前那一份。**任何讀進來的資料都不信任**，一律過 `normalize` |
 
 ### 繪製層
@@ -148,7 +153,11 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | --- | --- |
 | `tools/build-dex.mjs` | 從 PokeMiners 產生 `js/godex.js`，含 IV100 的三個 CP（倍率取自 game master 的 `PLAYER_LEVEL_SETTINGS`）。`--force` 忽略快取重抓。快取在 `tools/.cache/`（不進 git，約 25 MB） |
 | `tools/build-bg.mjs` | 產生 `js/bgdata.js`。PokeMiners 給代號與圖，Dittobase 給寶可夢清單，Serebii 給日期並墊底，Bulbapedia 只做交叉比對。兩邊叫法不同接不上的走 `DB_MANUAL`／`SEREBII_MANUAL` 人工指名，`resolveMatches` 擋掉兩張卡搶同一筆。另外寫一份 `tools/bg-report.md`。快取在 `tools/.cache/bg/` |
-| `tools/build-max.mjs` | 產生 `js/maxdata.js`。抓 Dittobase 圖鑑頁的 `isDynamax`／`isGigantamax` 旗標，映射到條目 id。**game master 給不出這份名單**（`breadTierGroup` 2467 筆幾乎全有），只能拿它的 `BREAD` 設定佐證。另外寫一份 `tools/max-report.md`。快取在 `tools/.cache/max/` |
+| `tools/build-max.mjs` | 產生 `js/maxdata.js`。抓 Dittobase 圖鑑頁的 `isDynamax`／`isGigantamax` 旗標，映射到條目 id。兩個來源都漏、但官方公告有的走 `MANUAL_MAX` 指名。**game master 給不出這份名單**（`breadTierGroup` 2467 筆幾乎全有），只能拿它的 `BREAD` 設定佐證。另外寫一份 `tools/max-report.md`。快取在 `tools/.cache/max/` |
+| `tools/build-shadow.mjs` | 產生 `js/shadowdata.js`。抓 Dittobase 圖鑑頁的 `isShadow` 旗標，映射到條目 id。**game master 的 `pokemonSettings.shadow` 只當佐證**，那 1015 筆明顯過度包含（連 2019 秋季妙蛙種子都有淨化費用）。報告在 `tools/shadow-report.md`。快取與 build-max 共用 `tools/.cache/max/` |
+| `tools/build-bgflags.mjs` | 產生 `js/bgflags.js`。解析 Bulbapedia 的 Background (GO)，抽出逐隻的暗影／極巨化／超極巨化角標。卡片對照 `CARD_MANUAL` 與型態後綴 `SUFFIX` 都是人工指名，**指名前逐張比對過清單內容**。報告在 `tools/bgflags-report.md`，會列出對不到的（多半是我們的卡片清單缺那一隻）。快取在 `tools/.cache/bgflags/` |
+| `tools/make-purified-mark.mjs` | 產生 `img/purified-mark.png`。抓 PokeMiners 的 `Images/Rocket/ic_purified.png`，**不是旁邊的 `_filter` 版**（那是圓底的篩選標籤版）。**不膨脹**：它是實心星芒，線條本來就夠粗 |
+| `tools/png.mjs` | PNG 讀寫與影像處理（膨脹、降採樣）。`make-max-mark` 與 `make-purified-mark` 共用，只處理 8-bit RGBA，不是通用函式庫 |
 | `tools/check.mjs` | 自我檢查。i18n key、版本號兩個檔沒寫岔、extra 的留白欄位齊全、條目完整性、背卡引用、儲存往返、全部繪製函式、逸出。`--net` 加驗圖片網址 |
 | `tools/make-max-mark.mjs` | 產生 `img/max-mark.png`。抓 Bulbapedia 的官方符號，**先把細線條加粗再縮**——原圖 185px 直接縮到 20px 會糊掉 |
 | `tools/measure-icons.mjs` | 量 `extra.js` 那批圖的主體佔畫布多少、中心偏多少。要連外網。**不自動改檔**，`--list` 印出數字自己貼進 `js/extra.js` |
@@ -159,6 +168,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | --- | --- | --- |
 | `img/bg/` | ✓ | 17 張背卡的本地備援圖，jpg / png / webp 混雜，**寫死檔名前先確認副檔名** |
 | `img/extra/` | ✓ | 5 張上游沒有的裝扮圖。來源沒有 CORS，不收進來就畫不進分享圖 |
+| `img/purified-mark.png` | ✓ | 淨化的官方符號，64×64 只有 alpha。顏色由使用端給（`--pur-mark` / canvas），由 `tools/make-purified-mark.mjs` 產生 |
 | `img/max-mark.png` | ✓ | 極巨化的官方符號，96×96 只有 alpha。顏色由使用端給（CSS mask／canvas source-in），所以一張圖出兩種顏色。由 `tools/make-max-mark.mjs` 產生 |
 
 寶可夢圖片**不鏡像**，一律直接連外部 CDN。3426 張約 75 MB，
@@ -199,8 +209,11 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 超極巨化勾了要換的圖 | `js/godex.js` 的 `gmaxIcon`（由 `build-dex.mjs` 的 `GMAX_ICONS` 掛到本體），畫面走 `dex.iconAttrs(e, shiny, gmax)` |
 | 改清單份數 | `js/store.js` 的 `LIST_COUNT`，分頁樣式在 `css/style.css` 的 `.list-tabs` |
 | 改背卡詳情的卡面圖大小 | `css/style.css` 的 `.card-art`（限高 38vh，寬度 auto） |
-| 勾了極巨化該列哪些背卡 | `js/backgrounds.js` 的 `MAX_BATTLE_CARDS`（白名單，人工指名）。過濾走 `cardsFor(id, { max })`，只影響列出什麼，不洗存進去的值 |
-| 極巨化與背卡的衝突清除 | `js/main.js` 兩條路：草稿在 `data-draft` 那段、已加入那筆在 `setField`。跟極巨化／超極巨化互斥同一個位置 |
+| GO 開放新的寶可夢可以淨化 | `node tools/build-shadow.mjs --force`，名單會自己長出來 |
+| 某張卡的某一隻可以帶某個條件 | `js/bgflags.js`（自動產生）。改 `tools/build-bgflags.mjs` 的 `CARD_MANUAL` 再重跑；**卡片對照要先逐張比對清單內容**，不要照名字猜 |
+| 改淨化的符號 | 圖是 `img/purified-mark.png`（`tools/make-purified-mark.mjs` 產生），顏色是 `css/style.css` 的 `--pur-mark`，分享圖那份在 `js/share.js` 的 `purMark` |
+| 勾了條件該列哪些背卡 | `js/bgflags.js` 的逐隻旗標。過濾走 `cardsFor(id, { purified, max, gmax })`，只影響列出什麼，不洗存進去的值。`opts.keep` 保住使用者自己選著的那張 |
+| 條件與背卡的衝突清除 | `js/main.js` 兩條路：草稿在 `data-draft` 那段、已加入那筆在 `setField`。三方互斥的名單是 `EXCLUSIVE`，`store.cleanItem` 再收斂一次 |
 | 改背卡詳情的批次加入 | `js/ui.js` 的 `renderCardDetail`（多選時的格子）與 `renderBgFoot`（底部兩顆鈕）。加進去帶哪些條件在 `js/main.js` 的 `addMany` |
 | 改選寶可夢面板 | `js/ui.js` 的 `renderPicker`，一次最多畫 `PICK_MAX` 筆。多選的底部動作列是 `renderPickFoot`，殼在 `index.html` 的 `#pickFoot` |
 | 改那個面板的篩選 | 跟圖鑑同一組 `FILTER_GROUPS`，HTML 走共用的 `pickedChips` / `filterGroups`，dataset 前綴由 `FATTR` 給。**改篩選不清掉選取**，畫面上看不到的那幾隻由 `countHidden` / `pickHidden` 算出來，底部補一句交代 |

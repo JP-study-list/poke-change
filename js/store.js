@@ -72,7 +72,7 @@ export const current = (book) => book.lists[book.active] || book.lists[0];
 
 /** 一筆新的交換項目。預設想要異色，因為交換的價值就在重骰個體值 */
 export function newItem(id, shiny = true) {
-  return { id, shiny: !!shiny, xxl: false, xxs: false, max: false, gmax: false, bg: "" };
+  return { id, shiny: !!shiny, xxl: false, xxs: false, max: false, gmax: false, purified: false, bg: "" };
 }
 
 /* ─────────── 訓練家代碼 ─────────── */
@@ -107,15 +107,20 @@ function cleanItem(v) {
     xxl: !!v.xxl,
     xxs: !!v.xxs,
     /*
-     * 舊紀錄沒有這兩個欄位，補 false。**不檢查條目能不能極巨化**：
+     * 舊紀錄沒有這三個欄位，補 false。**不檢查條目能不能極巨化或淨化**：
      * 名單會隨 GO 更新縮水，拿名單去洗紀錄等於默默改掉使用者存的東西。
      *
-     * 兩個互斥：超極巨化本來就蘊含極巨化，畫面上那兩顆鈕點一個會取消
-     * 另一個，手改過的 localStorage 也照這條規則收斂，免得畫面上
-     * 出現兩顆徽章疊在一起。
+     * 三個互斥，收斂順序是超極巨化 → 極巨化 → 淨化：
+     *   - 超極巨化本來就蘊含極巨化，兩個都亮沒有意義
+     *   - 淨化與極巨化在遊戲裡湊不出來：暗影寶可夢不能參加 Max Battle，
+     *     而極巨化只能從那裡抓到
+     * 畫面上那三顆鈕點一個會取消另外兩個，手改過的 localStorage 也照
+     * 同一條規則收斂——格子右上角只放得下一顆徽章，
+     * 兩個都亮的話畫面沒地方擺，而且那狀態本來就不存在。
      */
     max: !!v.max && !v.gmax,
     gmax: !!v.gmax,
+    purified: !!v.purified && !v.max && !v.gmax,
     bg: typeof v.bg === "string" ? v.bg.slice(0, 40) : "",
   };
 }
