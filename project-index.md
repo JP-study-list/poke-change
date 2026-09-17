@@ -125,7 +125,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | --- | --- |
 | 版面共用 | `renderChrome` `renderViews` `renderInfoBar` `setPop` `railFoot` `toast` `openSheet` `closeSheet` `esc` |
 | 圖鑑 | `renderFilterBar` `renderFilterPanel` `visibleEntries` `renderGrid` `renderDetail` |
-| 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` `renderPicker` `renderPickFoot` `pickHidden` `renderCopy` |
+| 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` `renderPicker` `growPicker` `renderPickFoot` `pickHidden` `renderCopy` |
 | 背卡 | `renderBg` `renderCardDetail` `renderBgFoot` |
 
 ### 協調層
@@ -133,7 +133,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 `js/main.js` —— 唯一有狀態、唯一綁事件的檔案。
 
 - **state**：`book` `lang` `goLang` `view` `filter` `pop` `query` `openId` `openCard` `draft` `flash`
-  `pick` `pickFilter` `pickMulti` `pickShiny` `bgMulti` `bgSel` `edit` `copy`
+  `pick`（含分段進度 `pick.shown`）`pickFilter` `pickMulti` `pickShiny` `bgMulti` `bgSel` `edit` `copy`
 - **`goLang` 跟 `lang` 是兩件事**：搜尋字串是給**對方**貼進他自己的遊戲的，
   關鍵字得用對方遊戲的語言。預設 `"auto"` 跟介面走，值存在 pref
 - **選寶可夢面板的篩選與多選模式放在 `pick` 外面**：`state.pick` 關一次面板就沒了，
@@ -150,7 +150,8 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
   清單摘要都已移除
 - **三份清單**：`state.book` 是整包，`cur()` 取目前那一份。畫面與操作一律只碰那一份
 - **資料流**：使用者操作 → 改 state → `draw()` → `save()`
-- **事件**：單一 `document` 委派（click / input / change / keydown）+ `pagehide`
+- **事件**：單一 `document` 委派（click / input / change / keydown / **scroll**）+ `pagehide`。
+  scroll 不冒泡，所以那一條用 capture 接，再認 `ev.target.id === "panel"`
 - **偏好與清單分開存**：語言與深淺色在 `poke-change/pref`，
   交換清單在 `poke-change/v1`。這樣「清空全部」不會把語言也重設掉
 
@@ -233,7 +234,8 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 勾了條件該列哪些背卡 | `js/bgflags.js` 的逐隻旗標。過濾走 `cardsFor(id, { purified, max, gmax })`，只影響列出什麼，不洗存進去的值。`opts.keep` 保住使用者自己選著的那張 |
 | 條件與背卡的衝突清除 | `js/main.js` 兩條路：草稿在 `data-draft` 那段、已加入那筆在 `setField`。三方互斥的名單是 `EXCLUSIVE`，`store.cleanItem` 再收斂一次 |
 | 改背卡詳情的批次加入 | `js/ui.js` 的 `renderCardDetail`（多選時的格子）與 `renderBgFoot`（底部兩顆鈕）。加進去帶哪些條件在 `js/main.js` 的 `addMany` |
-| 改選寶可夢面板 | `js/ui.js` 的 `renderPicker`，一次最多畫 `PICK_MAX` 筆。多選的底部動作列是 `renderPickFoot`，殼在 `index.html` 的 `#pickFoot` |
+| 改選寶可夢面板 | `js/ui.js` 的 `renderPicker`，**分段畫**：一批 `PICK_STEP` 筆，捲到底走 `growPicker` 接下一批。多選的底部動作列是 `renderPickFoot`，殼在 `index.html` 的 `#pickFoot` |
+| 改分段的批量或觸發距離 | `js/ui.js` 的 `PICK_STEP`（一批幾筆）與 `js/main.js` 的 scroll 監聽（距底 400px）。**接一定要 append**，重畫會把 scrollTop 歸零 |
 | 改那個面板的篩選 | 跟圖鑑同一組 `FILTER_GROUPS`，HTML 走共用的 `pickedChips` / `filterGroups`，dataset 前綴由 `FATTR` 給。**改篩選不清掉選取**，畫面上看不到的那幾隻由 `countHidden` / `pickHidden` 算出來，底部補一句交代 |
 | 加篩選條件 | `js/dex.js` 的 `FILTER_GROUPS`，標籤補 `js/i18n.js`，面板裡的組序在 `js/ui.js` 的 `FGROUPS` |
 | 改手機的欄數 | `css/style.css` 的 `--cell-cols`，900px 以下講死不推算 |

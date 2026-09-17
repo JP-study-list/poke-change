@@ -957,10 +957,15 @@ export function renderTrade(book, lang, t, code = "", edit = {}) {
  * 從交換表按加號不該看到一片空白，而且不會知道為什麼。
  * 反過來也一樣，這裡篩完不該把圖鑑的格子牆也換掉。
  *
- * 一次最多畫 150 筆。面板很窄，全部一千多筆畫下去只是拖慢開啟，
- * 沒有人會捲到底，要找特定一隻本來就該打字。
+ * **分段畫**：先畫 200 筆，捲到底再接 200，一路接到全部（2026-09-18，
+ * 使用者要求）。在那之前是硬上限 150 筆，超過的永遠叫不出來。
+ *
+ * 改掉的理由是那個上限站不住：量過桌機畫全部 1460 筆是 17ms
+ * （150 筆 3.9ms），而且圖鑑檢視本來就一次全畫、沒有任何上限。
+ * 真正的問題是**捲動高度** 28711px，約 96 個手機螢幕——沒有人會那樣捲。
+ * 分段同時解決兩件事：開啟只付第一批的錢，而後面的叫得出來。
  */
-const PICK_MAX = 150;
+const PICK_STEP = 200;
 
 /**
  * 選起來但畫面上看不到的有幾隻。
@@ -970,8 +975,8 @@ const PICK_MAX = 150;
  * 從畫面上消失，底部卻仍然算在數字裡。不交代的話就是「我明明只看到
  * 兩個勾，卻加進來五筆」，而且沒有任何線索。
  *
- * 「看不到」包含兩種：被篩選或搜尋濾掉的，以及排在 PICK_MAX 之後
- * 沒畫出來的。對使用者來說是同一件事——格子不在畫面上。
+ * 「看不到」包含兩種：被篩選或搜尋濾掉的，以及**還沒接出來的那幾批**。
+ * 對使用者來說是同一件事——格子不在畫面上。
  */
 function countHidden(sel, shown) {
   const ids = new Set(shown.map((e) => e.id));
@@ -987,29 +992,30 @@ export function pickHidden(pick) {
   const sel = pick.sel || [];
   if (!sel.length) return 0;
   const hits = search(applyFilter(ENTRIES, pick.filter || {}), pick.query || "");
-  return countHidden(sel, hits.slice(0, PICK_MAX));
+  // 吃目前接到第幾筆，不是第一批的長度——接出來的那幾隻看得見，不算藏起來
+  return countHidden(sel, hits.slice(0, shownCount(pick)));
 }
 
 /**
- * 面板有兩種模式。
+ * 目前該畫到第幾筆。
  *
- * 單選：點一隻就切到詳情，可以配背卡與條件，跟原本一樣。
- * 多選：點一隻是選起來，底下那顆鈕一次全加，條件一律不帶——
- * 逐隻配背卡本來就得一隻一隻來，那是單選那條路在做的事。
- *
- * 篩選收在漏斗裡，但已選條件留在外面，跟圖鑑同一條規則：
- * 只留一個數字的話，使用者看不出自己篩掉了什麼。
+ * `pick.shown` 由 main.js 保管：開面板、打字、改篩選都回到一批，
+ * 捲到底才長。沒有值時當第一批，這樣舊的呼叫端不必全部改。
  */
-export function renderPicker(pick, lang, t) {
-  const filter = pick.filter || {};
-  const multi = !!pick.multi;
-  const sel = new Set(pick.sel || []);
+function shownCount(pick) {
+  return Math.max(PICK_STEP, pick.shown || 0);
+}
 
-  const hits = search(applyFilter(ENTRIES, filter), pick.query || "");
-  const shown = hits.slice(0, PICK_MAX);
-  const n = filterCount(filter);
-
-  const cells = shown
+/**
+ * 一批格子的 HTML。
+ *
+ * 抽出來是因為**接下一批不能重畫整片**：`#panel` 是捲動容器，
+ * 換掉 innerHTML 會把 scrollTop 歸零，而捲到底的那一瞬間正是最不能
+ * 歸零的時候。所以 `growPicker` 拿這個函式產出新的幾格，
+ * 直接 append 到現有的格子牆後面。
+ */
+function pickCells(list, lang, multi, sel) {
+  return list
     .map((e) => {
       const form = formName(e, lang);
       const on = multi && sel.has(e.id);
@@ -1031,7 +1037,41 @@ export function renderPicker(pick, lang, t) {
       </button>`;
     })
     .join("");
+}
 
+/**
+ * 格子牆底下那一行「還有 N 筆」。
+ *
+ * 它同時是捲到底的**哨兵**：還在就表示還有東西可以接，
+ * 接完最後一批就整行拿掉，main.js 靠它決定要不要再接。
+ * 全部畫完不留一行「已經是全部了」——那是沒有人需要知道的事。
+ */
+function pickRest(rest, t) {
+  return rest > 0
+    ? `<p class="dim pick-rest" data-pickrest>${esc(t("pickMore", rest))}</p>`
+    : "";
+}
+
+/**
+ * 面板有兩種模式。
+ *
+ * 單選：點一隻就切到詳情，可以配背卡與條件，跟原本一樣。
+ * 多選：點一隻是選起來，底下那顆鈕一次全加，條件一律不帶——
+ * 逐隻配背卡本來就得一隻一隻來，那是單選那條路在做的事。
+ *
+ * 篩選收在漏斗裡，但已選條件留在外面，跟圖鑑同一條規則：
+ * 只留一個數字的話，使用者看不出自己篩掉了什麼。
+ */
+export function renderPicker(pick, lang, t) {
+  const filter = pick.filter || {};
+  const multi = !!pick.multi;
+  const sel = new Set(pick.sel || []);
+
+  const hits = search(applyFilter(ENTRIES, filter), pick.query || "");
+  const shown = hits.slice(0, shownCount(pick));
+  const n = filterCount(filter);
+
+  const cells = pickCells(shown, lang, multi, sel);
   const chips = pickedChips(filter, lang, t, FATTR.pick);
 
   $("#panel").innerHTML = `
@@ -1084,11 +1124,7 @@ export function renderPicker(pick, lang, t) {
     ${
       shown.length
         ? `<div class="grid pick-grid">${cells}</div>
-           ${
-             hits.length > shown.length
-               ? `<p class="dim">${esc(t("pickMore", PICK_MAX))}</p>`
-               : ""
-           }`
+           ${pickRest(hits.length - shown.length, t)}`
         : `<p class="empty">${esc(t("empty"))}</p>`
     }`;
 
@@ -1099,6 +1135,50 @@ export function renderPicker(pick, lang, t) {
    */
   if (multi) renderPickFoot(sel.size, t, pick.shiny, countHidden(sel, shown));
   else railFoot("");
+}
+
+/**
+ * 捲到底時接下一批。
+ *
+ * **只 append，不重畫。** `#panel` 是捲動容器，重畫會把 scrollTop 歸零，
+ * 使用者會被彈回最上面——而他正在往下捲，這是最糟的時機。
+ * 所以這裡只做三件事：新的幾格塞到格子牆後面、更新哨兵那一行、
+ * 更新底部的數字（多選時「N 隻在篩選外」會因為接出來而變少）。
+ *
+ * 回傳新的「已經畫到第幾筆」，由 main.js 寫回 `state.pick.shown`。
+ * 已經畫完就回原值，呼叫端不必先問。
+ */
+export function growPicker(pick, lang, t) {
+  const hits = search(applyFilter(ENTRIES, pick.filter || {}), pick.query || "");
+  /*
+   * 夾到命中數：一批是 200，但這次搜尋可能只有 105 筆。
+   * 不夾的話已經畫完時會回一個比實際格子還大的數字，
+   * main.js 把它寫進 `shown`，「N 隻在篩選外」就會算錯。
+   */
+  const from = Math.min(shownCount(pick), hits.length);
+  if (from >= hits.length) return from;
+
+  const to = Math.min(from + PICK_STEP, hits.length);
+  const grid = $("#panel").querySelector(".pick-grid");
+  if (!grid) return from; // 面板換成別的了，什麼都不做
+
+  const multi = !!pick.multi;
+  const sel = new Set(pick.sel || []);
+  grid.insertAdjacentHTML(
+    "beforeend",
+    pickCells(hits.slice(from, to), lang, multi, sel)
+  );
+
+  /*
+   * 哨兵那一行整個換掉而不是改 textContent：接完最後一批要連元素一起
+   * 消失，main.js 靠「還在不在」判斷要不要再接。
+   */
+  const rest = $("#panel").querySelector("[data-pickrest]");
+  if (rest) rest.outerHTML = pickRest(hits.length - to, t);
+
+  if (multi)
+    renderPickFoot(sel.size, t, pick.shiny, countHidden(sel, hits.slice(0, to)));
+  return to;
 }
 
 /**

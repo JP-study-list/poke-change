@@ -278,7 +278,16 @@ function drawDetail() {
       sel: state.bgSel,
       shiny: state.pickShiny,
     });
-  else if (state.pick) ui.renderPicker(pickView(), state.lang, t);
+  else if (state.pick) {
+    /*
+     * 整片重畫一定從第一批開始。打字、改篩選、切多選走的都是這裡，
+     * 而 `#panel` 換掉 innerHTML 時 scrollTop 本來就歸零——
+     * 留著長出來的筆數只是在看不到的地方畫一堆格子。
+     * 接下一批走的是 growPicker，不經過這裡。
+     */
+    state.pick.shown = 0;
+    ui.renderPicker(pickView(), state.lang, t);
+  }
   else if (state.copy) ui.renderCopy(state.copy, t);
 }
 
@@ -954,7 +963,8 @@ document.addEventListener("click", (ev) => {
   // 交換表格子牆最後那一格加號
   const addcell = el("[data-addcell]");
   if (addcell) {
-    state.pick = { col: addcell.dataset.addcell, query: "", open: false, sel: [] };
+    // shown 是分段畫到第幾筆。0 表示還沒長過，ui 會當第一批
+    state.pick = { col: addcell.dataset.addcell, query: "", open: false, sel: [], shown: 0 };
     state.openId = state.openCard = state.copy = null;
     state.draft = state.flash = null;
     drawDetail();
@@ -1217,6 +1227,31 @@ document.addEventListener("keydown", (ev) => {
     ui.setPop(null);
   }
 });
+
+/*
+ * 選寶可夢面板捲到底就接下一批（2026-09-18，使用者要求）。
+ *
+ * **scroll 不冒泡**，所以用 capture 在 document 上接，再認是不是 `#panel`。
+ * 這樣仍然是單一委派，不必替面板綁一顆自己的監聽、也不必在關面板時解掉。
+ *
+ * 距底 400px 就接，不等真的碰到底——接的那一下要在使用者捲到空白之前
+ * 完成，看到底了才開始長就已經晚了。
+ *
+ * 哨兵是底部那一行「還有 N 筆」：它不在就表示接完了，直接退出。
+ * 用元素在不在判斷而不是自己算，是因為那一行本來就由 growPicker 維護，
+ * 兩邊各算一次遲早會講不同的話。
+ */
+document.addEventListener(
+  "scroll",
+  (ev) => {
+    const el = ev.target;
+    if (!state.pick || !el || el.id !== "panel") return;
+    if (!document.querySelector("[data-pickrest]")) return;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight > 400) return;
+    state.pick.shown = ui.growPicker(pickView(), state.lang, t);
+  },
+  true
+);
 
 // 關閉分頁前把還沒送出的變更寫掉
 window.addEventListener("pagehide", () => store.flush(state.book));

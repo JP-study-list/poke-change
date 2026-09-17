@@ -2291,6 +2291,19 @@ body.no-names .cell .no {
   user-select: text;
 }
 
+/*
+ * 選寶可夢面板底下那行「還有 N 筆」。
+ *
+ * 它同時是捲到底的哨兵，所以**要佔一點高度**：貼著格子牆的最後一排
+ * 會被誤讀成某一格的說明。置中是因為它講的是整片格子牆的狀態，
+ * 不是某一欄的註腳。
+ */
+.pick-rest {
+  margin: 16px 0 4px;
+  text-align: center;
+  font-size: var(--fs-13);
+}
+
 /* 底部只有一顆鈕時吃滿整條，不然 space-between 會把它丟在左邊 */
 .pick-add.wide {
   flex: 1 1 auto;

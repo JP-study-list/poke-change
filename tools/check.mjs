@@ -54,7 +54,38 @@ function installDom() {
     },
     setAttribute() {},
     getAttribute: () => null,
-    querySelector: () => null,
+    /*
+     * 只支援 growPicker 會用到的那兩個查詢，不是通用的選擇器實作。
+     * 它接下一批時要 append 到格子牆、換掉底下那行哨兵，
+     * 兩個都**寫回這個元素的 innerHTML**，測試才量得到真正的格子數。
+     */
+    querySelector(sel) {
+      const self = this;
+      if (sel === ".pick-grid") {
+        if (!self.innerHTML.includes('class="grid pick-grid"')) return null;
+        return {
+          insertAdjacentHTML(_pos, html) {
+            // 格子是 <button>，裡面沒有 </div>，所以第一個就是格子牆的收尾
+            self.innerHTML = self.innerHTML.replace(
+              /(<div class="grid pick-grid">[\s\S]*?)<\/div>/,
+              (_m, head) => `${head}${html}</div>`
+            );
+          },
+        };
+      }
+      if (sel === "[data-pickrest]") {
+        if (!self.innerHTML.includes("data-pickrest")) return null;
+        return {
+          set outerHTML(html) {
+            self.innerHTML = self.innerHTML.replace(
+              /<p class="dim pick-rest"[\s\S]*?<\/p>/,
+              () => html
+            );
+          },
+        };
+      }
+      return null;
+    },
     querySelectorAll: () => [],
     closest: () => null,
     style: {},
@@ -1435,6 +1466,79 @@ console.log("\n5. 繪製函式");
   });
 
   // 整批異色開關：預設不開，開著時要標出來，兩種狀態都要有那顆鈕
+  /*
+   * ── 分段顯示 ──
+   * 先畫 200 筆，捲到底再接 200，一路接到全部（2026-09-18，使用者要求）。
+   * 在那之前是硬上限 150 筆，超過的永遠叫不出來。
+   *
+   * 捲動本身沒辦法在 Node 裡模擬，所以這裡測的是 growPicker 的行為：
+   * 接出來的是**下一批**、不是從頭再來一次，而且接完就停。
+   */
+  {
+    const cellsIn = (html) => (html.match(/data-pickcell="1"/g) || []).length;
+    const idsIn = (html) =>
+      [...html.matchAll(/data-id="([^"]+)"/g)].map((m) => m[1]);
+    const all = dex.search(dex.applyFilter(dex.ENTRIES, {}), "");
+
+    run("renderPicker 分段：第一批 200 筆", () => {
+      ui.renderPicker({ col: "want", query: "", shown: 0 }, "zh", t);
+      const n = cellsIn(els.panel.innerHTML);
+      if (n !== 200) throw new Error(`第一批應該 200 筆，得到 ${n}`);
+      if (!els.panel.innerHTML.includes("data-pickrest"))
+        throw new Error("還有沒畫完的，底下要留哨兵那一行");
+    });
+
+    run("renderPicker 分段：接的是下一批，不是從頭再來", () => {
+      const pick = { col: "want", query: "", shown: 0 };
+      ui.renderPicker(pick, "zh", t);
+      const next = ui.growPicker(pick, "zh", t);
+      if (next !== 400) throw new Error(`接完該回 400，得到 ${next}`);
+
+      const ids = idsIn(els.panel.innerHTML);
+      if (ids.length !== 400)
+        throw new Error(`畫面上該有 400 格，得到 ${ids.length}`);
+      if (ids[200] !== all[200].id)
+        throw new Error(`第 201 格該是 ${all[200].id}，得到 ${ids[200]}`);
+      if (new Set(ids).size !== 400) throw new Error("接出來的有重複");
+    });
+
+    run("renderPicker 分段：一批畫得完就沒有哨兵", () => {
+      const pick = { col: "want", query: "皮卡丘", shown: 0 };
+      ui.renderPicker(pick, "zh", t);
+      const n = cellsIn(els.panel.innerHTML);
+      if (n >= 200) throw new Error(`這個搜尋該少於一批，得到 ${n}`);
+      if (els.panel.innerHTML.includes("data-pickrest"))
+        throw new Error("一批就畫得完，不該留哨兵");
+      if (ui.growPicker(pick, "zh", t) !== n)
+        throw new Error("已經畫完了還在長");
+    });
+
+    run("renderPicker 分段：一路接到底就停", () => {
+      const pick = { col: "want", query: "", shown: 0 };
+      ui.renderPicker(pick, "zh", t);
+      for (let i = 0; i < 20; i++) pick.shown = ui.growPicker(pick, "zh", t);
+      if (pick.shown !== all.length)
+        throw new Error(`該接到 ${all.length}，停在 ${pick.shown}`);
+      if (cellsIn(els.panel.innerHTML) !== all.length)
+        throw new Error("畫面上的格子數跟接到的筆數對不上");
+      if (els.panel.innerHTML.includes("data-pickrest"))
+        throw new Error("接完了哨兵還在，會一直想再接");
+    });
+
+    /*
+     * 「N 隻在篩選外」要扣掉已經接出來的，否則接到第 400 筆之後
+     * 那幾隻明明看得見，底部還說它們在篩選外。
+     */
+    run("pickHidden 吃分段的進度", () => {
+      const late = all[300].id;
+      const base = { query: "", filter: {}, sel: [late] };
+      if (ui.pickHidden({ ...base, shown: 0 }) !== 1)
+        throw new Error("還沒接到那一筆，該算成看不到");
+      if (ui.pickHidden({ ...base, shown: 400 }) !== 0)
+        throw new Error("已經接出來了，不該再算成看不到");
+    });
+  }
+
   run("renderPicker 多選的異色開關", () => {
     ui.renderPicker({ col: "want", query: "", multi: true, sel: [] }, "zh", t);
     const off = els.pickFoot.innerHTML;
