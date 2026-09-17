@@ -134,6 +134,62 @@ export const KB_ENTRIES = [
       },
     ],
   },
+  {
+    slug: "remote-trade",
+    title: "遠距離交換",
+    summary: "要「正港好朋友＋」才解鎖，每天 1 次、每階段 48 小時。過去 30 天內捉到的寶可夢不能用，但它不計入特殊交換次數",
+    cat: "trade",
+    updated: "2026-09-18",
+    /*
+     * **三條官方把整個機制講完了**，這一則是五則裡出處最硬的。
+     * 5312 是主幹（流程、48 小時、每天 1 次、九種不能換的）；
+     * 2847 補兩件 5312 沒寫的：「同時只能擁有 1 次機會」是它的原句，
+     * 而「正港好朋友＋」的沙子折扣寫成「『正港好朋友』固定獎勵」——
+     * 升到第六級不會更便宜，這是讀者會誤會的地方。
+     *
+     * **FAQ 96 收了兩個語言，這是刻意的。** 英文版與繁中版內容不一樣：
+     * 等級門檻英文寫 10 級、繁中寫 12 級（繁中是還沒更新的舊翻譯），
+     * 而且英文版的特殊交換清單多一行 Location Cards（背卡）。
+     * 只列繁中的話，頁面上寫 10 級會變成沒有出處。
+     *
+     * 社群兩條只為了那張沙子費用表與 100 公尺，兩邊獨立對得起來才寫。
+     * **官方的定性描述（略為／適中／更加減少）正好裁定了等級對應**：
+     * 第一次出現折扣是「給力好朋友」，Pokemon Hubs 把等級標錯一格，
+     * 52poke 的對應才對得上官方。
+     */
+    sources: [
+      {
+        label: "Niantic 說明中心：遠距交換（FAQ 5312）",
+        url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/5312-trading-remotely/",
+        official: true,
+      },
+      {
+        label: "Niantic 說明中心：朋友名單 & 友誼等級（FAQ 2847）",
+        url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/2847-friend-list-friendship-levels-1614900279/",
+        official: true,
+      },
+      {
+        label: "Niantic 說明中心：交換寶可夢（FAQ 96）",
+        url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/96-trading-pokemon/",
+        official: true,
+      },
+      {
+        label: "Niantic 說明中心：交換寶可夢（FAQ 96，英文版；等級門檻 10 級只有這一版寫）",
+        url: "https://niantic.helpshift.com/hc/en/6-pokemon-go/faq/96-trading-pokemon/",
+        official: true,
+      },
+      {
+        label: "神奇寶貝百科：朋友（Pokémon GO）— 交換費用與折扣表",
+        url: "https://wiki.52poke.com/zh-hant/%E6%9C%8B%E5%8F%8B%EF%BC%88Pok%C3%A9mon_GO%EF%BC%89",
+        official: false,
+      },
+      {
+        label: "Pokemon Hubs：寶可夢交換—機制／交易成本／特別交易",
+        url: "https://pokemonhubs.com/pokemongo/2355/",
+        official: false,
+      },
+    ],
+  },
 ];
 
 export const KB_COUNT = KB_ENTRIES.length;
