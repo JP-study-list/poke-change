@@ -836,10 +836,19 @@ console.log("\n4b. 搜尋字串");
   // newItem 的第二個參數是 shiny，而且**預設 true**，基底要自己關掉
   const item = (id, extra = {}) => ({ ...store.newItem(id, false), ...extra });
 
+  /*
+   * 每一串的固定開頭：排掉交換來的（交換過的不能再交換）。
+   * 下面的期待值全部帶著它，這樣改壞了開頭會整節一起紅，
+   * 不會只有專門測開頭的那一條掉。
+   */
+  const HEAD = "!交換&";
+  const h = (body) => HEAD + body;
+
   ok("空清單回空字串", str([]) === "" && str(undefined) === "");
+  ok("空清單不會只剩一個開頭", !str([]).includes("交換"));
 
   ok("編號升序、逗號連接",
-     str([item("d150"), item("d1"), item("d25")]) === "1,25,150");
+     str([item("d150"), item("d1"), item("d25")]) === h("1,25,150"));
 
   /*
    * 同一隻的不同裝扮與型態在字串裡是同一個編號。這是刻意的：
@@ -847,16 +856,16 @@ console.log("\n4b. 搜尋字串");
    * **但條件不會塌**：沒條件那格會把有條件那格吸收掉（25 涵蓋異色的 25）。
    */
   ok("同編號只出現一次",
-     str([item("d25"), item("d25.cHALLOWEEN_2017"), item("d25", { shiny: true })]) === "25");
+     str([item("d25"), item("d25.cHALLOWEEN_2017"), item("d25", { shiny: true })]) === h("25"));
 
   ok("型態塌回本體編號",
-     str([item("d487.fORIGIN"), item("d487.fALTERED")]) === "487");
+     str([item("d487.fORIGIN"), item("d487.fALTERED")]) === h("487"));
 
   /*
    * 圖鑑更新拿掉某個 id 之後，格子牆畫不出那一格，字串裡也不該冒出編號。
    */
   ok("查不到的條目跳過",
-     str([item("d25"), { id: "d99999" }]) === "25");
+     str([item("d25"), { id: "d99999" }]) === h("25"));
 
   ok("編號一律跟圖鑑要，不從 id 拆",
      dexNumbers([item("d25.cHALLOWEEN_2017")])[0] === dex.find("d25").dex);
@@ -871,7 +880,7 @@ console.log("\n4b. 搜尋字串");
    */
   ok("條件進得了同一行",
      str([item("d4"), item("d19.fALOLA"), item("d7", { shiny: true })])
-       === "異色,4,19&7,4,19");
+       === h("異色,4,19&7,4,19"));
 
   /*
    * 同一組條件的那幾隻共用一個選項，不是一隻一個——
@@ -879,26 +888,47 @@ console.log("\n4b. 搜尋字串");
    */
   ok("同一組條件的共用一個子句",
      str([item("d1"), item("d4", { shiny: true }), item("d7", { shiny: true })])
-       === "異色,1&4,7,1");
+       === h("異色,1&4,7,1"));
 
   ok("全部都有同一個條件時 base 是空的",
-     str([item("d4", { shiny: true }), item("d7", { shiny: true })]) === "異色&4,7");
+     str([item("d4", { shiny: true }), item("d7", { shiny: true })]) === h("異色&4,7"));
 
   /* 六個條件都要有自己的關鍵字。漏掉會在字串裡變成 undefined */
   for (const [field, word] of [
     ["shiny", "異色"], ["xxl", "XXL"], ["xxs", "XXS"],
     ["purified", "淨化"], ["max", "極巨化"], ["gmax", "超極巨化"],
   ]) {
-    ok(`條件 ${field} 的關鍵字`, str([item("d25", { [field]: true })]) === `${word}&25`);
+    ok(`條件 ${field} 的關鍵字`, str([item("d25", { [field]: true })]) === h(`${word}&25`));
   }
   ok("背卡只看有沒有，不看是哪一張",
-     str([item("d25", { bg: "go-fest-2025" })]) === "背卡&25");
+     str([item("d25", { bg: "go-fest-2025" })]) === h("背卡&25"));
 
   /* 三語：關鍵字要跟著對方的遊戲語言換，編號不換 */
-  ok("日文關鍵字", str([item("d25", { shiny: true })], "ja") === "色違い&25");
-  ok("英文關鍵字", str([item("d25", { shiny: true })], "en") === "shiny&25");
-  ok("認不得的語言退回繁中", str([item("d25", { shiny: true })], "xx") === "異色&25");
+  ok("日文關鍵字", str([item("d25", { shiny: true })], "ja") === "!こうかん&色違い&25");
+  ok("英文關鍵字", str([item("d25", { shiny: true })], "en") === "!traded&shiny&25");
+  ok("認不得的語言退回繁中", str([item("d25", { shiny: true })], "xx") === h("異色&25"));
   ok("三個語言都有關鍵字", STR_LANGS.length === 3);
+
+  /*
+   * ── 固定開頭 ──
+   * GO 裡交換過的寶可夢不能再交換，所以兩欄都要把它們排掉：
+   * 「想要」那欄同樣是對方拿去翻自己的箱子，他交換來的那隻給不了。
+   * `!` 要緊貼關鍵字，中間不能有空格。
+   */
+  for (const [lang, head] of [
+    ["zh", "!交換&"], ["ja", "!こうかん&"], ["en", "!traded&"],
+  ]) {
+    ok(`${lang} 的字串以 ${head} 起頭`,
+       str([item("d25"), item("d4", { shiny: true })], lang).startsWith(head));
+  }
+  ok("開頭只出現一次",
+     str([item("d25"), item("d4", { shiny: true })]).split("交換").length === 2);
+  ok("降級到純編號也帶開頭", (() => {
+    const many = [];
+    for (const f of ["shiny", "xxl", "xxs", "purified", "max", "gmax"])
+      for (let i = 0; i < 8; i++) many.push(item(`d${100 + many.length}`, { [f]: true }));
+    return searchString(many, "zh").str.startsWith(HEAD);
+  })());
 
   /*
    * ── 降級 ──
@@ -956,18 +986,30 @@ console.log("\n4b. 搜尋字串");
       shiny: "異色", xxl: "XXL", xxs: "XXS",
       purified: "淨化", max: "極巨化", gmax: "超極巨化", bg: "背卡",
     };
-    const lit = (l, st) => (/^[0-9]+$/.test(l) ? st.dex === Number(l) : st.has.has(l));
+    /*
+     * `!` 是非，要緊貼關鍵字。固定開頭 `!交換` 靠它求值，
+     * 所以枚舉的狀態多一個維度：這隻是不是交換來的。
+     */
+    const lit = (l, st) => {
+      if (l.startsWith("!")) return !lit(l.slice(1), st);
+      if (/^[0-9]+$/.test(l)) return st.dex === Number(l);
+      if (l === "交換") return st.traded;
+      return st.has.has(l);
+    };
     const strTrue = (text, st) =>
       text.split("&").every((g) => g.split(",").some((l) => lit(l, st)));
     // 清單的原意：某一格的編號對得上，而且那一格要的條件對方全都有
     const listTrue = (items, st) =>
-      items.some((it) => {
-        const e = dex.find(it.id);
-        if (!e || e.dex !== st.dex) return false;
-        return Object.keys(WORD).every(
-          (f) => !(f === "bg" ? it.bg : it[f]) || st.has.has(WORD[f])
-        );
-      });
+      // 交換來的不能再交換，所以它永遠不是我們要的，不管編號對不對
+      st.traded
+        ? false
+        : items.some((it) => {
+            const e = dex.find(it.id);
+            if (!e || e.dex !== st.dex) return false;
+            return Object.keys(WORD).every(
+              (f) => !(f === "bg" ? it.bg : it[f]) || st.has.has(WORD[f])
+            );
+          });
 
     const compare = (name, items) => {
       const res = searchString(items, "zh");
@@ -975,19 +1017,33 @@ console.log("\n4b. 搜尋字串");
       const dexes = [...new Set(dexNumbers(items)), 99999];
       let miss = 0; // 清單要、字串搜不到（絕對不允許）
       let extra = 0; // 字串搜得到、清單沒要（降級時允許）
+      let traded = 0; // 交換來的卻搜得到（降級與否都絕對不允許）
       for (const d of dexes) {
-        for (let m = 0; m < 1 << words.length; m++) {
-          const st = {
-            dex: d,
-            has: new Set(words.filter((_, i) => m & (1 << i))),
-          };
-          const want = listTrue(items, st);
-          const got = strTrue(res.str, st);
-          if (want && !got) miss++;
-          else if (!want && got) extra++;
+        for (const isTraded of [false, true]) {
+          for (let m = 0; m < 1 << words.length; m++) {
+            const st = {
+              dex: d,
+              traded: isTraded,
+              has: new Set(words.filter((_, i) => m & (1 << i))),
+            };
+            const want = listTrue(items, st);
+            const got = strTrue(res.str, st);
+            if (want && !got) miss++;
+            else if (!want && got) {
+              extra++;
+              if (isTraded) traded++;
+            }
+          }
         }
       }
       ok(`${name}：一隻都不會漏`, miss === 0, `${miss} 種狀態搜不到`);
+      /*
+       * 這一條**不因降級而放寬**。放掉條件是安全的（對方多翻幾隻），
+       * 但放掉固定開頭不是：列出來的那隻他根本換不了，
+       * 而他要按下去才知道。所以開頭永遠不進降級的候選。
+       */
+      ok(`${name}：交換來的一律搜不到`, traded === 0,
+         `${traded} 種交換來的狀態仍搜得到`);
       ok(
         `${name}：${res.dropped ? "放掉條件後只多不少" : "語意完全等價"}`,
         res.dropped ? true : extra === 0,

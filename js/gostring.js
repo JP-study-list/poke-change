@@ -37,6 +37,15 @@
  * 是哪一個裝扮。**但條件不會塌**：皮卡丘收了一格普通一格異色，
  * 普通那格會把異色那格吸收掉（`25` 本來就涵蓋異色的 25）。
  *
+ * ── 固定的開頭：排掉交換來的 ──
+ * 每一串都以 `!交換&` 起頭（2026-09-17，使用者要求）。**GO 裡交換過的
+ * 寶可夢不能再交換**，所以對方箱子裡那幾隻列出來也給不了，
+ * 兩欄都要排掉——「想要」那欄同樣是對方拿去翻自己的箱子。
+ * `!` 要緊貼關鍵字，中間不能有空格。
+ *
+ * 它是一個獨立的 `&` 子句，跟上面那套分配律互不干擾，
+ * **但它吃長度額度**：預算要先扣掉再去試組合，不是組完才發現爆掉。
+ *
  * ── 語言 ──
  * 編號三語通用，但關鍵字不是（`異色` 在日文介面搜不到）。這串字是給
  * 對方用的，所以語言要跟**對方的遊戲**走，選擇器在設定面板。
@@ -73,7 +82,7 @@ const MAX_CLAUSES = 64;
 const COND_ORDER = ["shiny", "xxl", "xxs", "purified", "max", "gmax", "bg"];
 
 /**
- * 六個交換條件的遊戲內關鍵字，三語。
+ * 遊戲內關鍵字，三語：六個交換條件，加上固定開頭要用的 `traded`。
  *
  * 全部出自官方說明中心 FAQ 1486 的三語原文（見 docs/go-search-syntax.md），
  * 沒有一個是照字面推的——推錯的下場是使用者傳出一個搜不到東西的字串。
@@ -101,6 +110,7 @@ const KEYWORDS = {
     max: "極巨化",
     gmax: "超極巨化",
     bg: "背卡",
+    traded: "交換",
   },
   ja: {
     shiny: "色違い",
@@ -110,6 +120,7 @@ const KEYWORDS = {
     max: "だいまっくす",
     gmax: "きょだいまっくす",
     bg: "はいけい",
+    traded: "こうかん",
   },
   en: {
     shiny: "shiny",
@@ -119,6 +130,7 @@ const KEYWORDS = {
     max: "dynamax",
     gmax: "gigantamax",
     bg: "background",
+    traded: "traded",
   },
 };
 
@@ -201,7 +213,7 @@ function absorb(base, buckets) {
  * 每一桶的選項是「它的每個條件各一個」加上「整組編號一個」，
  * 取遍所有組合，每個子句再補上 base 的全部編號。
  */
-function build(base, buckets, kw) {
+function build(base, buckets, kw, budget) {
   const nums = [...base].sort((a, b) => a - b).map(String);
   let count = 1;
   for (const b of buckets) count *= b.conds.length + 1;
@@ -217,7 +229,8 @@ function build(base, buckets, kw) {
   const str = clauses
     .map((c) => [...new Set([...c, ...nums])].join(","))
     .join("&");
-  return str.length > SEARCH_MAX ? null : str;
+  // budget 是 SEARCH_MAX 扣掉固定開頭之後還剩多少，不是 SEARCH_MAX 本身
+  return str.length > budget ? null : str;
 }
 
 /**
@@ -235,14 +248,29 @@ function build(base, buckets, kw) {
 export function searchString(items, lang) {
   const kw = KEYWORDS[lang] || KEYWORDS.zh;
   const count = dexNumbers(items).length;
+  /*
+   * 空欄回空字串，呼叫端靠它決定要不要畫鈕、要不要開窗。
+   * **這個守衛是固定開頭帶來的**：在那之前空欄自然就組出空字串，
+   * 現在不擋的話會變成只有 `!交換&` 的一串，複製了也搜不出東西。
+   */
+  if (!count) return { str: "", count: 0, dropped: 0, long: false };
+
   const { base, buckets: raw } = bucketize(items);
   let buckets = absorb(base, raw);
   const dropped = new Set();
 
+  /*
+   * 固定開頭：排掉交換來的那些。交換過的不能再交換，列出來對方也給不了。
+   * **先從預算裡扣掉**——組完才發現爆掉的話，降級會少放掉一組條件，
+   * 產出一串超過上限的字。
+   */
+  const head = `!${kw.traded}&`;
+  const budget = SEARCH_MAX - head.length;
+
   for (;;) {
-    const str = build(base, buckets, kw);
+    const str = build(base, buckets, kw, budget);
     if (str !== null) {
-      return { str, count, dropped: dropped.size, long: false };
+      return { str: head + str, count, dropped: dropped.size, long: false };
     }
     if (!buckets.length) break;
 
@@ -265,7 +293,7 @@ export function searchString(items, lang) {
     buckets = absorb(base, buckets.filter((_, i) => i !== worst));
   }
 
-  // 條件全放光了，剩純編號。這一串就是 1.10.00 的行為
-  const str = [...base].sort((a, b) => a - b).join(",");
+  // 條件全放光了，只剩開頭加純編號。這是最寬鬆也最短的一串
+  const str = head + [...base].sort((a, b) => a - b).join(",");
   return { str, count, dropped: dropped.size, long: str.length > SEARCH_MAX };
 }
