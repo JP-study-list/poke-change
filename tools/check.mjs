@@ -17,7 +17,7 @@
  * 圖片網址不在這裡驗，那要連外網。需要時跑 --net。
  */
 
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 
 const NET = process.argv.includes("--net");
 
@@ -249,6 +249,59 @@ console.log("\n1d. 知識");
    */
   const noName = KB_CATS.filter((c) => ui.kbCatName(c, t) === c);
   ok(`${KB_CATS.length} 個分類都有譯名`, !noName.length, noName.join(","));
+
+  /*
+   * **中文段落不能在句中換行。**
+   *
+   * HTML 把 CJK 字元之間的換行渲染成一個空格，畫面上就會冒出
+   * 「其中一名朋友 變成」這種縫——**原始碼看起來完全正常**，
+   * 而且是整篇零星幾處，肉眼看很容易漏。第一則寫完實測抓到 7 處。
+   *
+   * 判準是純文字的：上一行結尾與下一行開頭都是 CJK 字元或全形標點。
+   * 標籤之間的換行不會誤報（上一行結尾是 `>`、下一行開頭是 `<`），
+   * 所以縮排照常寫。
+   */
+  {
+    const CJK = /[\u3000-\u303f\u3040-\u30ff\u4e00-\u9fff\uff00-\uffef]/;
+    const srcDir = new URL("../kb/_src/", import.meta.url);
+    let srcFiles = [];
+    try {
+      srcFiles = await readdir(srcDir);
+    } catch {
+      /* 還沒有任何內文，不是錯誤 */
+    }
+    const hits = [];
+    for (const f of srcFiles) {
+      if (!f.endsWith(".html")) continue;
+      const lines = (await readFile(new URL(f, srcDir), "utf8")).split("\n");
+
+      /*
+       * **HTML 註解裡的換行要跳過**，它根本不會被渲染。
+       * 不跳的話範本那份寫滿說明的註解會整片報出來，全是假的。
+       * 一個位元一個位元掃，因為 `<!--` 與 `-->` 可能在同一行。
+       */
+      let open = false;
+      const state = lines.map((line) => {
+        const startedOpen = open;
+        for (let j = 0; j < line.length; j++) {
+          if (!open && line.startsWith("<!--", j)) (open = true), (j += 3);
+          else if (open && line.startsWith("-->", j)) (open = false), (j += 2);
+        }
+        return { startedOpen, endedOpen: open };
+      });
+
+      for (let i = 1; i < lines.length; i++) {
+        // 上一行結尾在註解裡，或這一行開頭在註解裡，都不算
+        if (state[i - 1].endedOpen || state[i].startedOpen) continue;
+        const prev = lines[i - 1].trimEnd();
+        const cur = lines[i].trimStart();
+        if (!prev || !cur) continue;
+        if (CJK.test(prev.at(-1)) && CJK.test(cur[0]))
+          hits.push(`${f}:${i + 1}「${prev.slice(-6)}／${cur.slice(0, 6)}」`);
+      }
+    }
+    ok("中文段落沒有在句中換行", !hits.length, hits.join("，"));
+  }
 
   /*
    * **產出沒有過期。** 改了 `kb/_src/` 的內文或殼卻忘記重跑 build-kb 的話，
@@ -1707,10 +1760,13 @@ console.log("\n5. 繪製函式");
   run("toast", () => ui.toast("hi"));
 
   /*
-   * 知識檢視。**空與非空兩種都要驗**：交付時 kbdata 是空的，
-   * 所以「有內容」那條路平常沒有人走到，等第一則進來才發現壞掉就太晚了。
-   * 假資料直接 push 進 KB_ENTRIES（ui.js 拿的是同一個陣列參考），驗完還原。
+   * 知識檢視。**空與非空兩種都要驗**，而且**不依賴 kbdata 當下有沒有內容**：
+   * 空狀態那條路在有內容之後就沒有人走到了，等到哪天最後一則被拿掉才發現
+   * 壞掉太晚。所以先把真資料整個搬走，兩種狀態各自用可控的資料驗，
+   * 最後原封放回去（`ui.js` 拿的是同一個陣列參考，所以動這個陣列就夠了）。
    */
+  const kbReal = kbdata.KB_ENTRIES.splice(0, kbdata.KB_ENTRIES.length);
+
   run("renderKb 空的時候", () => {
     ui.renderKb(t);
     if (!els.app.innerHTML.includes(t("kbEmpty"))) throw new Error("沒有畫出空狀態");
@@ -1803,6 +1859,17 @@ console.log("\n5. 繪製函式");
   run("renderChrome 沒有內容時頁尾那條連結藏著", () => {
     ui.renderChrome(t, "zh");
     if (!els.kbFoot.hidden) throw new Error("沒有內容卻露出一條連到空頁的連結");
+  });
+
+  // 真資料放回去。後面還有三語繪製那一輪要用
+  kbdata.KB_ENTRIES.push(...kbReal);
+
+  run(`renderKb 真的那 ${kbReal.length} 則`, () => {
+    ui.renderKb(t);
+    for (const e of kbReal) {
+      if (!els.app.innerHTML.includes(`href="kb/${e.slug}/"`))
+        throw new Error(`${e.slug} 沒有畫出來`);
+    }
   });
 
   /*

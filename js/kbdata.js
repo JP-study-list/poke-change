@@ -36,7 +36,7 @@
  * 3. **術語一律用官方繁中**（亮晶晶好朋友、給力好朋友），
  *    不用玩家俗稱也不自己翻譯。
  *
- * 目前是空的：地基先做，內容一則一則進來（待辦 A-3 到 A-7）。
+ * 內容一則一則進來（待辦 A-4 到 A-7）。
  * **空的時候第四顆檢視鈕不會畫**，沒有內容就沒有入口。
  */
 
@@ -44,6 +44,41 @@
 export const KB_CATS = ["trade", "search"];
 
 /** 全部知識條目。反向時間序沒有意義，這裡照分類與加入順序排 */
-export const KB_ENTRIES = [];
+export const KB_ENTRIES = [
+  {
+    slug: "lucky-trinket",
+    title: "亮晶晶首飾",
+    summary: "一次性道具，把一名朋友直接變成亮晶晶好朋友。只能用在給力好朋友以上，而且不會改變交換距離",
+    cat: "trade",
+    updated: "2026-09-18",
+    /*
+     * 四條全是官方。**這一則是五則裡出處最齊的**，所以排在最前面做。
+     * 2847（友誼等級）是為了那張「哪幾級可以用」的表：4945 只寫
+     * 「給力好朋友以上」，要對到六個里程碑才知道被擋掉的是哪兩級。
+     */
+    sources: [
+      {
+        label: "Niantic 說明中心：「亮晶晶首飾」是什麼？（FAQ 4945）",
+        url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/4945-what-is-the-lucky-trinket/",
+        official: true,
+      },
+      {
+        label: "Niantic 說明中心：亮晶晶好朋友（FAQ 1485）",
+        url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/1485-lucky-friends/",
+        official: true,
+      },
+      {
+        label: "Niantic 說明中心：朋友名單 & 友誼等級（FAQ 2847）",
+        url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/2847-friend-list-friendship-levels-1614900279/",
+        official: true,
+      },
+      {
+        label: "Niantic 說明中心：亮晶晶寶可夢（FAQ 38）",
+        url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/38-lucky-pokemon/",
+        official: true,
+      },
+    ],
+  },
+];
 
 export const KB_COUNT = KB_ENTRIES.length;

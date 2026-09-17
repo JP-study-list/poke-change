@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>知識 · 寶可夢交換所</title>
+    <meta name="description" content="Pokémon GO 交換的規則與眉角。一則一頁，每一條都附得上出處。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="知識 · 寶可夢交換所" />
+    <meta property="og:description" content="Pokémon GO 交換的規則與眉角。一則一頁，每一條都附得上出處。" />
+    <meta property="og:site_name" content="寶可夢交換所" />
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <script>
+      try {
+        var p = JSON.parse(localStorage.getItem("poke-change/pref") || "{}");
+        if (p.dark) document.body.classList.add("dark");
+      } catch (e) {}
+    </script>
+
+    <header class="kb-top">
+      <nav class="kb-crumb">
+        <a href="../">寶可夢交換所</a>
+        <span>知識</span>
+      </nav>
+    </header>
+
+    <main class="kb-page">
+      <h1>知識</h1>
+      <p class="kb-lead">Pokémon GO 交換的規則與眉角。一則一頁，每一條都附得上出處。</p>
+
+      <ul class="kb-list">
+        <li class="kb-item">
+          <a href="lucky-trinket/">
+            <span class="kb-cat" data-cat="trade">交換</span>
+            <span class="kb-t">亮晶晶首飾</span>
+            <span class="kb-s">一次性道具，把一名朋友直接變成亮晶晶好朋友。只能用在給力好朋友以上，而且不會改變交換距離</span>
+            <span class="kb-d">更新 2026-09-18</span>
+          </a>
+        </li>
+      </ul>
+    </main>
+  </body>
+</html>

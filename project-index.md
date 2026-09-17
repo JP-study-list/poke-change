@@ -103,8 +103,8 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `js/bgevents.js` | `HAND_EVENTS` | 手工維護的 21 張，有三語名、註記、寶可夢清單與本地備援圖。會逐欄覆蓋骨架。其中 30 週年那四張只蓋名稱與日期，清單等活動辦完 |
 | `js/bgseries.js` | `SERIES` `seriesInfo` `seriesOrder` | 23 個收納夾的三語名與顯示順序 |
 | `js/types.js` | `TYPES` `typeInfo` | 18 種屬性的代表色與三語名 |
-| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 148 個 key，必須完全一致。**遊戲內的搜尋關鍵字不在這裡**，那是遊戲的字，在 `gostring.js` |
-| `js/kbdata.js` | `KB_CATS` `KB_ENTRIES` `KB_COUNT` | 知識條目的 metadata（slug、標題、摘要、分類、更新日、來源）。**手動維護**，跟上面那幾個自動產生的不一樣。內文不在這裡，在 `kb/_src/<slug>.html`；格子牆只讀這個檔，畫一面牆不必載入任何內文。**目前是空陣列**，所以第四顆檢視鈕與頁尾那條連結都不畫、`kb/` 底下也沒有產出 |
+| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 149 個 key，必須完全一致。**遊戲內的搜尋關鍵字不在這裡**，那是遊戲的字，在 `gostring.js` |
+| `js/kbdata.js` | `KB_CATS` `KB_ENTRIES` `KB_COUNT` | 知識條目的 metadata（slug、標題、摘要、分類、更新日、來源）。**手動維護**，跟上面那幾個自動產生的不一樣。內文不在這裡，在 `kb/_src/<slug>.html`；格子牆只讀這個檔，畫一面牆不必載入任何內文。目前 1 則（亮晶晶首飾）。空陣列時第四顆檢視鈕與頁尾那條連結都不畫、`kb/` 底下也不產出任何檔案 |
 | `js/version.js` | `VERSION` `VERSION_DATE` | 版本號。**畫面唯一認的值**，`VERSION.md` 是給人看的紀錄，兩邊必須一致，`check.mjs` 會驗 |
 
 ### 存取層

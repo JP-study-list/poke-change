@@ -194,9 +194,13 @@ export function renderIndex(entries, t, catName) {
     )
     .join("\n");
 
+  /*
+   * 引言用 `kbLead` 不是 `kbFooter`。後者是給 SPA 頁尾那條連結用的，
+   * 自帶「知識：」前綴——擺在 h1「知識」底下會變成同一句講兩次。
+   */
   const inner = `    <main class="kb-page">
       <h1>${esc(t("viewKb"))}</h1>
-      <p class="kb-lead">${esc(t("kbFooter"))}</p>
+      <p class="kb-lead">${esc(t("kbLead"))}</p>
 
       <ul class="kb-list">
 ${items || `        <li class="dim">${esc(t("kbEmpty"))}</li>`}
@@ -206,7 +210,7 @@ ${items || `        <li class="dim">${esc(t("kbEmpty"))}</li>`}
   return shell({
     up: "../",
     title: `${t("viewKb")} · ${SITE_NAME}`,
-    desc: t("kbFooter"),
+    desc: t("kbLead"),
     cls: "website",
     crumb: { mid: false, here: "", path: "kb/" },
     body: inner,
