@@ -1922,7 +1922,8 @@ body.no-names .cell .no {
  * 欄標題右邊那顆鉛筆。只有觸控裝置要——桌機把滑鼠移過去就有叉了，
  * 再放一顆切換鈕是同一件事的第二條路。
  */
-.edit-btn {
+.edit-btn,
+.copy-btn {
   display: none;
   place-items: center;
   width: 28px;
@@ -1935,7 +1936,16 @@ body.no-names .cell .no {
   cursor: pointer;
 }
 
-.edit-btn svg {
+/*
+ * 複製鈕桌機手機都顯示。鉛筆是為了補觸控裝置格子上沒有刪除鈕才存在的，
+ * 這顆兩邊都用得到，所以在上面那組共用外觀之後把 display 打開。
+ */
+.copy-btn {
+  display: grid;
+}
+
+.edit-btn svg,
+.copy-btn svg {
   width: 15px;
   height: 15px;
   fill: none;

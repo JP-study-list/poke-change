@@ -104,6 +104,7 @@ const extra = await import("../js/extra.js");
 const maxdata = await import("../js/maxdata.js");
 const shadowdata = await import("../js/shadowdata.js");
 const { BG_FLAGS } = await import("../js/bgflags.js");
+const gostring = await import("../js/gostring.js");
 
 /** 背卡檢視的狀態，畫面測試用。收合狀態不影響資料正確性，給預設值就好 */
 const BG_STATE = { query: "", scope: "all", open: new Set() };
@@ -827,6 +828,43 @@ console.log("\n4. 儲存往返");
   ok("空代碼是空字串", store.formatCode(null) === "");
 }
 
+console.log("\n4b. 搜尋字串");
+{
+  const { searchString, dexNumbers, SEARCH_MAX } = gostring;
+
+  ok("空清單回空字串", searchString([]) === "" && searchString(undefined) === "");
+
+  ok("編號升序、逗號連接",
+     searchString([store.newItem("d150"), store.newItem("d1"), store.newItem("d25")])
+       === "1,25,150");
+
+  /*
+   * 同一隻的不同裝扮、型態與條件在字串裡是同一個編號。
+   * 這是刻意的：搜尋指定不了裝扮，對方要做的就是翻自己所有的皮卡丘。
+   */
+  const pikas = [
+    store.newItem("d25"),
+    store.newItem("d25.cHALLOWEEN_2017"),
+    { ...store.newItem("d25"), shiny: true },
+  ];
+  ok("同編號只出現一次", searchString(pikas) === "25");
+
+  ok("型態塌回本體編號",
+     searchString([store.newItem("d487.fORIGIN"), store.newItem("d487.fALTERED")]) === "487");
+
+  /*
+   * 圖鑑更新拿掉某個 id 之後，格子牆畫不出那一格，字串裡也不該冒出編號。
+   * 拿一個一定查不到的 id 驗。
+   */
+  ok("查不到的條目跳過",
+     searchString([store.newItem("d25"), { id: "d99999", shiny: false }]) === "25");
+
+  ok("編號一律跟圖鑑要，不從 id 拆",
+     dexNumbers([store.newItem("d25.cHALLOWEEN_2017")])[0] === dex.find("d25").dex);
+
+  ok("SEARCH_MAX 是數字", typeof SEARCH_MAX === "number" && SEARCH_MAX > 0);
+}
+
 console.log("\n5. 繪製函式");
 {
   const t = makeT("zh");
@@ -978,6 +1016,26 @@ console.log("\n5. 繪製函式");
     const g = (html.match(/class="maxb gmax"/g) || []).length;
     if (g !== 1) throw new Error(`G 徽章有 ${g} 顆`);
     if (!html.includes(e.gmaxIcon)) throw new Error("格子沒有換成超極巨化的圖");
+  });
+  /*
+   * 複製鈕。空的那一欄不畫——跟鉛筆同一個道理，按了只會得到空字串。
+   * 兩顆鈕都在 col-head 裡，所以數 data-copy 就知道畫了幾欄。
+   */
+  run("renderTrade 複製鈕只長在有東西的那一欄", () => {
+    const oneSide = store.normalize({
+      v: 2,
+      active: 0,
+      lists: [
+        { name: "", want: [{ id: "d25" }], have: [] },
+        store.emptyList(),
+        store.emptyList(),
+      ],
+    });
+    ui.renderTrade(oneSide, "zh", t);
+    const html = els.app.innerHTML;
+    const n = (html.match(/data-copy=/g) || []).length;
+    if (n !== 1) throw new Error(`複製鈕有 ${n} 顆，只有「想要」那欄該有`);
+    if (!html.includes('data-copy="want"')) throw new Error("長錯欄了");
   });
   run("renderTrade 帶友情碼", () => ui.renderTrade(book, "zh", t, "499230220284"));
   run("renderTrade 空清單", () => ui.renderTrade(store.emptyBook(), "zh", t));

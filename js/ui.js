@@ -853,12 +853,28 @@ function tradeColumn(col, items, lang, t, editing) {
        </button>`
     : "";
 
+  /*
+   * 複製搜尋字串。跟鉛筆並排，但**桌機手機都顯示**——鉛筆是為了
+   * 補觸控裝置沒有刪除鈕才存在的，這顆兩邊都用得到。
+   * 同樣空欄不畫：沒有東西可複製時給一顆鈕，按了只會得到空字串。
+   */
+  const copy = rows.length
+    ? `<button type="button" class="copy-btn" data-copy="${col}"
+               title="${esc(t("copyStr"))}" aria-label="${esc(t("copyStr"))}">
+         <svg viewBox="0 0 24 24" aria-hidden="true">
+           <rect x="9" y="9" width="11" height="11" rx="2" />
+           <path d="M5 15V6a2 2 0 0 1 2-2h8" />
+         </svg>
+       </button>`
+    : "";
+
   return `<section class="col ${col}">
     <div class="col-head">
       <i class="dot"></i>
       <span class="t">${esc(title)}</span>
       <span class="n">${esc(t("itemCount", rows.length))}</span>
       ${pencil}
+      ${copy}
     </div>
     <div class="panel">${body}</div>
   </section>`;

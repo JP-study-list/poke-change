@@ -14,6 +14,7 @@ import { CARDS as BG_CARDS, cardAllows } from "./backgrounds.js";
 import * as store from "./store.js";
 import * as ui from "./ui.js";
 import { buildShareImage } from "./share.js";
+import { searchString, SEARCH_MAX } from "./gostring.js";
 
 /** 背卡總張數。資訊列要顯示，算一次就好 */
 const CARD_TOTAL = BG_CARDS.length;
@@ -539,6 +540,72 @@ function listLabel(i) {
   return state.book.lists[i].name || t("listTab", i + 1);
 }
 
+/* ─────────── 搜尋字串 ─────────── */
+
+/**
+ * 把一欄變成 GO 的搜尋字串，寫進剪貼簿。
+ *
+ * 用的人是**收到字串的那一方**：他貼進自己的寶可夢搜尋框，
+ * 就知道手上有沒有我們想要的。搜尋只搜得到自己的箱子，
+ * 所以這顆鈕的產物是要傳出去的，不是自己看的。
+ *
+ * 複製走 Clipboard API。它要求安全內容（HTTPS 或 localhost）與使用者手勢，
+ * 兩個條件在這裡都成立——線上是 GitHub Pages，本機是 localhost，
+ * 而這段本來就跑在 click 裡。舊 iOS Safari 沒有這個 API，
+ * 退回藏起來的 textarea 加 execCommand。
+ */
+async function copyColumn(col) {
+  const str = searchString(cur()[col]);
+  if (!str) return;
+
+  const ok = await writeClipboard(str);
+  if (!ok) {
+    ui.toast(t("copyFailed"));
+    return;
+  }
+
+  /*
+   * 太長只提醒不切。搜尋框確實有上限（社群的清箱工具會自動分段），
+   * 但 Niantic 沒公開數字，SEARCH_MAX 是還沒實測的保守值。
+   * 拿一個猜的數字去切字串，切錯了是靜默少一半；讓使用者自己看一眼，
+   * 錯了至少看得見。
+   */
+  const n = str.split(",").length;
+  ui.toast(
+    str.length > SEARCH_MAX
+      ? `${t("copiedStr", n)} · ${t("copyLong")}`
+      : t("copiedStr", n)
+  );
+}
+
+/** 寫剪貼簿。成功回 true，兩條路都失敗回 false */
+async function writeClipboard(str) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(str);
+      return true;
+    }
+  } catch {
+    /* 沒有權限或使用者拒絕，往下退回舊做法 */
+  }
+
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = str;
+    // 不能用 display:none，那樣選不到字；移出畫面外才選得到又看不見
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 /* ─────────── 分享圖 ─────────── */
 
 async function doShare(btn) {
@@ -743,6 +810,13 @@ document.addEventListener("click", (ev) => {
   }
 
   // 交換表格子上的刪除鈕。要擋掉冒泡，否則會順便打開詳情面板
+  // 欄標題那顆複製鈕。把那一欄變成 GO 的搜尋字串傳給對方
+  const copyBtn = el("[data-copy]");
+  if (copyBtn) {
+    copyColumn(copyBtn.dataset.copy);
+    return;
+  }
+
   // 欄標題那顆鉛筆。只切換自己那一欄，另一欄不受影響
   const pencil = el("[data-edit]");
   if (pencil) {

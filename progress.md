@@ -4,6 +4,44 @@
 
 ---
 
+## 2026-09-17（四）
+- 類型：新增
+- 影響檔案：js/gostring.js（新）, js/ui.js, js/main.js, js/i18n.js, css/style.css,
+  js/version.js, VERSION.md, tools/check.mjs, project-index.md, CLAUDE.md
+- 摘要：交換表每一欄多一顆複製鈕，把那一欄變成 GO 的搜尋字串。版本升 1.10.00。
+- 原因：使用者拍板。字串是給**對方**用的——搜尋只搜得到自己的箱子，
+  所以把「想要」那欄傳過去，對方貼進遊戲就知道手上有沒有。
+  這是交換流程裡唯一我們完全沒幫上忙的一段：對方拿到圖之後只能對著
+  兩百格自己翻箱子。
+
+- 三個決定（使用者選的）：
+  - **只做交換表的入口**，背卡詳情那顆先不做。
+  - **只給編號**，不帶條件。理由是語法逼的，見 CLAUDE.md 新增的那條：
+    GO 沒有括號、`,` 綁得比 `&` 緊，逐隻條件寫不出單一字串。
+  - **跟介面語言走**。實際上純數字三語通用，所以字串本身不必翻譯，
+    只有鈕的文字與 toast 會變——**省掉了語言選擇器**。
+
+- 做法：
+  - 新檔 `js/gostring.js`，純函式好測，之後背卡入口與帶條件都在這裡長。
+    依賴 `dex.js` 拿編號，**不從 id 字串拆**。
+  - 鈕在 `tradeColumn` 跟鉛筆並排，**空欄不畫**；複製與 toast 在
+    `main.js` 的 `copyColumn`，走 Clipboard API，舊 Safari 退回 textarea。
+  - `SEARCH_MAX` 先填 200 但**不切字串，只多一句提醒**——那個數字還沒實測。
+
+- 驗證：
+  - check 新增 4b 一整節（7 條）與一條繪製檢查，全部通過。
+  - **CDP 實測過兩種裝置**。桌機：鈕 28×28、`display: grid`、鉛筆 `none`。
+    觸控（`--blink-settings=primaryHoverType=1,availableHoverTypes=1`，
+    因為 CDP 模擬 hover 不動）：兩顆同一列、間隔 8px、沒有溢出。
+  - **真的按下去讀了剪貼簿**：5 格（含皮卡丘本體與萬聖節裝扮兩格）
+    產出 `1,25,150,487`，皮卡丘如預期塌成一個；toast「已複製 4 隻的搜尋字串」。
+    headless 讀剪貼簿要先開 `Emulation.setFocusEmulationEnabled`。
+- 待辦/已知問題：
+  - `SEARCH_MAX` 的真值要在遊戲裡實測，超過會不會靜默截斷也要看。
+  - 背卡詳情那顆鈕（`背卡&編號串`，語法剛好合法）還沒做。
+
+---
+
 ## 2026-09-17（三）
 - 類型：文件
 - 影響檔案：docs/go-search-syntax.md（新）, project-index.md, CLAUDE.md, progress.md
