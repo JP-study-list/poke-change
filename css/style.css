@@ -2240,6 +2240,62 @@ body.no-names .cell .no {
   cursor: default;
 }
 
+/*
+ * 複製搜尋字串的確認面板。
+ *
+ * 版面沿用選寶可夢那一套（`.pick-head` 的留白、底部同一條動作列），
+ * 所以標題也要讓開右上角那顆紅色 X。
+ */
+.copy-head {
+  padding-right: 34px;
+}
+
+/*
+ * 「有幾隻的條件放不進去」「字串較長」。
+ *
+ * 金色只能大面積填色，當文字一定要用 `--gold-ink`——`#b8860b` 對白底
+ * 只有 3.25:1，低於 AA。這裡是要人讀的一句話，不是裝飾。
+ */
+.copy-warn {
+  margin: 12px 0 0;
+  font-size: var(--fs-13);
+  line-height: 1.5;
+  color: var(--gold-ink);
+}
+
+/*
+ * 字串本身。
+ *
+ * 等寬字是因為這串東西是要逐字核對的（`異色,4,19&7,4,19`），
+ * 比例字型下逗號與 1 擠在一起看不出斷在哪。
+ *
+ * 斷行用 `word-break: break-all` 不是 `overflow-wrap: anywhere`：
+ * 字串裡**一個空白都沒有**，兩者都擋得掉橫向捲動，但 anywhere 只在
+ * 「這一行無論如何放不下」時才啟用任意斷點，所以開頭的「異色」會斷在
+ * CJK 的正常機會上，第一行只剩孤零零一個「異」字，下一行才滿。
+ * break-all 每個字元後都可以斷，排出來才是齊頭的一塊。
+ *
+ * 可以選取是刻意的：底下那顆鈕失敗時（舊瀏覽器、權限被拒）
+ * 這裡就是唯一的出路，手機長按也複製得了。
+ */
+.copy-str {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 15px;
+  line-height: 1.7;
+  word-break: break-all;
+  user-select: text;
+}
+
+/* 底部只有一顆鈕時吃滿整條，不然 space-between 會把它丟在左邊 */
+.pick-add.wide {
+  flex: 1 1 auto;
+}
+
 .pick-q {
   width: 100%;
   margin: 12px 0;

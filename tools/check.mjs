@@ -1396,6 +1396,34 @@ console.log("\n5. 繪製函式");
       throw new Error("開著的時候要標成 pressed");
   });
 
+  /*
+   * 複製搜尋字串的確認面板。按下複製鈕先開這個窗，窗裡那顆鈕才寫剪貼簿，
+   * 所以三件事一定要在畫面上：字串本身、`data-docopy` 那顆鈕，
+   * 以及該講的提醒——提醒是從 toast 搬過來的，就是為了複製前看得到。
+   */
+  run("renderCopy", () => {
+    ui.renderCopy({ col: "want", str: "4,19,25", count: 3 }, t);
+    if (!els.panel.innerHTML.includes("4,19,25"))
+      throw new Error("字串沒有攤在面板上");
+    if (!els.pickFoot.innerHTML.includes("data-docopy"))
+      throw new Error("底部沒有複製鈕");
+  });
+
+  run("renderCopy 的提醒在複製前就看得到", () => {
+    ui.renderCopy({ col: "have", str: "4,19", count: 2 }, t);
+    if (els.panel.innerHTML.includes("copy-warn"))
+      throw new Error("沒有要提醒的事時不該畫提醒列");
+
+    ui.renderCopy(
+      { col: "want", str: "4,19", count: 2, dropped: 3, long: true },
+      t
+    );
+    const html = els.panel.innerHTML;
+    if (!html.includes(t("copyDropped", 3)))
+      throw new Error("放掉條件的那幾隻沒有講出來");
+    if (!html.includes(t("copyLong"))) throw new Error("字串過長沒有提醒");
+  });
+
   run("renderDetail 從加號進來有返回鈕", () => {
     ui.renderDetail("d150", data, "zh", t, null, null, true);
     if (!els.panel.innerHTML.includes("data-pickback"))

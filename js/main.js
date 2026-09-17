@@ -61,6 +61,12 @@ const state = {
    */
   pick: null,
   /*
+   * 複製搜尋字串的確認面板。按下交換表那顆複製鈕時算好一包放這裡
+   * （`{ col, str, count, dropped, long }`），**還沒有寫進剪貼簿**，
+   * 要窗裡那顆鈕按下去才寫。跟 pick 一樣關掉就丟。
+   */
+  copy: null,
+  /*
    * 那個面板的篩選與多選模式。**刻意放在 pick 外面**：
    * pick 關一次就沒了，而這兩個要記到下一次按加號，
    * 不然每加一批都要重篩一次。跟篩選一樣不寫進偏好，重整回到預設。
@@ -273,6 +279,7 @@ function drawDetail() {
       shiny: state.pickShiny,
     });
   else if (state.pick) ui.renderPicker(pickView(), state.lang, t);
+  else if (state.copy) ui.renderCopy(state.copy, t);
 }
 
 /*
@@ -284,7 +291,7 @@ function drawDetail() {
  */
 function closePanels() {
   state.openId = state.openCard = null;
-  state.draft = state.flash = state.pick = null;
+  state.draft = state.flash = state.pick = state.copy = null;
   ui.closeSheet();
   drawDetail();
 }
@@ -563,7 +570,7 @@ function listLabel(i) {
  * 而這段本來就跑在 click 裡。舊 iOS Safari 沒有這個 API，
  * 退回藏起來的 textarea 加 execCommand。
  */
-async function copyColumn(col) {
+function openCopy(col) {
   /*
    * 關鍵字要用**對方遊戲**的語言。預設跟介面走，因為台灣人跟台灣人
    * 換是常態；要傳給日本人的那次去設定改一下，值會記著。
@@ -572,23 +579,39 @@ async function copyColumn(col) {
   const res = searchString(cur()[col], lang);
   if (!res.str) return;
 
-  const ok = await writeClipboard(res.str);
+  /*
+   * **這裡不寫剪貼簿**（2026-09-17，使用者要求）。先把字串攤在面板上，
+   * 按了窗裡那顆鈕才是真的複製。
+   *
+   * 兩個提醒也跟著搬過去，理由是它們在 toast 裡出現得太晚：
+   *   dropped  有幾隻的條件為了塞進一行被放掉了（搜出來會多幾隻，但不會漏）
+   *   long     連純編號都超過 SEARCH_MAX，只能請他自己看一眼結尾
+   * 複製前就看得到的話，還來得及決定要不要複製，或回去減幾隻再來。
+   *
+   * long 那條一樣不切字串：那個上限是還沒實測的保守值，拿猜的數字去切，
+   * 切錯了是靜默少一半；讓使用者看得見，錯了至少發現得了。
+   */
+  state.copy = { col, ...res };
+  state.openId = state.openCard = null;
+  state.draft = state.flash = state.pick = null;
+  drawDetail();
+  ui.openSheet();
+}
+
+/** 窗裡那顆鈕。走到這裡才真的寫剪貼簿，寫完就收掉 */
+async function doCopy() {
+  if (!state.copy) return;
+  const { str, count } = state.copy;
+
+  const ok = await writeClipboard(str);
   if (!ok) {
+    // 失敗不關窗：字串還在畫面上，使用者可以自己選取複製
     ui.toast(t("copyFailed"));
     return;
   }
 
-  /*
-   * toast 要把兩件事講出來，不然使用者不會知道自己拿到的是什麼：
-   *   dropped  有幾隻的條件為了塞進一行被放掉了（搜出來會多幾隻，但不會漏）
-   *   long     連純編號都超過 SEARCH_MAX，只能請他自己看一眼結尾
-   * 後者不切字串：那個上限是還沒實測的保守值，拿猜的數字去切，
-   * 切錯了是靜默少一半；讓使用者看得見，錯了至少發現得了。
-   */
-  const parts = [t("copiedStr", res.count)];
-  if (res.dropped) parts.push(t("copyDropped", res.dropped));
-  if (res.long) parts.push(t("copyLong"));
-  ui.toast(parts.join(" · "));
+  closePanels();
+  ui.toast(t("copiedStr", count));
 }
 
 /** 寫剪貼簿。成功回 true，兩條路都失敗回 false */
@@ -838,7 +861,13 @@ document.addEventListener("click", (ev) => {
   // 欄標題那顆複製鈕。把那一欄變成 GO 的搜尋字串傳給對方
   const copyBtn = el("[data-copy]");
   if (copyBtn) {
-    copyColumn(copyBtn.dataset.copy);
+    openCopy(copyBtn.dataset.copy);
+    return;
+  }
+
+  // 複製面板底部那顆鈕。Clipboard API 要使用者手勢，這裡仍在 click 裡
+  if (el("[data-docopy]")) {
+    doCopy();
     return;
   }
 
@@ -903,7 +932,7 @@ document.addEventListener("click", (ev) => {
     // 換一張卡就清掉選取，兩張卡的清單不是同一批，留著只會加錯
     if (state.openCard !== card.dataset.card) state.bgSel = [];
     state.openCard = card.dataset.card;
-    state.openId = null;
+    state.openId = state.copy = null;
     drawDetail();
     ui.openSheet();
     return;
@@ -926,7 +955,7 @@ document.addEventListener("click", (ev) => {
   const addcell = el("[data-addcell]");
   if (addcell) {
     state.pick = { col: addcell.dataset.addcell, query: "", open: false, sel: [] };
-    state.openId = state.openCard = null;
+    state.openId = state.openCard = state.copy = null;
     state.draft = state.flash = null;
     drawDetail();
     ui.openSheet();
@@ -1087,7 +1116,7 @@ document.addEventListener("click", (ev) => {
      */
     state.draft = newDraft(state.openCard || "");
     state.openId = cell.dataset.id;
-    state.openCard = null;
+    state.openCard = state.copy = null;
     // 從交換表點進來就指出是哪一筆，圖鑑點進來沒有對應的筆數就不閃
     state.flash = cell.dataset.col
       ? { col: cell.dataset.col, idx: Number(cell.dataset.idx) }

@@ -99,7 +99,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `js/bgevents.js` | `HAND_EVENTS` | 手工維護的 21 張，有三語名、註記、寶可夢清單與本地備援圖。會逐欄覆蓋骨架。其中 30 週年那四張只蓋名稱與日期，清單等活動辦完 |
 | `js/bgseries.js` | `SERIES` `seriesInfo` `seriesOrder` | 23 個收納夾的三語名與顯示順序 |
 | `js/types.js` | `TYPES` `typeInfo` | 18 種屬性的代表色與三語名 |
-| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 134 個 key，必須完全一致。**遊戲內的搜尋關鍵字不在這裡**，那是遊戲的字，在 `gostring.js` |
+| `js/i18n.js` | `LANGS` `DEFAULT_LANG` `STRINGS` `makeT` | 介面文字，三語各 137 個 key，必須完全一致。**遊戲內的搜尋關鍵字不在這裡**，那是遊戲的字，在 `gostring.js` |
 | `js/version.js` | `VERSION` `VERSION_DATE` | 版本號。**畫面唯一認的值**，`VERSION.md` 是給人看的紀錄，兩邊必須一致，`check.mjs` 會驗 |
 
 ### 存取層
@@ -109,7 +109,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `js/backgrounds.js` | `CARDS` `FOLDERS` `findCard` `bgUrl` `bgAttrs` `bgSources` `cardName` `folderName` `allCards` `entriesOf` `cardsFor` `allBgEntryIds` `totalCardSlots` `cardAllows` | 合併骨架與手工資料，240 張背卡 / 23 個收納夾 / 1579 個收集格 |
 | `js/imgchain.js` | `imgAttrs` | 圖片備援鏈。dex 與 backgrounds 共用，獨立成檔是為了不讓那兩個檔繞成一圈 |
 | `js/dex.js` | `ENTRIES` `find` `fullName` `speciesName` `formName` `iconAttrs` `hasShiny` `canMax` `canGmax` `canPurify` `search` `FILTER_GROUPS` `GROUP_KEYS` `emptyFilter` `normalizeFilter` `applyFilter` `filterCount` `goUrl` `artUrl` | 合併 godex 與 extra，1460 個條目。負責名稱組合、搜尋、篩選、圖片備援鏈 |
-| `js/gostring.js` | `searchString` `dexNumbers` `SEARCH_MAX` `STR_LANGS` | 把一欄的項目變成 GO 遊戲內的搜尋字串。**逐隻條件靠分配律塞進一行**（`異色,4,19&7,4,19`），六個交換條件都帶得了，三語關鍵字表也在這裡（是遊戲的字，不放 i18n）。**永遠只有一行**：搜尋框是單行輸入，太長就從隻數最少的那組開始放掉條件，最壞退回純編號。回傳 `{ str, count, dropped, long }`。編號一律跟 `dex.js` 要，不從 id 拆。語法對照在 `docs/go-search-syntax.md` |
+| `js/gostring.js` | `searchString` `dexNumbers` `SEARCH_MAX` `STR_LANGS` | 把一欄的項目變成 GO 遊戲內的搜尋字串。**逐隻條件靠分配律塞進一行**（`異色,4,19&7,4,19`），六個交換條件都帶得了，三語關鍵字表也在這裡（是遊戲的字，不放 i18n）。**永遠只有一行**：搜尋框是單行輸入，太長就從隻數最少的那組開始放掉條件，最壞退回純編號。回傳 `{ str, count, dropped, long }`，整包直接餵給 `ui.renderCopy` 的確認彈窗。編號一律跟 `dex.js` 要，不從 id 拆。語法對照在 `docs/go-search-syntax.md` |
 | `js/store.js` | `emptyList` `emptyBook` `current` `newItem` `normalize` `normalizeList` `load` `save` `flush` `clearList` `toJSON` `fromJSON` `exportName` `cleanCode` `formatCode` `MAX_ITEMS` `COLUMNS` `LIST_COUNT` | localStorage 讀寫。三份清單裝在一個 key 裡，`current()` 取目前那一份。**任何讀進來的資料都不信任**，一律過 `normalize` |
 
 ### 繪製層
@@ -125,7 +125,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | --- | --- |
 | 版面共用 | `renderChrome` `renderViews` `renderInfoBar` `setPop` `railFoot` `toast` `openSheet` `closeSheet` `esc` |
 | 圖鑑 | `renderFilterBar` `renderFilterPanel` `visibleEntries` `renderGrid` `renderDetail` |
-| 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` `renderPicker` `renderPickFoot` `pickHidden` |
+| 交換表 | `renderTrade` `tradeCell` `tradeColumn` `editBlock` `renderPicker` `renderPickFoot` `pickHidden` `renderCopy` |
 | 背卡 | `renderBg` `renderCardDetail` `renderBgFoot` |
 
 ### 協調層
@@ -133,7 +133,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 `js/main.js` —— 唯一有狀態、唯一綁事件的檔案。
 
 - **state**：`book` `lang` `goLang` `view` `filter` `pop` `query` `openId` `openCard` `draft` `flash`
-  `pick` `pickFilter` `pickMulti` `pickShiny` `bgMulti` `bgSel` `edit`
+  `pick` `pickFilter` `pickMulti` `pickShiny` `bgMulti` `bgSel` `edit` `copy`
 - **`goLang` 跟 `lang` 是兩件事**：搜尋字串是給**對方**貼進他自己的遊戲的，
   關鍵字得用對方遊戲的語言。預設 `"auto"` 跟介面走，值存在 pref
 - **選寶可夢面板的篩選與多選模式放在 `pick` 外面**：`state.pick` 關一次面板就沒了，
@@ -142,6 +142,9 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
   兩顆鈕的 `aria-expanded` 與面板的顯示綁在同一個函式裡，兩邊不會講不同的話，
   也天生擋掉兩片面板同時打開。點外面關掉那一段放在 click 委派最前面，
   因為底下每一段處理完都會 return
+- **右欄一次只顯示一種**：條目詳情、背卡詳情、選寶可夢、**複製搜尋字串**。
+  第四種是 `state.copy`，按交換表那顆複製鈕時開，**開的時候還沒寫剪貼簿**，
+  窗裡那顆鈕（`data-docopy`）按下去才寫。開任一種之前要把另外三種清掉
 - **右欄三個檢視一律彈出**（2026-09-14）：沒點東西就整欄不存在，
   格子牆吃滿寬度。`rail-pop`、`rail-off`、`railHasContent()` 與背卡的
   清單摘要都已移除
@@ -213,7 +216,8 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改交換表格子的刪除鈕 | `css/style.css` 的 `.want-del`。紅圓一半露在框外，所以 `.want-tile` **不能**有 `overflow: hidden`；觸控裝置平常藏著，靠欄標題那顆鉛筆（`.edit-btn`）切換 `.grid.editing` 才出現 |
 | 改詳情面板的順序 | `js/ui.js` 的 `renderDetail`，由上到下就是操作順序 |
 | 改一欄的上限 | `js/store.js` 的 `MAX_ITEMS` |
-| 改搜尋字串的內容或格式 | `js/gostring.js`。鈕在 `js/ui.js` 的 `tradeColumn`，複製與 toast 在 `js/main.js` 的 `copyColumn`。**改演算法一定要跑 check 的 4b 對拍** |
+| 改搜尋字串的內容或格式 | `js/gostring.js`。鈕在 `js/ui.js` 的 `tradeColumn`，確認彈窗是 `js/ui.js` 的 `renderCopy`，開窗與實際複製在 `js/main.js` 的 `openCopy` / `doCopy`。**改演算法一定要跑 check 的 4b 對拍** |
+| 改複製前那個確認彈窗 | `js/ui.js` 的 `renderCopy`（標題、提醒、字串、底部那顆鈕），樣式是 `css/style.css` 的 `.copy-head` / `.copy-warn` / `.copy-str`。字串框的斷行**必須是 `word-break: break-all`**，換成 `overflow-wrap: anywhere` 會排出孤字 |
 | 加一個新的交換條件到搜尋字串 | `js/gostring.js` 的 `COND_ORDER` 與 `KEYWORDS`（三語都要，出處要是官方 FAQ），check 的逐條關鍵字測試會跟著要求 |
 | 改搜尋字串的語言選擇器 | 骨架在 `index.html` 的 `#strLangs`，繪製在 `js/ui.js` 的 `STR_LANG_BTNS`，值在 `js/main.js` 的 `state.goLang`（存 pref，預設 `"auto"`） |
 | GO 開放新的寶可夢可以極巨化 | `node tools/build-max.mjs --force`，名單會自己長出來 |

@@ -1124,6 +1124,51 @@ export function renderPickFoot(n, t, shiny, hidden = 0) {
 }
 
 /**
+ * 複製搜尋字串的確認面板。
+ *
+ * 按下交換表的複製鈕**不直接寫剪貼簿**，先把字串攤出來（2026-09-17，
+ * 使用者要求）。理由是那串字長得跟原清單完全不像
+ * （`異色,4,19&7,4,19`），複製完只有一句 toast 的話，使用者無從判斷
+ * 自己拿到的是不是對的東西，更不會發現「有幾隻的條件被放掉了」。
+ *
+ * 所以提醒也從 toast 搬到這裡：**複製前就看得到**，還來得及決定要不要複製。
+ * toast 那邊只留「已複製」。
+ *
+ * 字串本身可以選取，手機長按也複製得了——底下那顆鈕失敗時還有一條路。
+ */
+export function renderCopy(v, t) {
+  const warns = [
+    v.dropped ? t("copyDropped", v.dropped) : "",
+    v.long ? t("copyLong") : "",
+  ].filter(Boolean);
+
+  $("#panel").innerHTML = `
+    <div class="copy-head">
+      <div class="d-name">${esc(
+        t("copyPanel", v.col === "want" ? t("colWant") : t("colHave"))
+      )}</div>
+      <div class="d-meta">${esc(t("copyHint"))}</div>
+    </div>
+
+    ${warns
+      .map((w) => `<p class="copy-warn">${esc(w)}</p>`)
+      .join("")}
+
+    <div class="copy-str">${esc(v.str)}</div>`;
+
+  /*
+   * 底部只有一顆鈕，不像多選那條動作列左邊還掛著數字與異色開關。
+   * 「幾隻」留給複製後的 toast：這裡要的是「按下去會發生什麼」，
+   * 多一個數字反而讓那顆鈕不是一眼就看得到的那個東西。
+   */
+  railFoot(
+    `<button type="button" class="pick-add wide" data-docopy>${esc(
+      t("copyDo")
+    )}</button>`
+  );
+}
+
+/**
  * 右欄底部那條動作列。目前只有選寶可夢面板的多選在用。
  *
  * 它在捲動區外面，所以不會隨著內容被換掉——換句話說，切到別的面板
