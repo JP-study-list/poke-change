@@ -216,6 +216,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改交換表格子長相 | `js/ui.js` 的 `tradeCell` + `css/style.css` 的 `.want-cell` |
 | 改交換表格子的刪除鈕 | `css/style.css` 的 `.want-del`。紅圓一半露在框外，所以 `.want-tile` **不能**有 `overflow: hidden`；觸控裝置平常藏著，靠欄標題那顆鉛筆（`.edit-btn`）切換 `.grid.editing` 才出現 |
 | 改詳情面板的順序 | `js/ui.js` 的 `renderDetail`，由上到下就是操作順序 |
+| 改詳情面板底部的加入鈕 | `js/ui.js` 的 `addBtn`。**從加號進來時只畫那一欄那顆**，由 `renderDetail` 的第七個參數 `from`（欄位字串）決定，main.js 傳 `state.pick.col`。圖鑑點進來沒有欄的脈絡，兩顆都留 |
 | 改一欄的上限 | `js/store.js` 的 `MAX_ITEMS` |
 | 改搜尋字串的內容或格式 | `js/gostring.js`。鈕在 `js/ui.js` 的 `tradeColumn`，確認彈窗是 `js/ui.js` 的 `renderCopy`，開窗與實際複製在 `js/main.js` 的 `openCopy` / `doCopy`。**改演算法一定要跑 check 的 4b 對拍** |
 | 改複製前那個確認彈窗 | `js/ui.js` 的 `renderCopy`（標題、提醒、字串、底部那顆鈕），樣式是 `css/style.css` 的 `.copy-head` / `.copy-warn` / `.copy-str`。字串框的斷行**必須是 `word-break: break-all`**，換成 `overflow-wrap: anywhere` 會排出孤字 |

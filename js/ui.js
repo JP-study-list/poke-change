@@ -596,6 +596,19 @@ function editBlock(col, data, id, e, lang, t, flash) {
 }
 
 /**
+ * 底部那顆加入鈕。
+ *
+ * `from` 有值時只畫它指的那一欄——從加號進來的脈絡已經選好欄了。
+ * 樣式不必分兩套：`.d-actions button` 是 `flex: 1`，剩一顆就自己撐滿整列。
+ */
+function addBtn(col, from, t) {
+  if (from && from !== col) return "";
+  return `<button type="button" class="${col}" data-add="${col}">${esc(
+    t(col === "want" ? "addWant" : "addHave")
+  )}</button>`;
+}
+
+/**
  * 條目詳情。
  *
  * 由上到下就是操作順序：確認是哪一隻 → 選條件 → 選背卡 → 加進某一欄。
@@ -603,8 +616,15 @@ function editBlock(col, data, id, e, lang, t, flash) {
  * 上方那張圖跟著草稿的異色走：勾起來就換成異色圖，這樣不必加進清單
  * 也看得出自己要的是哪一種。異色預設不勾，大多數交換談的是一般色。
  * 已經在清單裡的那幾筆列在按鈕下方，各自編輯，互不干擾。
+ *
+ * `from` 是「從哪一欄的加號進來的」（`"want"` / `"have"`，空字串表示
+ * 不是從加號進來）。有值時面板上多一顆返回鈕，而且**底部只畫那一欄
+ * 那顆加入鈕**：加號已經指定了欄，標題也寫著「加入可以給」，
+ * 再擺兩顆同等權重的鈕只是給人按錯的機會——而且橘色那顆排在左邊，
+ * 誤按的結果是東西掉進另一欄，加完還會直接跳回交換表。
+ * 從圖鑑點進來沒有欄的脈絡，兩顆都要留。
  */
-export function renderDetail(id, data, lang, t, draft = null, flash = null, back = false) {
+export function renderDetail(id, data, lang, t, draft = null, flash = null, from = "") {
   const e = find(id);
   if (!e) return;
 
@@ -681,7 +701,7 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
 
   $("#panel").innerHTML = `
     ${
-      back
+      from
         ? `<button type="button" class="btn-back" data-pickback="1">${esc(
             t("back")
           )}</button>`
@@ -721,12 +741,7 @@ export function renderDetail(id, data, lang, t, draft = null, flash = null, back
     ${bgBlock}
 
     <div class="d-actions">
-      <button type="button" class="want" data-add="want">${esc(
-        t("addWant")
-      )}</button>
-      <button type="button" class="have" data-add="have">${esc(
-        t("addHave")
-      )}</button>
+      ${addBtn("want", from, t)}${addBtn("have", from, t)}
     </div>
 
     ${editBlock("want", data, id, e, lang, t, flash)}

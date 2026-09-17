@@ -269,7 +269,8 @@ function drawDetail() {
       t,
       state.draft,
       state.flash,
-      !!state.pick // 從加號進來的話，面板上要有返回鈕回去選別隻
+      // 從加號進來的是哪一欄。有值就多一顆返回鈕，而且底部只畫那一欄的加入鈕
+      state.pick ? state.pick.col : ""
     );
     state.flash = null; // 閃一次就好，下一次重畫不該再閃
   } else if (state.openCard)

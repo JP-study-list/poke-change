@@ -1585,9 +1585,35 @@ console.log("\n5. 繪製函式");
   });
 
   run("renderDetail 從加號進來有返回鈕", () => {
-    ui.renderDetail("d150", data, "zh", t, null, null, true);
+    ui.renderDetail("d150", data, "zh", t, null, null, "want");
     if (!els.panel.innerHTML.includes("data-pickback"))
       throw new Error("沒有返回鈕");
+  });
+
+  /*
+   * 從某一欄的加號進來時，底部只該有那一欄的加入鈕。
+   * 兩顆都畫的話，橘色的「加入想要」排在左邊第一顆，
+   * 從「可以給」進來的人一按就掉進另一欄——使用者回報過。
+   */
+  run("renderDetail 從加號進來只有那一欄的加入鈕", () => {
+    for (const [from, other] of [
+      ["have", "want"],
+      ["want", "have"],
+    ]) {
+      ui.renderDetail("d150", data, "zh", t, null, null, from);
+      const html = els.panel.innerHTML;
+      if (!html.includes(`data-add="${from}"`))
+        throw new Error(`${from} 那顆加入鈕不見了`);
+      if (html.includes(`data-add="${other}"`))
+        throw new Error(`從 ${from} 的加號進來，卻還畫得出 ${other} 的加入鈕`);
+    }
+  });
+
+  run("renderDetail 不是從加號進來的兩顆都在", () => {
+    ui.renderDetail("d150", data, "zh", t);
+    const html = els.panel.innerHTML;
+    if (!html.includes('data-add="want"') || !html.includes('data-add="have"'))
+      throw new Error("圖鑑點進來沒有欄的脈絡，兩顆都要留");
   });
   run("renderBg", () => ui.renderBg(BG_STATE, "zh", t));
   run("renderBg 展開一個收納夾", () =>
