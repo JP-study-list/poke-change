@@ -1097,6 +1097,7 @@ tools/make-purified-mark.mjs  產生淨化符號
 tools/png.mjs         PNG 讀寫（兩支 make-*-mark 共用）
 tools/check.mjs       自我檢查
 tools/measure-icons.mjs  量 extra.js 那批圖的留白
+docs/go-search-syntax.md  GO 搜尋語法抄錄（參考用，程式沒用到）
 project-index.md      檔案索引與依賴關係
 progress.md           開發歷史（給我看的，逐次改動）
 VERSION.md            版本紀錄（給使用者看的，一版一筆）
