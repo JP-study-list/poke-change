@@ -20,11 +20,28 @@
     </script>
 
     <header class="kb-top">
-      <nav class="kb-crumb">
-        <a href="../../">寶可夢交換所</a>
-        <a href="../../kb/">知識</a>
-        <span>搜尋術語規則</span>
-      </nav>
+      <div class="kb-topin">
+        <nav class="kb-crumb">
+          <a href="../../">寶可夢交換所</a>
+          <a href="../../kb/">知識</a>
+          <span>搜尋術語規則</span>
+        </nav>
+        <button
+          class="icon-btn"
+          id="kbGear"
+          type="button"
+          aria-expanded="false"
+          aria-controls="kbSettings"
+          aria-label="設定"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M9.5 2.8 L14.5 2.8 L13.9 5.8 L16.4 7.2 L18.7 5.3 L21.2 9.5 L18.3 10.5 L18.3 13.5 L21.2 14.5 L18.7 18.7 L16.4 16.8 L13.9 18.2 L14.5 21.2 L9.5 21.2 L10.1 18.2 L7.6 16.8 L5.3 18.7 L2.8 14.5 L5.7 13.5 L5.7 10.5 L2.8 9.5 L5.3 5.3 L7.6 7.2 L10.1 5.8Z"
+            />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
+      </div>
     </header>
 
     <main class="kb-page">
@@ -156,15 +173,89 @@
 
 <p class="kb-note">這一頁<strong>不列這些的繁中寫法</strong>。它們只有英文字串有可靠來源，而 GO 的搜尋關鍵字是各語言各自一套、不是互相翻譯的。照字面推一個出來，讀的人打進去只會得到一個搜不到東西的字串，而且看不出哪裡不對。像<a href="../guaranteed-lucky/">必定變亮晶晶</a>那一則裡沒有官方依據的數字，至少講得出「社群是這樣說的」。這些連社群的繁中來源都沒有。</p>
       </article>
-
-      <section class="kb-src">
-        <h2>資料來源</h2>
-        <ol>
-        <li><a href="https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/1486-searching-filtering-your-pokemon-inventory/" rel="nofollow noopener" target="_blank">Niantic 說明中心：搜尋和篩選你收藏的寶可夢（FAQ 1486）</a> <span class="kb-tag official">官方</span></li>
-        <li><a href="https://leidwesen.github.io/SearchPhrases/" rel="nofollow noopener" target="_blank">leidwesen/SearchPhrases：社群最完整的關鍵字整理（對到版本 0.413.0）</a> <span class="kb-tag community">社群說法，非官方</span></li>
-        <li><a href="https://forum.gamer.com.tw/C.php?bsn=29659&amp;snA=32191" rel="nofollow noopener" target="_blank">巴哈姆特 Pokémon GO 哈啦板：搜尋關鍵字整理（繁中，地區只到伽勒爾）</a> <span class="kb-tag community">社群說法，非官方</span></li>
-        </ol>
-      </section>
     </main>
+
+    <div class="modal" id="kbSettings" hidden>
+      <div class="modal-inner">
+        <button class="btn-x" type="button" data-closepop="1" aria-label="關閉">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+        <div class="modal-scroll">
+          <section class="side-block">
+            <p class="side-title">外觀</p>
+            <div class="opt-cards">
+            <button type="button" class="opt-card" data-theme="0"
+                    aria-pressed="true">
+              <span class="thumb"><svg viewBox="0 0 100 55" aria-hidden="true"><rect x="0" y="0" width="100" height="55" fill="#faf9f5" /><rect x="8" y="7" width="30" height="4" rx="2" fill="#cfc9bd" /><rect x="8" y="17" width="25" height="14" rx="2.5" fill="#e8e4da" /><rect x="37" y="17" width="25" height="14" rx="2.5" fill="#e8e4da" /><rect x="66" y="17" width="25" height="14" rx="2.5" fill="#e8e4da" /><rect x="8" y="35" width="25" height="14" rx="2.5" fill="#e8e4da" /><rect x="37" y="35" width="25" height="14" rx="2.5" fill="#e8e4da" /><rect x="66" y="35" width="25" height="14" rx="2.5" fill="#e8e4da" /></svg></span>
+              <span class="opt-name">淺色</span>
+            </button>
+            <button type="button" class="opt-card" data-theme="1"
+                    aria-pressed="false">
+              <span class="thumb"><svg viewBox="0 0 100 55" aria-hidden="true"><rect x="0" y="0" width="100" height="55" fill="#101010" /><rect x="8" y="7" width="30" height="4" rx="2" fill="#3c3c40" /><rect x="8" y="17" width="25" height="14" rx="2.5" fill="#232326" /><rect x="37" y="17" width="25" height="14" rx="2.5" fill="#232326" /><rect x="66" y="17" width="25" height="14" rx="2.5" fill="#232326" /><rect x="8" y="35" width="25" height="14" rx="2.5" fill="#232326" /><rect x="37" y="35" width="25" height="14" rx="2.5" fill="#232326" /><rect x="66" y="35" width="25" height="14" rx="2.5" fill="#232326" /></svg></span>
+              <span class="opt-name">深色</span>
+            </button>
+            </div>
+          </section>
+          <section class="side-block kb-src">
+            <p class="side-title">資料來源</p>
+            <ol>
+              <li><a href="https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/1486-searching-filtering-your-pokemon-inventory/" rel="nofollow noopener" target="_blank">Niantic 說明中心：搜尋和篩選你收藏的寶可夢（FAQ 1486）</a> <span class="kb-tag official">官方</span></li>
+              <li><a href="https://leidwesen.github.io/SearchPhrases/" rel="nofollow noopener" target="_blank">leidwesen/SearchPhrases：社群最完整的關鍵字整理（對到版本 0.413.0）</a> <span class="kb-tag community">社群說法，非官方</span></li>
+              <li><a href="https://forum.gamer.com.tw/C.php?bsn=29659&amp;snA=32191" rel="nofollow noopener" target="_blank">巴哈姆特 Pokémon GO 哈啦板：搜尋關鍵字整理（繁中，地區只到伽勒爾）</a> <span class="kb-tag community">社群說法，非官方</span></li>
+            </ol>
+          </section>
+          <section class="side-block">
+            <a class="kb-home" href="../../">寶可夢交換所</a>
+            <p class="kb-ver">版本 1.20.00 · 2026-09-18</p>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var gear = document.getElementById("kbGear");
+        var box = document.getElementById("kbSettings");
+        if (!gear || !box) return;
+
+        function show(on) {
+          box.hidden = !on;
+          gear.setAttribute("aria-expanded", on ? "true" : "false");
+        }
+        function mark() {
+          var dark = document.body.classList.contains("dark");
+          var cards = box.querySelectorAll("[data-theme]");
+          for (var i = 0; i < cards.length; i++)
+            cards[i].setAttribute(
+              "aria-pressed",
+              (cards[i].getAttribute("data-theme") === "1") === dark ? "true" : "false"
+            );
+        }
+
+        mark();
+        gear.addEventListener("click", function () { show(box.hidden); });
+
+        box.addEventListener("click", function (ev) {
+          /* 遮罩在 DOM 上就是 #kbSettings 自己，所以點它本身也算點外面 */
+          if (ev.target === box || ev.target.closest("[data-closepop]")) { show(false); return; }
+          var card = ev.target.closest("[data-theme]");
+          if (!card) return;
+          var dark = card.getAttribute("data-theme") === "1";
+          document.body.classList.toggle("dark", dark);
+          mark();
+          try {
+            var pref = JSON.parse(localStorage.getItem("poke-change/pref") || "{}");
+            pref.dark = dark;
+            localStorage.setItem("poke-change/pref", JSON.stringify(pref));
+          } catch (e) {}
+        });
+
+        document.addEventListener("keydown", function (ev) {
+          if (ev.key === "Escape" && !box.hidden) show(false);
+        });
+      })();
+    </script>
   </body>
 </html>

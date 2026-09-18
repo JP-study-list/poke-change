@@ -48,6 +48,7 @@
  */
 
 import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
+import { VERSION, VERSION_DATE } from "../js/version.js";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -83,13 +84,110 @@ const DARK_BOOT = `<script>
 /** 站名與副標。跟 `js/i18n.js` 的繁中那份一致，靜態頁只做繁中 */
 const SITE_NAME = "寶可夢交換所";
 
+/** 齒輪。SVG 逐點抄 `index.html` 那顆，兩邊要長得一樣 */
+const GEAR_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M9.5 2.8 L14.5 2.8 L13.9 5.8 L16.4 7.2 L18.7 5.3 L21.2 9.5 L18.3 10.5 L18.3 13.5 L21.2 14.5 L18.7 18.7 L16.4 16.8 L13.9 18.2 L14.5 21.2 L9.5 21.2 L10.1 18.2 L7.6 16.8 L5.3 18.7 L2.8 14.5 L5.7 13.5 L5.7 10.5 L2.8 9.5 L5.3 5.3 L7.6 7.2 L10.1 5.8Z"
+            />
+            <circle cx="12" cy="12" r="3" />
+          </svg>`;
+
+/**
+ * 外觀那兩張縮圖。**配色寫死**，跟 `js/ui.js` 的 `themeThumb` 同一組值：
+ * 它們預覽的正是兩套配色本身，吃 CSS 變數的話兩張會長得一模一樣。
+ */
+const themeThumb = (bg, line, cell) =>
+  `<rect x="0" y="0" width="100" height="55" fill="${bg}" />` +
+  `<rect x="8" y="7" width="30" height="4" rx="2" fill="${line}" />` +
+  [0, 1]
+    .map((r) =>
+      [0, 1, 2]
+        .map(
+          (c) =>
+            `<rect x="${8 + c * 29}" y="${17 + r * 18}" width="25" height="14" rx="2.5" fill="${cell}" />`
+        )
+        .join("")
+    )
+    .join("");
+
+/*
+ * 外觀切換。**是選值不是 toggle**（跟主站那三組同一個道理）：兩張卡各代表
+ * 一個值，點已經選中的那張不該把它關掉，否則會變成兩張都沒選。
+ *
+ * `aria-pressed` 這裡先寫死淺色，載入後那段 script 會照真正的 body.dark
+ * 修正——HTML 是靜態的，寫哪一個都會有一半的人看到錯的。
+ */
+const themeCards = (t) =>
+  [
+    [0, t("dispLight"), themeThumb("#faf9f5", "#cfc9bd", "#e8e4da")],
+    [1, t("dispDark"), themeThumb("#101010", "#3c3c40", "#232326")],
+  ]
+    .map(
+      ([val, name, thumb]) => `            <button type="button" class="opt-card" data-theme="${val}"
+                    aria-pressed="${val === 0}">
+              <span class="thumb"><svg viewBox="0 0 100 55" aria-hidden="true">${thumb}</svg></span>
+              <span class="opt-name">${esc(name)}</span>
+            </button>`
+    )
+    .join("\n");
+
+/**
+ * 設定的行為。**放 body 末端**，不是開頭那段 boot：它要摸到彈窗的 DOM。
+ *
+ * 深淺色寫回 `poke-change/pref` 的同一個 key，所以在知識頁切換，
+ * 回 SPA 也是同一套；反過來也一樣。
+ */
+const SETTINGS_JS = `<script>
+      (function () {
+        var gear = document.getElementById("kbGear");
+        var box = document.getElementById("kbSettings");
+        if (!gear || !box) return;
+
+        function show(on) {
+          box.hidden = !on;
+          gear.setAttribute("aria-expanded", on ? "true" : "false");
+        }
+        function mark() {
+          var dark = document.body.classList.contains("dark");
+          var cards = box.querySelectorAll("[data-theme]");
+          for (var i = 0; i < cards.length; i++)
+            cards[i].setAttribute(
+              "aria-pressed",
+              (cards[i].getAttribute("data-theme") === "1") === dark ? "true" : "false"
+            );
+        }
+
+        mark();
+        gear.addEventListener("click", function () { show(box.hidden); });
+
+        box.addEventListener("click", function (ev) {
+          /* 遮罩在 DOM 上就是 #kbSettings 自己，所以點它本身也算點外面 */
+          if (ev.target === box || ev.target.closest("[data-closepop]")) { show(false); return; }
+          var card = ev.target.closest("[data-theme]");
+          if (!card) return;
+          var dark = card.getAttribute("data-theme") === "1";
+          document.body.classList.toggle("dark", dark);
+          mark();
+          try {
+            var pref = JSON.parse(localStorage.getItem("poke-change/pref") || "{}");
+            pref.dark = dark;
+            localStorage.setItem("poke-change/pref", JSON.stringify(pref));
+          } catch (e) {}
+        });
+
+        document.addEventListener("keydown", function (ev) {
+          if (ev.key === "Escape" && !box.hidden) show(false);
+        });
+      })();
+    </script>`;
+
 /**
  * 共用的殼。
  *
  * `up` 是回到站台根目錄要幾層（一則是 `../../`、索引頁是 `../`），
  * 每一條連結與 CSS 都吃它，所以目錄結構改了只要改呼叫端。
  */
-function shell({ up, title, desc, cls, crumb, body, t }) {
+function shell({ up, title, desc, cls, crumb, body, t, extra = "" }) {
   const canonical =
     SITE && crumb.path
       ? `\n    <link rel="canonical" href="${esc(SITE + crumb.path)}" />
@@ -113,18 +211,54 @@ function shell({ up, title, desc, cls, crumb, body, t }) {
     ${DARK_BOOT}
 
     <header class="kb-top">
-      <nav class="kb-crumb">
+      <div class="kb-topin">
+        <nav class="kb-crumb">
 ${[
   `<a href="${up}">${esc(SITE_NAME)}</a>`,
   crumb.mid ? `<a href="${up}kb/">${esc(t("viewKb"))}</a>` : `<span>${esc(t("viewKb"))}</span>`,
   ...(crumb.here ? [`<span>${esc(crumb.here)}</span>`] : []),
 ]
-  .map((x) => `        ${x}`)
+  .map((x) => `          ${x}`)
   .join("\n")}
-      </nav>
+        </nav>
+        <button
+          class="icon-btn"
+          id="kbGear"
+          type="button"
+          aria-expanded="false"
+          aria-controls="kbSettings"
+          aria-label="${esc(t("settings"))}"
+        >
+          ${GEAR_SVG}
+        </button>
+      </div>
     </header>
 
 ${body}
+
+    <div class="modal" id="kbSettings" hidden>
+      <div class="modal-inner">
+        <button class="btn-x" type="button" data-closepop="1" aria-label="${esc(t("close"))}">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+        <div class="modal-scroll">
+          <section class="side-block">
+            <p class="side-title">${esc(t("dispTheme"))}</p>
+            <div class="opt-cards">
+${themeCards(t)}
+            </div>
+          </section>
+${extra}          <section class="side-block">
+            <a class="kb-home" href="${up}">${esc(SITE_NAME)}</a>
+            <p class="kb-ver">${esc(t("version"))} ${esc(VERSION)} · ${esc(VERSION_DATE)}</p>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    ${SETTINGS_JS}
   </body>
 </html>
 `;
@@ -139,7 +273,7 @@ const sourceItem = (s, t) => {
   const tag = s.official
     ? `<span class="kb-tag official">${esc(t("kbOfficialTag"))}</span>`
     : `<span class="kb-tag community">${esc(t("kbCommunityTag"))}</span>`;
-  return `        <li>${link} ${tag}</li>`;
+  return `              <li>${link} ${tag}</li>`;
 };
 
 /**
@@ -159,14 +293,20 @@ export function renderPage(e, body, t, catName) {
       <article class="kb-body">
 ${body.trimEnd()}
       </article>
-
-      <section class="kb-src">
-        <h2>${esc(t("kbSourceTitle"))}</h2>
-        <ol>
-${e.sources.map((s) => sourceItem(s, t)).join("\n")}
-        </ol>
-      </section>
     </main>`;
+
+  /*
+   * **出處住在設定面板裡**（2026-09-18，使用者要求），不在頁面底部。
+   * 內容仍然逐條寫在 HTML 裡、官方與社群分得出來，爬蟲也讀得到，
+   * 只是不再佔掉每一則的結尾。
+   */
+  const src = `          <section class="side-block kb-src">
+            <p class="side-title">${esc(t("kbSourceTitle"))}</p>
+            <ol>
+${e.sources.map((s) => sourceItem(s, t)).join("\n")}
+            </ol>
+          </section>
+`;
 
   return shell({
     up: "../../",
@@ -175,6 +315,7 @@ ${e.sources.map((s) => sourceItem(s, t)).join("\n")}
     cls: "article",
     crumb: { mid: true, here: e.title, path: `kb/${e.slug}/` },
     body: inner,
+    extra: src,
     t,
   });
 }

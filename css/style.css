@@ -2956,14 +2956,28 @@ body.no-names .cell .no {
   background: var(--card);
 }
 
+/*
+ * 頂部列是兩欄：麵包屑吃剩下的寬度，齒輪靠右。
+ * 內距改由這一層管，`.kb-crumb` 只負責排自己那幾段文字——
+ * 齒輪要是排進 `.kb-crumb`，那條 `> * + *::before` 會給它加一個 `›`。
+ */
+.kb-topin {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 5px 20px;
+}
+
 .kb-crumb {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 12px 20px;
+  flex: 1;
+  min-width: 0;
+  padding: 7px 0;
   font-size: var(--fs-13);
   color: var(--dim);
 }
@@ -3182,20 +3196,13 @@ body.no-names .cell .no {
  * 出處。**逐條列，而且官方與社群分得出來**——查不到官方出處的不是
  * 不能寫，是要講明白。圖鑑只能不列，頁面寫得出這句話，差別在這裡。
  */
-.kb-src {
-  margin-top: 44px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-}
-
-.kb-src h2 {
-  font: var(--caps);
-  color: var(--dim);
-  text-transform: uppercase;
-}
-
+/*
+ * 出處。**逐條列，而且官方與社群分得出來**——這一段 2026-09-18 從頁面
+ * 結尾搬進了設定彈窗，所以它不再需要自己的上邊界與分隔線，
+ * `.side-block` 已經把區塊之間隔開了。
+ */
 .kb-src ol {
-  margin-top: 12px;
+  margin-top: 10px;
   padding-left: 20px;
   font-size: var(--fs-13);
   line-height: 1.9;
@@ -3224,6 +3231,19 @@ body.no-names .cell .no {
 .kb-tag.community {
   border: 1px solid var(--gold);
   color: var(--gold-ink);
+}
+
+/* 設定面板底下那一區：回主站與版本號 */
+.kb-home {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--gold-ink);
+}
+
+.kb-ver {
+  margin-top: 6px;
+  font-size: var(--fs-xs);
+  color: var(--dim);
 }
 
 /* 索引頁的清單。項目符號拿掉，格子自己就是項目 */
@@ -3262,7 +3282,7 @@ body.no-names .cell .no {
     font-size: var(--fs-xl);
   }
 
-  .kb-crumb {
-    padding: 10px 16px;
+  .kb-topin {
+    padding: 4px 16px;
   }
 }

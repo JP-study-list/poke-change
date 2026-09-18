@@ -141,6 +141,7 @@ const { BG_FLAGS } = await import("../js/bgflags.js");
 const gostring = await import("../js/gostring.js");
 const kbdata = await import("../js/kbdata.js");
 const buildKb = await import("./build-kb.mjs");
+const version = await import("../js/version.js");
 
 /** 背卡檢視的狀態，畫面測試用。收合狀態不影響資料正確性，給預設值就好 */
 const BG_STATE = { query: "", scope: "all", open: new Set() };
@@ -1863,13 +1864,40 @@ console.log("\n5. 繪製函式");
         'property="og:title"',
         'property="og:type" content="article"',
         'class="kb-crumb"',
-        'class="kb-src"',
+        'id="kbGear"',
+        "kb-src",
       ]) {
         if (!html.includes(need)) throw new Error(`殼裡少了 ${need}`);
       }
       // canonical 與 og:url 等待辦 C 才啟用，現在不該出現
       if (html.includes("canonical") || html.includes("og:url"))
         throw new Error("SITE 還是空的，不該長出 canonical");
+    });
+
+    /*
+     * **出處住在設定面板裡，不在文章裡**（2026-09-18，使用者要求）。
+     * 搬錯位置是看不出來的：兩個地方都在同一頁上，眼睛掃過去都有出處，
+     * 只有真的去點齒輪才會發現它沒跟著搬。
+     */
+    run("build-kb 的殼：出處在設定面板裡", () => {
+      const html = buildKb.renderPage(fake, "<p>內文</p>", t, "交換");
+      const article = html.slice(html.indexOf("<main"), html.indexOf("</main>"));
+      if (article.includes("kb-src")) throw new Error("出處還留在文章裡");
+
+      const panel = html.slice(html.indexOf('id="kbSettings"'));
+      if (!panel.includes("kb-src")) throw new Error("設定面板裡沒有出處");
+      if (!panel.includes("https://example.com")) throw new Error("出處的連結沒搬過去");
+      for (const need of ['data-theme="0"', 'data-theme="1"', "kb-ver", "kb-home"])
+        if (!panel.includes(need)) throw new Error(`設定面板裡少了 ${need}`);
+    });
+
+    /*
+     * 版本號。設定面板印的那行跟 `js/version.js` 是同一個值——
+     * 殼是 build 時寫死的，忘記重跑就會停在舊號碼上。
+     */
+    run("build-kb 的殼印的版本號跟 version.js 一致", () => {
+      const html = buildKb.renderPage(fake, "<p>內文</p>", t, "交換");
+      if (!html.includes(version.VERSION)) throw new Error(`面板裡沒有 ${version.VERSION}`);
     });
 
     kbdata.KB_ENTRIES.length = 0;

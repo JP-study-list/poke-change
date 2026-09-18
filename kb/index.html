@@ -20,10 +20,27 @@
     </script>
 
     <header class="kb-top">
-      <nav class="kb-crumb">
-        <a href="../">寶可夢交換所</a>
-        <span>知識</span>
-      </nav>
+      <div class="kb-topin">
+        <nav class="kb-crumb">
+          <a href="../">寶可夢交換所</a>
+          <span>知識</span>
+        </nav>
+        <button
+          class="icon-btn"
+          id="kbGear"
+          type="button"
+          aria-expanded="false"
+          aria-controls="kbSettings"
+          aria-label="設定"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M9.5 2.8 L14.5 2.8 L13.9 5.8 L16.4 7.2 L18.7 5.3 L21.2 9.5 L18.3 10.5 L18.3 13.5 L21.2 14.5 L18.7 18.7 L16.4 16.8 L13.9 18.2 L14.5 21.2 L9.5 21.2 L10.1 18.2 L7.6 16.8 L5.3 18.7 L2.8 14.5 L5.7 13.5 L5.7 10.5 L2.8 9.5 L5.3 5.3 L7.6 7.2 L10.1 5.8Z"
+            />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
+      </div>
     </header>
 
     <main class="kb-page">
@@ -81,5 +98,80 @@
         </li>
       </ul>
     </main>
+
+    <div class="modal" id="kbSettings" hidden>
+      <div class="modal-inner">
+        <button class="btn-x" type="button" data-closepop="1" aria-label="關閉">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+        <div class="modal-scroll">
+          <section class="side-block">
+            <p class="side-title">外觀</p>
+            <div class="opt-cards">
+            <button type="button" class="opt-card" data-theme="0"
+                    aria-pressed="true">
+              <span class="thumb"><svg viewBox="0 0 100 55" aria-hidden="true"><rect x="0" y="0" width="100" height="55" fill="#faf9f5" /><rect x="8" y="7" width="30" height="4" rx="2" fill="#cfc9bd" /><rect x="8" y="17" width="25" height="14" rx="2.5" fill="#e8e4da" /><rect x="37" y="17" width="25" height="14" rx="2.5" fill="#e8e4da" /><rect x="66" y="17" width="25" height="14" rx="2.5" fill="#e8e4da" /><rect x="8" y="35" width="25" height="14" rx="2.5" fill="#e8e4da" /><rect x="37" y="35" width="25" height="14" rx="2.5" fill="#e8e4da" /><rect x="66" y="35" width="25" height="14" rx="2.5" fill="#e8e4da" /></svg></span>
+              <span class="opt-name">淺色</span>
+            </button>
+            <button type="button" class="opt-card" data-theme="1"
+                    aria-pressed="false">
+              <span class="thumb"><svg viewBox="0 0 100 55" aria-hidden="true"><rect x="0" y="0" width="100" height="55" fill="#101010" /><rect x="8" y="7" width="30" height="4" rx="2" fill="#3c3c40" /><rect x="8" y="17" width="25" height="14" rx="2.5" fill="#232326" /><rect x="37" y="17" width="25" height="14" rx="2.5" fill="#232326" /><rect x="66" y="17" width="25" height="14" rx="2.5" fill="#232326" /><rect x="8" y="35" width="25" height="14" rx="2.5" fill="#232326" /><rect x="37" y="35" width="25" height="14" rx="2.5" fill="#232326" /><rect x="66" y="35" width="25" height="14" rx="2.5" fill="#232326" /></svg></span>
+              <span class="opt-name">深色</span>
+            </button>
+            </div>
+          </section>
+          <section class="side-block">
+            <a class="kb-home" href="../">寶可夢交換所</a>
+            <p class="kb-ver">版本 1.20.00 · 2026-09-18</p>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var gear = document.getElementById("kbGear");
+        var box = document.getElementById("kbSettings");
+        if (!gear || !box) return;
+
+        function show(on) {
+          box.hidden = !on;
+          gear.setAttribute("aria-expanded", on ? "true" : "false");
+        }
+        function mark() {
+          var dark = document.body.classList.contains("dark");
+          var cards = box.querySelectorAll("[data-theme]");
+          for (var i = 0; i < cards.length; i++)
+            cards[i].setAttribute(
+              "aria-pressed",
+              (cards[i].getAttribute("data-theme") === "1") === dark ? "true" : "false"
+            );
+        }
+
+        mark();
+        gear.addEventListener("click", function () { show(box.hidden); });
+
+        box.addEventListener("click", function (ev) {
+          /* 遮罩在 DOM 上就是 #kbSettings 自己，所以點它本身也算點外面 */
+          if (ev.target === box || ev.target.closest("[data-closepop]")) { show(false); return; }
+          var card = ev.target.closest("[data-theme]");
+          if (!card) return;
+          var dark = card.getAttribute("data-theme") === "1";
+          document.body.classList.toggle("dark", dark);
+          mark();
+          try {
+            var pref = JSON.parse(localStorage.getItem("poke-change/pref") || "{}");
+            pref.dark = dark;
+            localStorage.setItem("poke-change/pref", JSON.stringify(pref));
+          } catch (e) {}
+        });
+
+        document.addEventListener("keydown", function (ev) {
+          if (ev.key === "Escape" && !box.hidden) show(false);
+        });
+      })();
+    </script>
   </body>
 </html>

@@ -172,7 +172,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | `tools/build-bgflags.mjs` | 產生 `js/bgflags.js`。解析 Bulbapedia 的 Background (GO)，抽出逐隻的暗影／極巨化／超極巨化角標。卡片對照 `CARD_MANUAL` 與型態後綴 `SUFFIX` 都是人工指名，**指名前逐張比對過清單內容**。報告在 `tools/bgflags-report.md`，會列出對不到的（多半是我們的卡片清單缺那一隻）。快取在 `tools/.cache/bgflags/` |
 | `tools/make-purified-mark.mjs` | 產生 `img/purified-mark.png`。抓 PokeMiners 的 `Images/Rocket/ic_purified.png`，**不是旁邊的 `_filter` 版**（那是圓底的篩選標籤版）。**不膨脹**：它是實心星芒，線條本來就夠粗 |
 | `tools/png.mjs` | PNG 讀寫與影像處理（膨脹、降採樣）。`make-max-mark` 與 `make-purified-mark` 共用，只處理 8-bit RGBA，不是通用函式庫 |
-| `tools/build-kb.mjs` | 產生 `kb/<slug>/index.html` 與索引頁 `kb/index.html`。讀 `js/kbdata.js` 的 metadata 與 `kb/_src/<slug>.html` 的內文片段，套共用的殼。`--check` 只比對不寫檔（`check.mjs` 走這條，抓「改了內文忘記重跑」）。**不連外網、沒有快取。** `SITE` 常數填了才會長出 canonical 與 `og:url`，等待辦 C |
+| `tools/build-kb.mjs` | 產生 `kb/<slug>/index.html` 與索引頁 `kb/index.html`。殼裡包含右上角的齒輪、設定彈窗（外觀切換、**出處**、回主站、版本號）與那段切換用的 script。讀 `js/kbdata.js` 的 metadata 與 `kb/_src/<slug>.html` 的內文片段，套共用的殼。`--check` 只比對不寫檔（`check.mjs` 走這條，抓「改了內文忘記重跑」）。**不連外網、沒有快取。** `SITE` 常數填了才會長出 canonical 與 `og:url`，等待辦 C |
 | `tools/check.mjs` | 自我檢查。i18n key、版本號兩個檔沒寫岔、extra 的留白欄位齊全、條目完整性、背卡引用、儲存往返、全部繪製函式、逸出。`--net` 加驗圖片網址 |
 | `tools/make-max-mark.mjs` | 產生 `img/max-mark.png`。抓 Bulbapedia 的官方符號，**先把細線條加粗再縮**——原圖 185px 直接縮到 20px 會糊掉 |
 | `tools/measure-icons.mjs` | 量 `extra.js` 那批圖的主體佔畫布多少、中心偏多少。要連外網。**不自動改檔**，`--list` 印出數字自己貼進 `js/extra.js` |
@@ -218,7 +218,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改資訊列顯示什麼 | `js/main.js` 的 `draw()`，文字翻好再傳給 `renderInfoBar` |
 | 改右欄寬度或收起的斷點 | `css/style.css` 的 `--rail-w` 與 1200px 那段查詢 |
 | 改介面文字、加語言 | `js/i18n.js`（三語 key 必須一致） |
-| 升版 | `js/version.js` 的兩個常數 + `VERSION.md` 補一筆，兩邊號碼與日期要一樣 |
+| 升版 | `js/version.js` 的兩個常數 + `VERSION.md` 補一筆，兩邊號碼與日期要一樣。**改完要重跑 `node tools/build-kb.mjs`**：版本號印在知識頁的設定面板裡，不重跑那七個產出就過期了（check 會擋） |
 | 改屬性配色 | `js/types.js` |
 | 改分享圖版面 | `js/share.js` 上方的尺寸常數（`CELL` `COLS` `NAME_H`） |
 | 改交換表格子長相 | `js/ui.js` 的 `tradeCell` + `css/style.css` 的 `.want-cell` |
@@ -228,6 +228,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改一欄的上限 | `js/store.js` 的 `MAX_ITEMS` |
 | 寫一則新的知識 | `js/kbdata.js` 加一筆 → 寫 `kb/_src/<slug>.html` → `node tools/build-kb.mjs` → `node tools/check.mjs`。**slug 一旦發布就不能改**，它是網址 |
 | 改知識頁的殼或 SEO 件 | `tools/build-kb.mjs` 的 `shell()`，改完**重跑一次全部都會換掉**，不必手改 N 個檔 |
+| 改知識頁的設定面板 | `tools/build-kb.mjs`：`themeCards()` 是外觀那兩張、`SETTINGS_JS` 是行為、`shell()` 的 `extra` 是中間那一塊（一則傳出處、索引頁傳空）。樣式整套重用主站的 `.modal` / `.opt-card`，**深色不必另外寫** |
 | 網域到手要補 canonical | `tools/build-kb.mjs` 頂端的 `SITE` 填上去再重跑，`canonical` 與 `og:url` 會自己長出來 |
 | 改知識格子牆或文章排版 | `js/ui.js` 的 `renderKb` + `css/style.css` **檔尾**那一整區（含它自己的 `@media`） |
 | 加一個知識分類 | `js/kbdata.js` 的 `KB_CATS`、`js/i18n.js` 的 `kbCat*`（三語）、`js/ui.js` 的 `KB_CAT_KEY`，三處要一致 |
