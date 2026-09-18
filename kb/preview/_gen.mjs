@@ -674,6 +674,17 @@ const AC_CSS = `
         color: var(--gold-ink);
       }
 
+      /*
+       * 兩端對齊。CJK 靠字元間距撐，不像英文會被拉出大空隙。
+       * **只給整段的內文**：標題、矩陣、出處那種短行對齊了反而更亂。
+       * 最後一行照常靠左，那是 justify 本來的行為。
+       */
+      .kb-lead,
+      .kb-body p,
+      .kb-body li {
+        text-align: justify;
+      }
+
       /* ── C：費用矩陣 ── */
       .cost {
         display: grid;

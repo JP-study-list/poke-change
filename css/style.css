@@ -3013,6 +3013,18 @@ body.no-names .cell .no {
   line-height: 1.8;
 }
 
+/*
+ * **內文兩端對齊**（2026-09-18，使用者要求）。CJK 靠字元間距撐，
+ * 不像英文會被拉出大空隙，整段右緣切齊讀起來比參差的乾淨。
+ * **只給整段的內文**：標題、表格、出處那種短行對齊了反而更亂，
+ * 最後一行照常靠左（justify 本來的行為）。
+ */
+.kb-lead,
+.kb-body p,
+.kb-body li {
+  text-align: justify;
+}
+
 .kb-body h2 {
   margin: 34px 0 12px;
   padding-top: 14px;
