@@ -1,0 +1,121 @@
+<!--
+  中文段落一行寫到底，不要在句中換行（HTML 會把 CJK 之間的換行
+  渲染成一個空格）。check 有一條盯著，註解裡的換行不算。
+
+  這一則整篇都是符號，行內一律用 <code> 包起來，
+  不然 , 與 & 會跟旁邊的全形標點混在一起看不出來。
+-->
+
+<h2>搜尋欄吃得下條件，不只是名字</h2>
+
+<p>GO 的寶可夢搜尋欄除了打名字，還可以把條件組起來。打 <code>異色&amp;25</code> 就是「異色的皮卡丘」，打 <code>25,133</code> 就是「皮卡丘或伊布」。</p>
+
+<p>這一頁講的是那些符號怎麼拼。本站的交換表有一顆複製鈕，產出的就是這種字串，看完這一頁就讀得懂它在做什麼。</p>
+
+<h2>三個運算符</h2>
+
+<div class="kb-scroll">
+  <table>
+    <tr>
+      <th scope="col">符號</th>
+      <th scope="col">意思</th>
+      <th scope="col">例子</th>
+    </tr>
+    <tr>
+      <th scope="row"><code>&amp;</code> <code>|</code></th>
+      <td><strong>且</strong>，兩個條件都要成立</td>
+      <td><code>草&amp;進化</code>＝可進化的草屬性</td>
+    </tr>
+    <tr>
+      <th scope="row"><code>,</code> <code>:</code> <code>;</code></th>
+      <td><strong>或</strong>，成立一個就算</td>
+      <td><code>電,@天氣</code>＝電屬性的，或招式有天氣加成的</td>
+    </tr>
+    <tr>
+      <th scope="row"><code>!</code></th>
+      <td><strong>非</strong>，排除符合的</td>
+      <td><code>!防禦者</code>＝沒有在道館防禦的</td>
+    </tr>
+  </table>
+</div>
+
+<p class="kb-note"><code>|</code> 是<strong>且</strong>，不是「或」。多數程式語言拿 <code>|</code> 當「或」，GO 把它跟 <code>&amp;</code> 放在同一組。官方說明頁寫得很清楚，但這是最容易搞反的一個。</p>
+
+<p><code>!</code> 要<strong>緊貼關鍵字，中間不能有空格</strong>。<code>! 交換</code> 不會生效。</p>
+
+<h2>「或」綁得比「且」緊</h2>
+
+<p>字串長了之後，這件事決定整串的意思。<code>A,B&amp;C</code> 的意思是<strong>（A 或 B）且 C</strong>，不是「A 或（B 且 C）」。</p>
+
+<p>GO 的搜尋欄<strong>沒有括號</strong>，所以能寫出來的結構固定是「或的且」：好幾組用 <code>,</code> 串起來的選項，再用 <code>&amp;</code> 串在一起，每一組都必須成立一個。</p>
+
+<p class="kb-note">這條<strong>官方三語的說明頁都沒有寫</strong>，是社群整理出來的。本站產生搜尋字串時靠的就是它，寫長字串前建議自己在遊戲裡先試一個短的確認。</p>
+
+<h2>交換用得到的關鍵字</h2>
+
+<p>下面這些全部出自官方說明頁。交換表上的六個條件，搜尋欄都表達得出來。</p>
+
+<div class="kb-scroll">
+  <table>
+    <tr>
+      <th scope="col">關鍵字</th>
+      <th scope="col">找到什麼</th>
+    </tr>
+    <tr><th scope="row"><code>異色</code></th><td>異色寶可夢</td></tr>
+    <tr><th scope="row"><code>XXL</code> <code>XXS</code></th><td>特定體型（也有 <code>XL</code> 與 <code>XS</code>）</td></tr>
+    <tr><th scope="row"><code>淨化</code></th><td>淨化後的寶可夢</td></tr>
+    <tr><th scope="row"><code>極巨化</code></th><td>極巨化寶可夢（語意有陷阱，見下面）</td></tr>
+    <tr><th scope="row"><code>超極巨化</code></th><td>超極巨化寶可夢</td></tr>
+    <tr><th scope="row"><code>背卡</code></th><td>有背卡的（全部）</td></tr>
+    <tr><th scope="row"><code>紀念背卡</code></th><td>標記捕捉地點的紀念背卡</td></tr>
+    <tr><th scope="row"><code>特殊</code></th><td>活動裝扮，例如戴著魔女帽的皮卡丘</td></tr>
+    <tr><th scope="row"><code>交換</code></th><td>透過交換獲得的</td></tr>
+    <tr><th scope="row">數字</th><td>寶可夢圖鑑編號，<code>25</code> 就是皮卡丘</td></tr>
+    <tr><th scope="row"><code>+名字</code></th><td>整個進化家族，<code>+皮卡丘</code> 含皮丘與雷丘</td></tr>
+    <tr><th scope="row"><code>日數0</code></th><td>過去 24 小時內捉到的，<code>日數1</code> 是 24 到 48 小時</td></tr>
+    <tr><th scope="row"><code>年2016</code></th><td>2016 年獲得的</td></tr>
+    <tr><th scope="row"><code>4*</code></th><td>評價星數，<code>0*</code> 到 <code>4*</code></td></tr>
+  </table>
+</div>
+
+<h2>拆解一串本站產生的字串</h2>
+
+<p>假設「可以給」那一欄收了妙蛙種子、傑尼龜，還有一隻要異色的小火龍。複製鈕會給你這一串：</p>
+
+<p><code>!交換&amp;異色,1,7&amp;4,1,7</code></p>
+
+<p>用上面的規則讀，它是三組用 <code>&amp;</code> 串起來的條件，每一組都要成立：</p>
+
+<ul>
+  <li><code>!交換</code>：不是交換來的。<strong>交換過的寶可夢不能再交換</strong>，所以先排掉。</li>
+  <li><code>異色,1,7</code>：是異色，或是 1 號，或是 7 號。</li>
+  <li><code>4,1,7</code>：是 4 號，或是 1 號，或是 7 號。</li>
+</ul>
+
+<p>一隻非異色的小火龍（4 號）會在第二組被擋下來，異色的小火龍兩組都過。妙蛙種子與傑尼龜兩組都靠自己的編號過關，不管是不是異色。<strong>沒有括號也表達得出「這一隻要異色，那兩隻不用」</strong>，靠的就是把條件分配到每一組裡。</p>
+
+<h2>搜尋做不到的兩件事</h2>
+
+<p>同一串字裡，<strong>同一隻寶可夢只會出現一次</strong>，而且一律是本體的圖鑑編號。皮卡丘收了六格也只有一個 <code>25</code>。</p>
+
+<p>原因是搜尋欄指定不了<strong>哪一張背卡</strong>，也指定不了<strong>哪一個裝扮</strong>。<code>背卡</code> 只篩「有沒有」，<code>特殊</code> 也只篩「是不是裝扮」。</p>
+
+<p>所以搜尋字串能做的是把對方的箱子縮小到「有背卡的皮卡丘」這種程度，剩下對照哪一張卡、哪一款裝扮，還是得看分享圖。</p>
+
+<h2>幾個會讓你搜不到東西的陷阱</h2>
+
+<p><code>極巨化</code> 找的是<strong>手上這隻已經是極巨化狀態</strong>，不是「這隻可以極巨化」。它是解鎖極巨招式數量的捷徑寫法，跟本站圖鑑那份「可極巨化名單」講的不是同一件事。</p>
+
+<p><code>極巨化</code>、<code>超極巨化</code> 這類捷徑字<strong>會吃掉後面的字</strong>，所以想搜名字裡含這些字的招式或寶可夢時會出問題。</p>
+
+<p>地區搜尋<strong>排除不掉地區型</strong>。<code>!阿羅拉</code> 排掉之後沒辦法再取消排除，而且編號區間 <code>1-151</code> 跟 <code>關都</code> 不等價。</p>
+
+<p>名字裡有標點要照打。<code>mr.</code> 找得到魔牆人偶，<code>mr mime</code> 找不到任何東西。</p>
+
+<p>大小寫不敏感，名字與招式是前綴自動補完。</p>
+
+<h2>官方沒收錄的那些</h2>
+
+<p>除了官方說明頁列出來的，還有一批確實能用、但官方一個字都沒提的關鍵字：組隊時抓到的、手上有幾隻同編號的、糖果與糖果 XL 的數量、夥伴每顆糖要走幾公里、極巨招式解鎖到第幾級、目前可以遠距交換的朋友。</p>
+
+<p class="kb-note">這一頁<strong>不列這些的繁中寫法</strong>。它們只有英文字串有可靠來源，而 GO 的搜尋關鍵字是各語言各自一套、不是互相翻譯的。照字面推一個出來，讀的人打進去只會得到一個搜不到東西的字串，而且看不出哪裡不對。像<a href="../guaranteed-lucky/">必定變亮晶晶</a>那一則裡沒有官方依據的數字，至少講得出「社群是這樣說的」。這些連社群的繁中來源都沒有。</p>

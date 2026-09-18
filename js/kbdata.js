@@ -303,6 +303,50 @@ export const KB_ENTRIES = [
       },
     ],
   },
+  {
+    slug: "search-syntax",
+    title: "搜尋術語規則",
+    summary: "GO 搜尋欄的運算符怎麼拼，以及本站複製鈕產生的那串字在做什麼。「或」綁得比「且」緊，而 | 是「且」不是「或」",
+    cat: "search",
+    updated: "2026-09-18",
+    /*
+     * **`search` 分類的第一則**，前五則都是 `trade`。
+     *
+     * **底稿在 `docs/go-search-syntax.md`（212 行），但沒有整份搬過來。**
+     * 那份是給自己看的完整參考，這一頁只收「讀得懂本站產生的字串」需要的部分：
+     * 三個運算符、優先順序、交換用得到的關鍵字、字串拆解、陷阱。
+     *
+     * **底稿裡標「未確認」的 14 條，這一頁一條都沒列繁中寫法。**
+     * 2026-09-18 重抓過官方繁中 FAQ 1486 全文確認：**那 8 條繁中未確認的
+     * 官方一條都沒收**，社群那邊也沒有繁中字串。GO 的關鍵字是各語言各自
+     * 一套、不是互相翻譯的，照字面推一個出來，讀的人打進去會得到一個
+     * 搜不到東西的字串而且看不出哪裡不對。剩下 4 條只缺日文，
+     * 而知識頁只做繁中，不影響。
+     * 改成用一段文字交代「有這些東西、但繁中沒有可靠來源」。
+     *
+     * **`|` 是「且」不是「或」是官方寫的**，這一頁把它拉成 note，
+     * 因為多數程式語言相反，是最容易搞反的一條。
+     * **而「`,` 綁得比 `&` 緊」官方三語都沒寫**，是社群整理的，
+     * 但 `js/gostring.js` 的分配律整個靠它，所以頁面上標明並建議自己先試。
+     */
+    sources: [
+      {
+        label: "Niantic 說明中心：搜尋和篩選你收藏的寶可夢（FAQ 1486）",
+        url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/1486-searching-filtering-your-pokemon-inventory/",
+        official: true,
+      },
+      {
+        label: "leidwesen/SearchPhrases：社群最完整的關鍵字整理（對到版本 0.413.0）",
+        url: "https://leidwesen.github.io/SearchPhrases/",
+        official: false,
+      },
+      {
+        label: "巴哈姆特 Pokémon GO 哈啦板：搜尋關鍵字整理（繁中，地區只到伽勒爾）",
+        url: "https://forum.gamer.com.tw/C.php?bsn=29659&snA=32191",
+        official: false,
+      },
+    ],
+  },
 ];
 
 export const KB_COUNT = KB_ENTRIES.length;
