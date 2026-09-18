@@ -4,6 +4,45 @@
 
 ---
 
+## 2026-09-18（六）· 交換費用不是各自計算的（1.19.02）
+- 類型：修正
+- 影響檔案：kb/_src/trade-stardust.html, js/kbdata.js, js/version.js,
+  VERSION.md, kb/preview/（四頁同步）
+- 摘要：「費用是兩個人各付各的，所以兩邊看到的數字可能不一樣」是**錯的**。
+  正確：**兩個人付同一個數字**，各付一份不是分攤，兩隻寶可夢的費用不同時
+  取貴的那一邊；「已登錄／未登錄」判的是**接收方**的圖鑑。
+- 原因：**使用者質疑才查出來的。** 他看到那句話說「我星辰不是兩個人分開算的，
+  兩個人應該會一樣吧」——他對。
+
+- **這條錯了多久沒人發現，是因為它長得很合理。** 「各自計算」跟表格的
+  四個欄位（已登錄／未登錄）配起來讀得通，而且官方 FAQ 96 把特殊交換的
+  條件寫成「該寶可夢並不在**你的**寶可夢圖鑑中」（英文 `your Pokédex`），
+  第二人稱看起來就像各自判定。**官方從頭到尾沒有講過費用怎麼攤**。
+
+- 兩個獨立來源都寫同一件事：
+  - Bulbapedia `Trade (GO)`：「Both players are required to pay the same
+    Stardust cost for the same trade… If the two Pokémon have different
+    Stardust costs to be traded, then the higher cost will be applied.」
+  - PoGO Alley：「Both trainers pay the full amount separately; it is not
+    split. Both also pay the same figure even when only one of the two
+    offered Pokémon triggers the Special Trade.」
+  第二條補了一個有用的區分：**「各付各的」有一半是對的**——各自付一份、
+  不是分攤，錯的只是「數字可能不一樣」。頁面現在兩件事都講。
+
+- **教訓跟 1.16.00 那張費用表是同一類。** 那次是拿折扣去乘底價推算，
+  這次是拿官方的第二人稱措辭推論攤付方式。**兩次都是推出來的東西
+  看起來很像真的**，而且兩次都是使用者拿實際經驗抓到的。
+  官方沒寫的機制，不要從官方寫了的句子推。
+
+- 來源補了 PoGO Alley（社群）。Bulbapedia 本來就在。
+- 驗證：build-kb 重跑、check 全過。
+- 待辦/已知問題：
+  - 升 1.19.02。
+  - **這句話在線上活了一天**（1.16.00 上線，1.19.01 還在）。
+  - 其餘五則沒有同類敘述，查過了。
+
+---
+
 ## 2026-09-18（六）· 知識頁版面模板預覽（暫時，不是定案）
 - 類型：新增
 - 影響檔案：kb/preview/（新，暫時目錄，定案後刪掉）

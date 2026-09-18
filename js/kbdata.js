@@ -275,6 +275,15 @@ export const KB_ENTRIES = [
      * Bulbapedia 這裡又破例當資料來源（跟 bgflags 同一個理由）：
      * 官方只給定性描述，game master 又缺底價，沒有別的地方有完整格子。
      *
+     * **1.19.02 修掉一個事實錯誤：費用不是各自計算的。**
+     * 原本寫「兩個人各付各的，所以兩邊看到的數字可能不一樣」，
+     * **是使用者質疑才查出來的**（他說「應該會一樣吧」，他對）。
+     * Bulbapedia 與 PoGO Alley 兩邊獨立寫了同一件事：
+     * 雙方付**相同**金額、各付一份不是分攤，兩隻費用不同時**取較高者**。
+     * 「已登錄／未登錄」判的是**接收方**的圖鑑，不是各自算各自的。
+     * **官方沒有講過這條**（FAQ 96 只說特殊交換「需要更多星星沙子」），
+     * 所以兩條來源都是社群的——這也是為什麼它能在頁面上活這麼久。
+     *
      * **「帶背卡算特殊交換」只有官方英文版 FAQ 96 寫**（繁中版是舊翻譯，
      * 沒有這一行），2026-09-18 使用者從遊戲內確認為真後才寫進頁面。
      * **注意 Bulbapedia 的費用格子也沒列背卡**，所以頁面只說它算特殊交換
@@ -290,6 +299,11 @@ export const KB_ENTRIES = [
         label: "Niantic 說明中心：朋友名單 & 友誼等級（FAQ 2847，折扣的定性描述）",
         url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/2847-friend-list-friendship-levels-1614900279/",
         official: true,
+      },
+      {
+        label: "PoGO Alley：Trade Stardust Cost 完整表（2026-09 查閱，雙方同額與取較高者）",
+        url: "https://pogoalley.com/guides/stardust-cost",
+        official: false,
       },
       {
         label: "Niantic 說明中心：交換寶可夢（FAQ 96，哪些算特殊交換）",
