@@ -274,6 +274,11 @@ export const KB_ENTRIES = [
      *
      * Bulbapedia 這裡又破例當資料來源（跟 bgflags 同一個理由）：
      * 官方只給定性描述，game master 又缺底價，沒有別的地方有完整格子。
+     *
+     * **「帶背卡算特殊交換」只有官方英文版 FAQ 96 寫**（繁中版是舊翻譯，
+     * 沒有這一行），2026-09-18 使用者從遊戲內確認為真後才寫進頁面。
+     * **注意 Bulbapedia 的費用格子也沒列背卡**，所以頁面只說它算特殊交換
+     * （比較貴、吃掉每天那一次額度），沒有去指某一格的數字。
      */
     sources: [
       {
@@ -289,6 +294,11 @@ export const KB_ENTRIES = [
       {
         label: "Niantic 說明中心：交換寶可夢（FAQ 96，哪些算特殊交換）",
         url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/96-trading-pokemon/",
+        official: true,
+      },
+      {
+        label: "Niantic 說明中心：交換寶可夢（FAQ 96，英文版；「帶背卡算特殊交換」只有這一版寫）",
+        url: "https://niantic.helpshift.com/hc/en/6-pokemon-go/faq/96-trading-pokemon/",
         official: true,
       },
       {
