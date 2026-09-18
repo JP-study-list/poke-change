@@ -251,6 +251,58 @@ export const KB_ENTRIES = [
       },
     ],
   },
+  {
+    slug: "trade-stardust",
+    title: "交換的星星沙子",
+    summary: "四種情形乘六個友誼等級，從 100 到 1,000,000。圖鑑已登錄的一般寶可夢固定 100、不吃折扣，其餘照友誼等級打折",
+    cat: "trade",
+    updated: "2026-09-18",
+    /*
+     * **這一則的折扣值來自遊戲本體資料，不是社群推算的。**
+     * `FRIENDSHIP_LEVEL_0`~`5` 的 `tradingDiscount` 依序是
+     * 0、0、0.2、0.92、0.96、0.96；`FRIENDSHIP_LEVEL_0` 的
+     * `unlockedTrading` 只有 `REGULAR_IN_POKEDEX`，這就是「朋友」那一排
+     * 三欄不可交換的出處。**底價（100／20,000／1,000,000）不在 game master**，
+     * 那是 client 端常數，所以完整格子對照 Bulbapedia 的 Trade (GO)。
+     * 兩邊乘起來逐格吻合。
+     *
+     * **1.16.00 的遠距交換那一則寫錯過這張表**（一般交換寫成
+     * 100/100/80/8/4），錯因是拿折扣去乘 100 推算。**實際上 100 那一格
+     * 不吃折扣，六級都是 100。** Bulbapedia、使用者提供的兩張社群表
+     * 與英文社群三邊一致。1.18.00 連同那一則一起修掉。
+     * **教訓：推算出來的數字要當成待驗證的假設，不是結論。**
+     *
+     * Bulbapedia 這裡又破例當資料來源（跟 bgflags 同一個理由）：
+     * 官方只給定性描述，game master 又缺底價，沒有別的地方有完整格子。
+     */
+    sources: [
+      {
+        label: "Pokémon GO game master：FRIENDSHIP_LEVEL_0~5 的 tradingDiscount 與 unlockedTrading（遊戲本體設定資料，PokeMiners 鏡像）",
+        url: "https://github.com/PokeMiners/game_masters",
+        official: true,
+      },
+      {
+        label: "Niantic 說明中心：朋友名單 & 友誼等級（FAQ 2847，折扣的定性描述）",
+        url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/2847-friend-list-friendship-levels-1614900279/",
+        official: true,
+      },
+      {
+        label: "Niantic 說明中心：交換寶可夢（FAQ 96，哪些算特殊交換）",
+        url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/96-trading-pokemon/",
+        official: true,
+      },
+      {
+        label: "Bulbapedia：Trade (GO) — 完整的費用格子（底價不在遊戲資料裡，只能對照這裡）",
+        url: "https://bulbapedia.bulbagarden.net/wiki/Trade_(GO)",
+        official: false,
+      },
+      {
+        label: "神奇寶貝百科：朋友（Pokémon GO）— 底價與折扣",
+        url: "https://wiki.52poke.com/zh-hant/%E6%9C%8B%E5%8F%8B%EF%BC%88Pok%C3%A9mon_GO%EF%BC%89",
+        official: false,
+      },
+    ],
+  },
 ];
 
 export const KB_COUNT = KB_ENTRIES.length;

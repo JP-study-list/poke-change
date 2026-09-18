@@ -1544,6 +1544,32 @@ SPA 照舊，靜態頁是新長出來的一層。
   而那個組織 2023 年就結束運作了。**兩個網站抄同一份資料，不算兩個來源。**
   CLAUDE.md 原本那條「社群數字要兩個以上獨立來源」要這樣讀。
 
+#### 交換機制的數字，第一個該翻的是 game master（2026-09-18）
+
+- **`tools/.cache/game_master.json` 裡有交換機制的權威設定，不必上網查。**
+  做「交換的星星沙子」那一則時才發現的，兩個模板一次解決很多問題：
+
+  | 模板 | 給了什麼 |
+  | --- | --- |
+  | `FRIENDSHIP_LEVEL_0`~`5` | `tradingDiscount`（0、0、0.2、0.92、0.96、0.96）、`minPointsToReach`（1／7／30／90／+90）、`unlockedTrading`（哪一級能換哪些）、`attackBonusPercentage`、`raidBallBonus` |
+  | `REMOTE_TRADE_SETTINGS` | `requestedPokemonCount` 3、`pokemonUntradableDays` 30、`maxRemoteTradesPerDay` 1、`timeLimitMinutes` 2880（＝48 小時）、`taggingUnlockPointThreshold` 85（對 90，就是官方說的「差 5 點」） |
+
+  **`REMOTE_TRADE_SETTINGS` 把 A-6 整頁逐項對上了。** 下次寫交換相關的
+  知識頁，先 grep 這個檔再去翻說明中心。
+
+- **但底價（100／20,000／1,000,000）不在 game master**，那是 client 端常數。
+  完整格子只能對照 Bulbapedia 的 `Trade (GO)`——**Bulbapedia 在這裡又破例
+  當資料來源**，跟 bgflags 同一個理由：官方只給定性描述，沒有別的地方有。
+
+- **1.16.00 的費用表是錯的，錯因是「推算」。** 那時拿 52poke 的折扣
+  （0.92／0.96）去乘底價 100，推出麻吉好朋友 8、正港好朋友 4，
+  **實際上「一般且雙方都已登錄」六個等級全部固定 100、不吃折扣**。
+  折扣只作用在 20,000 與 1,000,000 那兩個底價上。
+  使用者拿兩張社群費用表來對才抓到，Bulbapedia 與英文社群也一致。
+  **教訓：自己乘出來的數字是待驗證的假設，不是結論**——
+  這跟「IV100 的 CP 不能退回本體的數值」是同一類錯，
+  推出來的東西看起來都很像真的。
+
 **MVP 五則**（都是使用者點名的，`search-syntax` 已有底稿）：
 
 | slug | 內容 | 來源狀況 |
