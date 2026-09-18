@@ -102,19 +102,6 @@
         font-size: var(--fs-sm);
         font-weight: 600;
       }
-      .cost-key {
-        display: flex; flex-wrap: wrap; gap: 14px;
-        margin: 12px 0 18px;
-        font-size: var(--fs-sm);
-        color: var(--dim);
-      }
-      .cost-key span { display: flex; align-items: center; gap: 5px; }
-      .cost-key .c { padding: 0; }
-      .cost-key i {
-        width: 22px; height: 12px; border-radius: 3px;
-        border: 1px solid var(--line);
-      }
-
       /*
        * 手機上矩陣要塞進螢幕，不靠左右滑。縮三處：字級、格子內距、欄間距，
        * 並把 min-width 收掉、資料欄改 minmax(0, 1fr)。
@@ -232,17 +219,9 @@
           </div>
         </div>
 
-        <div class="cost-key">
-          <span><i class="c t0"></i>百位</span>
-          <span><i class="c t1"></i>千位</span>
-          <span><i class="c t2"></i>萬位</span>
-          <span><i class="c t3"></i>十萬位</span>
-          <span><i class="c t4"></i>百萬位</span>
-        </div>
-
         <ul class="pts">
-          <li>費用是<strong>兩個人各付各的</strong>，而「登錄了沒有」各自計算，所以兩邊看到的數字可能不一樣。</li>
-          <li>想省沙子，<strong>先確認對方圖鑑裡有沒有登錄</strong>，比衝友誼等級有用。同樣一隻異色，對方有登錄的話在正港好朋友之間是 800，沒登錄就要 40,000。</li>
+          <li><strong>兩個人付一樣多。</strong>各付一份不是分攤，兩隻寶可夢的費用不同時取貴的那一邊。</li>
+          <li>「登錄了沒有」看的是<strong>收到那一隻的人</strong>。想省沙子，先確認對方圖鑑裡有沒有你要給的那一隻，比衝友誼等級有用：同樣一隻異色，對方有登錄是 800，沒登錄要 40,000，而且兩個人都付。</li>
           <li><strong>「正港好朋友＋」消耗的星星沙子跟「正港好朋友」相同</strong>，所以表上最後兩列一樣。</li>
         </ul>
 
