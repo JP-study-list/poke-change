@@ -3070,39 +3070,47 @@ body.no-names .cell .no {
 }
 
 /*
- * 章節速覽在最前面時，第一個 h2 就不再是 `:first-child`，
- * 不收掉的話 chips 底下會多一條分隔線。
+ * 一節開頭的大數字。**數字歸方塊，文字只寫數字以外的事**——
+ * 底下那串要點再把同一個數字講一次就是複述，這一則已經為了複述
+ * 被砍過三輪了。
+ *
+ * 底色用 `--card` 加一條細框，跟 `.kb-note` 同一個做法：
+ * 兩套配色都是「比畫布亮一階」，**不要用 `--sunk`**（深色的比畫布更暗）。
  */
-.kb-toc + h2 {
-  margin-top: 22px;
-  padding-top: 0;
-  border-top: 0;
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 18px 0;
 }
 
-/*
- * 章節速覽。**只有節數多、而且讀者會想跳著看的那幾則才寫**，
- * 不是每一則都要——它要手寫錨點，而且三四節的頁面捲一下就到底了。
- */
-.kb-toc {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 20px;
-}
-
-.kb-toc a {
-  padding: 4px 10px;
+.stat {
+  padding: 12px 14px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: var(--card);
-  font-size: var(--fs-sm);
-  color: var(--ink2);
-  text-decoration: none;
 }
 
-.kb-toc a:hover {
-  border-color: var(--gold);
-  color: var(--gold-ink);
+.stat b {
+  display: block;
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-u {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--dim);
+}
+
+.stat span.stat-t {
+  display: block;
+  margin-top: 5px;
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  color: var(--ink2);
 }
 
 /*

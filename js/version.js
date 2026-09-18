@@ -8,7 +8,7 @@
  * **這跟儲存格式的版本號是兩件事**：`poke-change/v1` 裡的 `v: 2` 是
  * 資料結構的版本，只在格式真的變了才動，跟這裡沒有關係。
  */
-export const VERSION = "1.21.00";
+export const VERSION = "1.21.01";
 
 /** 這一版上線的日期。三語共用同一個寫法，不做在地化 */
 export const VERSION_DATE = "2026-09-18";
