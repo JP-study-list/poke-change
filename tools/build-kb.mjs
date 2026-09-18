@@ -273,7 +273,7 @@ const sourceItem = (s, t) => {
   const tag = s.official
     ? `<span class="kb-tag official">${esc(t("kbOfficialTag"))}</span>`
     : `<span class="kb-tag community">${esc(t("kbCommunityTag"))}</span>`;
-  return `              <li>${link} ${tag}</li>`;
+  return `                <li>${link} ${tag}</li>`;
 };
 
 /**
@@ -300,11 +300,35 @@ ${body.trimEnd()}
    * 內容仍然逐條寫在 HTML 裡、官方與社群分得出來，爬蟲也讀得到，
    * 只是不再佔掉每一則的結尾。
    */
-  const src = `          <section class="side-block kb-src">
+  const official = e.sources.filter((s) => s.official).length;
+  const community = e.sources.length - official;
+  const tally = [official ? `官方 ${official} 筆` : "", community ? `社群 ${community} 筆` : ""]
+    .filter(Boolean)
+    .join("・");
+
+  const src = `          <section class="side-block">
             <p class="side-title">${esc(t("kbSourceTitle"))}</p>
-            <ol>
+            <details class="kb-row kb-src">
+              <summary>
+                <span class="row-ic">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 3.5h7.5L18 8v12.5H6z" />
+                    <path d="M13.5 3.5V8H18" />
+                    <path d="M9 12.5h6M9 16h4" />
+                  </svg>
+                </span>
+                <span class="row-tx">
+                  <span class="row-t">這一則的出處</span>
+                  <span class="row-s">${esc(tally)}</span>
+                </span>
+                <svg class="row-ar" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M9.5 5.5 L16 12 L9.5 18.5" />
+                </svg>
+              </summary>
+              <ol>
 ${e.sources.map((s) => sourceItem(s, t)).join("\n")}
-            </ol>
+              </ol>
+            </details>
           </section>
 `;
 

@@ -228,7 +228,7 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改一欄的上限 | `js/store.js` 的 `MAX_ITEMS` |
 | 寫一則新的知識 | `js/kbdata.js` 加一筆 → 寫 `kb/_src/<slug>.html` → `node tools/build-kb.mjs` → `node tools/check.mjs`。**slug 一旦發布就不能改**，它是網址 |
 | 改知識頁的殼或 SEO 件 | `tools/build-kb.mjs` 的 `shell()`，改完**重跑一次全部都會換掉**，不必手改 N 個檔 |
-| 改知識頁的設定面板 | `tools/build-kb.mjs`：`themeCards()` 是外觀那兩張、`SETTINGS_JS` 是行為、`shell()` 的 `extra` 是中間那一塊（一則傳出處、索引頁傳空）。樣式整套重用主站的 `.modal` / `.opt-card`，**深色不必另外寫** |
+| 改知識頁的設定面板 | `tools/build-kb.mjs`：`themeCards()` 是外觀那兩張、`SETTINGS_JS` 是行為、`shell()` 的 `extra` 是中間那一塊（一則傳出處、索引頁傳空）。出處那個可展開的方塊是 `<details class="kb-row kb-src">`，樣式在 style.css 的 `.kb-row`／`.row-*`。樣式整套重用主站的 `.modal` / `.opt-card`，**深色不必另外寫** |
 | 網域到手要補 canonical | `tools/build-kb.mjs` 頂端的 `SITE` 填上去再重跑，`canonical` 與 `og:url` 會自己長出來 |
 | 改知識格子牆或文章排版 | `js/ui.js` 的 `renderKb` + `css/style.css` **檔尾**那一整區（含它自己的 `@media`） |
 | 加一個知識分類 | `js/kbdata.js` 的 `KB_CATS`、`js/i18n.js` 的 `kbCat*`（三語）、`js/ui.js` 的 `KB_CAT_KEY`，三處要一致 |

@@ -3197,13 +3197,102 @@ body.no-names .cell .no {
  * 不能寫，是要講明白。圖鑑只能不列，頁面寫得出這句話，差別在這裡。
  */
 /*
- * 出處。**逐條列，而且官方與社群分得出來**——這一段 2026-09-18 從頁面
- * 結尾搬進了設定彈窗，所以它不再需要自己的上邊界與分隔線，
- * `.side-block` 已經把區塊之間隔開了。
+ * 設定面板裡那種一列一格的方塊：圓形圖示、標題、副標、右邊一個箭頭。
+ *
+ * **底色靠 color-mix 混 `--ink`，不用 `--sunk`。** 這個方塊要比它所在的
+ * 面板**亮一階**，而深色的 `--sunk`（#0b0b0b）比畫布還暗，方向相反——
+ * `.kb-note` 為同一條理由改吃 `--card`。混出來的值兩套配色都往「抬起來」
+ * 的方向走，所以不必寫深色覆寫。
  */
-.kb-src ol {
-  margin-top: 10px;
-  padding-left: 20px;
+.kb-row {
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--ink) 8%, var(--card));
+}
+
+.kb-row > summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 13px;
+  cursor: pointer;
+  list-style: none;
+}
+
+/* 三角形的預設標記要兩條規則才關得掉，Safari 走 -webkit 那條 */
+.kb-row > summary::-webkit-details-marker {
+  display: none;
+}
+
+.kb-row > summary::marker {
+  content: "";
+}
+
+.kb-row > summary:hover {
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  border-radius: var(--radius);
+}
+
+.row-ic {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink2);
+}
+
+/* 這一區的圖示走描邊不走填色，齒輪那顆是填色的，兩種不要混用 */
+.row-ic svg,
+.row-ar {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.row-tx {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.row-t {
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.row-s {
+  font-size: var(--fs-13);
+  color: var(--dim);
+}
+
+.row-ar {
+  flex: none;
+  color: var(--dim);
+  transition: transform 0.15s;
+}
+
+/* 展開就把箭頭轉下去，收合與展開一眼分得出來 */
+.kb-row[open] > summary .row-ar {
+  transform: rotate(90deg);
+}
+
+/*
+ * 出處。**逐條列，而且官方與社群分得出來**——這一段 2026-09-18 從頁面
+ * 結尾搬進設定彈窗，再收進上面那個方塊裡。收合時內容仍然在 DOM，
+ * 爬蟲讀得到。
+ */
+.kb-src > ol {
+  margin: 0;
+  padding: 4px 14px 12px 34px;
   font-size: var(--fs-13);
   line-height: 1.9;
 }
