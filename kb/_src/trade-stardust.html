@@ -1,52 +1,87 @@
 <!--
   中文段落一行寫到底，不要在句中換行（HTML 會把 CJK 之間的換行
   渲染成一個空格）。check 有一條盯著，註解裡的換行不算。
+
+  費用矩陣（`.cost`）是這一則專用的版面，不是通用元件：它只對
+  「兩個維度交叉出一格一個數字」這種資料成立。六位數要寫兩份，
+  `.n-lg` 是桌機的完整數字、`.n-sm` 是手機的萬進位——390 的螢幕
+  塞不下「1,000,000」九個字元，而再縮字級就到不能讀的大小了。
 -->
 
-<h2>一張表看完</h2>
+<nav class="kb-toc">
+  <a href="#s1">費用一覽</a>
+  <a href="#s2">哪些算「特殊」</a>
+  <a href="#s3">兩個門檻</a>
+</nav>
 
-<p>交換要花多少星星沙子，看兩件事：<strong>那隻寶可夢在雙方的圖鑑裡登錄了沒有</strong>，以及<strong>牠是不是特殊種類</strong>。兩件事各有兩種可能，再乘上六個友誼等級，就是下面這張表。</p>
+<h2 id="s1">費用一覽</h2>
+
+<p>交換要花多少星星沙子，看<strong>那隻寶可夢在雙方的圖鑑裡登錄了沒有</strong>，以及<strong>牠是不是特殊種類</strong>。</p>
 
 <div class="kb-scroll">
-  <table>
-    <tr>
-      <th scope="col">友誼等級</th>
-      <th scope="col">一般<br />已登錄</th>
-      <th scope="col">一般<br />未登錄</th>
-      <th scope="col">特殊<br />已登錄</th>
-      <th scope="col">特殊<br />未登錄</th>
-    </tr>
-    <tr><th scope="row">朋友</th><td>100</td><td>不可交換</td><td>不可交換</td><td>不可交換</td></tr>
-    <tr><th scope="row">好朋友</th><td>100</td><td>20,000</td><td>20,000</td><td>1,000,000</td></tr>
-    <tr><th scope="row">給力好朋友</th><td>100</td><td>16,000</td><td>16,000</td><td>800,000</td></tr>
-    <tr><th scope="row">麻吉好朋友</th><td>100</td><td>1,600</td><td>1,600</td><td>80,000</td></tr>
-    <tr><th scope="row">正港好朋友</th><td>100</td><td>800</td><td>800</td><td>40,000</td></tr>
-    <tr><th scope="row">正港好朋友＋</th><td>100</td><td>800</td><td>800</td><td>40,000</td></tr>
-  </table>
+  <div class="cost">
+    <div class="ch">友誼等級</div>
+    <div class="ch">一般<br />已登錄</div>
+    <div class="ch">一般<br />未登錄</div>
+    <div class="ch">特殊<br />已登錄</div>
+    <div class="ch">特殊<br />未登錄</div>
+
+    <div class="rh">朋友</div>
+    <div class="c t0">100</div>
+    <div class="c no">不可交換</div>
+    <div class="c no">不可交換</div>
+    <div class="c no">不可交換</div>
+
+    <div class="rh">好朋友</div>
+    <div class="c t0">100</div>
+    <div class="c t2"><span class="n-lg">20,000</span><span class="n-sm">2萬</span></div>
+    <div class="c t2"><span class="n-lg">20,000</span><span class="n-sm">2萬</span></div>
+    <div class="c t4"><span class="n-lg">1,000,000</span><span class="n-sm">100萬</span></div>
+
+    <div class="rh">給力好朋友</div>
+    <div class="c t0">100</div>
+    <div class="c t2"><span class="n-lg">16,000</span><span class="n-sm">1.6萬</span></div>
+    <div class="c t2"><span class="n-lg">16,000</span><span class="n-sm">1.6萬</span></div>
+    <div class="c t4"><span class="n-lg">800,000</span><span class="n-sm">80萬</span></div>
+
+    <div class="rh">麻吉好朋友</div>
+    <div class="c t0">100</div>
+    <div class="c t1">1,600</div>
+    <div class="c t1">1,600</div>
+    <div class="c t3"><span class="n-lg">80,000</span><span class="n-sm">8萬</span></div>
+
+    <div class="rh">正港好朋友</div>
+    <div class="c t0">100</div>
+    <div class="c t1">800</div>
+    <div class="c t1">800</div>
+    <div class="c t3"><span class="n-lg">40,000</span><span class="n-sm">4萬</span></div>
+
+    <div class="rh">正港好朋友＋</div>
+    <div class="c t0">100</div>
+    <div class="c t1">800</div>
+    <div class="c t1">800</div>
+    <div class="c t3"><span class="n-lg">40,000</span><span class="n-sm">4萬</span></div>
+  </div>
 </div>
 
-<p><strong>兩個人付一樣多。</strong>各付各的一份，不是分攤，而且兩隻寶可夢的費用不同時<strong>取貴的那一邊</strong>，雙方都照那個數字付。</p>
+<ul class="pts">
+  <li><strong>兩個人付一樣多。</strong>各付一份不是分攤，兩隻寶可夢的費用不同時取貴的那一邊。</li>
+  <li>「登錄了沒有」看的是<strong>收到那一隻的人</strong>。想省沙子，先確認對方圖鑑裡有沒有你要給的那一隻，比衝友誼等級有用：同樣一隻異色，對方有登錄是 800，沒登錄要 40,000，而且兩個人都付。</li>
+  <li><strong>「正港好朋友＋」消耗的星星沙子跟「正港好朋友」相同</strong>，所以表上最後兩列一樣。升到這一級拿到的是<a href="../remote-trade/">遠距離交換</a>的機會。</li>
+</ul>
 
-<p>「登錄了沒有」看的是<strong>收到那一隻的人</strong>有沒有登錄過。所以想省沙子，<strong>先確認對方圖鑑裡有沒有你要給的那一隻</strong>，比衝友誼等級有用：同樣一隻異色，對方有登錄的話在正港好朋友之間是 800，沒登錄就要 40,000，而且兩個人都付 40,000。</p>
+<h2 id="s2">哪些算「特殊」</h2>
 
-<p><strong>「正港好朋友＋」消耗的星星沙子跟「正港好朋友」相同</strong>，所以表上最後兩列一樣。</p>
+<ul class="pts">
+  <li>傳說寶可夢、究極異獸、異色寶可夢、美錄坦與美錄梅塔、可超極巨化的寶可夢。</li>
+  <li><strong>帶背卡的寶可夢也算。</strong>它不只比較貴，還會吃掉<a href="../remote-trade/">每天那一次</a>特殊交換的額度。一份清單裡挑幾隻帶背卡的，就得排好幾天才換得完。</li>
+  <li><strong>圖鑑裡沒登錄過的型態算「未登錄」</strong>，即使那個物種你早就有了。地區型、未知圖騰、裝扮寶可夢、飄浮泡泡都算，所以一隻戴帽子的皮卡丘費用可能跟你想的差很多。</li>
+</ul>
 
-<h2>哪些算「特殊」</h2>
+<h2 id="s3">兩個門檻</h2>
 
-<p>被歸進特殊那兩欄的是<strong>傳說寶可夢、究極異獸、異色寶可夢、美錄坦與美錄梅塔，以及可超極巨化的寶可夢</strong>。</p>
-
-<p><strong>帶背卡的寶可夢也算特殊交換。</strong>所以它不只比較貴，還會吃掉<a href="../remote-trade/">每天那一次</a>特殊交換的額度。這對交換清單的影響不小：一份清單裡挑幾隻帶背卡的，就得排好幾天才換得完。</p>
-
-<p><strong>圖鑑裡沒登錄過的型態也會被當成「未登錄」</strong>，即使那個物種你早就有了。地區型、未知圖騰、裝扮寶可夢、飄浮泡泡都算。所以一隻戴帽子的皮卡丘，費用可能跟你想的差很多。</p>
-
-<h2>「朋友」這一級幾乎換不了東西</h2>
-
-<p>剛加好友、還沒累積任何朋友點數的時候，<strong>只能交換雙方圖鑑裡都已經登錄的一般寶可夢</strong>。異色、傳說、對方沒登錄過的，全部不能換。</p>
-
-<p>累積 <strong>1 點</strong>朋友點數升到「好朋友」，上面四欄就全部解鎖了。所以這一級只擋得住剛加完好友的那段時間。</p>
-
-<h2>特殊交換每天只能一次</h2>
-
-<p>上面表格右邊三欄那些，在遊戲裡叫<strong>特殊交換</strong>，而特殊交換<strong>每天只能進行 1 次</strong>（官方只寫「有每日次數上限」，這個數字是社群的說法）。</p>
-
-<p><a href="../remote-trade/">遠距離交換</a><strong>不計入這個額度</strong>。不管換的是傳說、異色還是圖鑑裡沒有的，都不吃特殊交換的次數，等於每天多一次換稀有貨的機會。</p>
+<ul class="pts">
+  <li>剛加好友、還沒累積任何朋友點數時，<strong>只能交換雙方圖鑑裡都已經登錄的一般寶可夢</strong>。這一級只擋得住加完好友的那段時間。</li>
+  <li>表格右邊三欄那些在遊戲裡叫<strong>特殊交換</strong>，每天只能進行 1 次（官方只寫「有每日次數上限」，這個數字是社群的說法）。</li>
+  <li><a href="../remote-trade/">遠距離交換</a>不吃這個額度，等於每天多一次換稀有貨的機會。</li>
+</ul>

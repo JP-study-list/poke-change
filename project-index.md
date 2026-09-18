@@ -231,6 +231,8 @@ tools/check.mjs ──────► 全部模組（用 DOM stub 在 Node 跑�
 | 改知識頁的設定面板 | `tools/build-kb.mjs`：`themeCards()` 是外觀那兩張、`SETTINGS_JS` 是行為、`shell()` 的 `extra` 是中間那一塊（一則傳出處、索引頁傳空）。出處那個可展開的方塊是 `<details class="kb-row kb-src">`，樣式在 style.css 的 `.kb-row`／`.row-*`。樣式整套重用主站的 `.modal` / `.opt-card`，**深色不必另外寫** |
 | 網域到手要補 canonical | `tools/build-kb.mjs` 頂端的 `SITE` 填上去再重跑，`canonical` 與 `og:url` 會自己長出來 |
 | 改知識格子牆或文章排版 | `js/ui.js` 的 `renderKb` + `css/style.css` **檔尾**那一整區（含它自己的 `@media`） |
+| 知識頁的小標編號 | `css/style.css` 的 `.kb-body h2::before`（counter）。**六則自動都有**，內文不必改 |
+| 知識頁的章節速覽 / 費用矩陣 | `.kb-toc` / `.cost`，**按則手寫進 `kb/_src/`**。矩陣只對「兩個維度交叉出一格一個數字」的資料成立，目前只有「交換的星星沙子」用 |
 | 加一個知識分類 | `js/kbdata.js` 的 `KB_CATS`、`js/i18n.js` 的 `kbCat*`（三語）、`js/ui.js` 的 `KB_CAT_KEY`，三處要一致 |
 | 改搜尋字串的內容或格式 | `js/gostring.js`。鈕在 `js/ui.js` 的 `tradeColumn`，確認彈窗是 `js/ui.js` 的 `renderCopy`，開窗與實際複製在 `js/main.js` 的 `openCopy` / `doCopy`。**改演算法一定要跑 check 的 4b 對拍** |
 | 改複製前那個確認彈窗 | `js/ui.js` 的 `renderCopy`（標題、提醒、字串、底部那顆鈕），樣式是 `css/style.css` 的 `.copy-head` / `.copy-warn` / `.copy-str`。字串框的斷行**必須是 `word-break: break-all`**，換成 `overflow-wrap: anywhere` 會排出孤字 |

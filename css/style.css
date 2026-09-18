@@ -3022,6 +3022,7 @@ body.no-names .cell .no {
  * 不是格子上的標籤。
  */
 .kb-body {
+  counter-reset: kbsec;
   margin-top: 26px;
   font-size: var(--fs-md);
   line-height: 1.8;
@@ -3040,16 +3041,184 @@ body.no-names .cell .no {
 }
 
 .kb-body h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
   margin: 34px 0 12px;
   padding-top: 14px;
   border-top: 1px solid var(--hair);
   font-size: var(--fs-lg);
 }
 
+/*
+ * 小標編號。**用 flex 的第一個子元素，不是絕對定位**——絕對定位對不準
+ * 基線，行高一改就跑掉。`decimal-leading-zero` 補到兩位，一頁八節也齊。
+ */
+.kb-body h2::before {
+  counter-increment: kbsec;
+  content: counter(kbsec, decimal-leading-zero);
+  flex: none;
+  font: var(--caps);
+  font-size: var(--fs-13);
+  color: var(--gold-ink);
+}
+
 .kb-body h2:first-child {
   margin-top: 0;
   padding-top: 0;
   border-top: 0;
+}
+
+/*
+ * 章節速覽在最前面時，第一個 h2 就不再是 `:first-child`，
+ * 不收掉的話 chips 底下會多一條分隔線。
+ */
+.kb-toc + h2 {
+  margin-top: 22px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/*
+ * 章節速覽。**只有節數多、而且讀者會想跳著看的那幾則才寫**，
+ * 不是每一則都要——它要手寫錨點，而且三四節的頁面捲一下就到底了。
+ */
+.kb-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 20px;
+}
+
+.kb-toc a {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  font-size: var(--fs-sm);
+  color: var(--ink2);
+  text-decoration: none;
+}
+
+.kb-toc a:hover {
+  border-color: var(--gold);
+  color: var(--gold-ink);
+}
+
+/*
+ * 要點清單。段落塌成可掃的短行，項目符號是一個小方塊不是圓點——
+ * 圓點跟內文的標點在小字級下分不太出來。
+ */
+.kb-body ul.pts {
+  padding-left: 0;
+  list-style: none;
+}
+
+ul.pts > li {
+  position: relative;
+  margin-bottom: 9px;
+  padding-left: 18px;
+  line-height: 1.7;
+}
+
+ul.pts > li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 11px;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--gold);
+}
+
+/*
+ * 費用矩陣。**這是「交換的星星沙子」那一則專用的**，不是通用元件：
+ * 它只對「兩個維度交叉出一格一個數字」這種資料成立。
+ * 表格換成色階之後，貴不貴是用看的，不必逐格讀數字。
+ */
+.cost {
+  display: grid;
+  grid-template-columns: max-content repeat(4, minmax(78px, 1fr));
+  gap: 4px;
+  min-width: 480px;
+}
+
+.cost .ch {
+  padding: 0 6px 6px;
+  font: var(--caps);
+  line-height: 1.5;
+  color: var(--dim);
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.cost .ch:first-child {
+  text-align: left;
+}
+
+.cost .rh {
+  display: flex;
+  align-items: center;
+  padding-right: 10px;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/*
+ * **階只做在底色，文字一律 `--ink`。** 各階配自己色相的文字量過了：
+ * 淺色的千位 4.32、萬位 3.50、百萬位 3.61 都低於 AA 的 4.5
+ * （15px 粗體不到大字標準，要 4.5 不是 3）。底色濃度已經把階說清楚。
+ */
+.cost .c {
+  padding: 9px 6px;
+  border-radius: 6px;
+  color: var(--ink);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.c.t0 {
+  background: color-mix(in srgb, var(--have) 14%, var(--card));
+}
+
+.c.t1 {
+  background: color-mix(in srgb, var(--gold) 20%, var(--card));
+}
+
+.c.t2 {
+  background: color-mix(in srgb, var(--want) 20%, var(--card));
+}
+
+.c.t3 {
+  background: color-mix(in srgb, var(--danger) 16%, var(--card));
+}
+
+/* 百萬那一格要跟四萬分得出來，差 25 倍 */
+.c.t4 {
+  background: color-mix(in srgb, var(--danger) 34%, var(--card));
+}
+
+/*
+ * 「不可交換」是空格子，不是一個值。**底色不能用 `--sunk`**：
+ * 深色的 `--sunk`（#0b0b0b）比畫布（#101010）更暗，那幾格會變成黑洞。
+ * 虛線框讓它讀起來就是「這裡沒有東西」。
+ */
+.c.no {
+  border: 1px dashed var(--line);
+  background: var(--card);
+  color: var(--dim);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+/* 六位數在手機上換成萬進位，只有這時候才顯示 */
+.n-sm {
+  display: none;
 }
 
 .kb-body p,
@@ -3365,6 +3534,44 @@ body.no-names .cell .no {
 
   .kb-page {
     padding: 22px 16px 48px;
+  }
+
+  /*
+   * 費用矩陣要塞進螢幕，**不要左右滑**（2026-09-18，使用者要求）。
+   * **`minmax(0, 1fr)` 不能寫成 `1fr`**：1fr 的下限是 auto，那 480px
+   * 會把整欄撐開。純 CSS 縮到底 390 還差 4px、320 差 22px，
+   * **瓶頸是「1,000,000」本身九個字元**，所以六位數換成萬進位，
+   * 字級才不必縮到不能讀。390／360／320 量過，溢出都是 0。
+   */
+  .cost {
+    min-width: 0;
+    grid-template-columns: max-content repeat(4, minmax(0, 1fr));
+    gap: 3px;
+  }
+
+  .cost .rh {
+    padding-right: 6px;
+    font-size: var(--fs-sm);
+  }
+
+  .cost .c {
+    padding: 8px 2px;
+  }
+
+  .cost .c.no {
+    font-size: var(--fs-xs);
+  }
+
+  .cost .ch {
+    padding: 0 2px 6px;
+  }
+
+  .n-lg {
+    display: none;
+  }
+
+  .n-sm {
+    display: inline;
   }
 
   .kb-page h1 {
