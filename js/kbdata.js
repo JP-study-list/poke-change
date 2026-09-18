@@ -190,6 +190,67 @@ export const KB_ENTRIES = [
       },
     ],
   },
+  {
+    slug: "guaranteed-lucky",
+    title: "必定變亮晶晶",
+    summary: "三條路：亮晶晶好朋友、亮晶晶首飾，或交換 2020 年以前捉到的寶可夢。第三條有 45 隻的上限，而且是兩個人一起算",
+    cat: "trade",
+    updated: "2026-09-18",
+    /*
+     * **「35 → 45」這條追到官方出處了**，而且繁中版就有原句
+     * （CLAUDE.md 原本記著「可能找得到，值得追」）。出處不是 FAQ，
+     * 是 pokemongo.com 的活動公告——**說明中心只講機制，數字在公告裡**，
+     * 這是找官方數字的第二個地方，下次先想到它。
+     *
+     * **2018 年最初那則也有繁中版，而且比新的那則講得更死**：
+     * 「兩位訓練家過去獲得的亮晶晶寶可夢數量都未滿10隻」。
+     * 2026 那則只換了數字，沒有重提也沒有取消這個條件，所以頁面照舊寫雙方。
+     *
+     * **機率那兩個數字（5%／20%）是使用者拍板要寫的，但前提查下去站不住。**
+     * 只有巴哈那一篇給數字；PoGO Alley（2026-08）明講網路上的機率表
+     * 幾乎都追溯到 The Silph Road 的取樣，而那個組織 2023 年就結束了，
+     * 數字從未被官方證實，之後沒有人重做。所以**不是兩個來源互相印證，
+     * 是一份舊資料被抄很多遍**——寫是寫了，但把這個來歷一起寫在頁面上。
+     * 收 PoGO Alley 當來源正是為了那段警告，不是為了數字。
+     */
+    sources: [
+      {
+        label: "Pokémon GO 官方公告：「新年 2026」活動（上限 35→45、2020 年門檻）",
+        url: "https://pokemongo.com/zh-Hant/news/new-years-2026",
+        official: true,
+      },
+      {
+        label: "Pokémon GO 官方公告：讓亮晶晶寶可夢為你帶來更多幸運！（2018，首次公布保證機制）",
+        url: "https://pokemongo.com/zh-Hant/news/luckypokemon-update",
+        official: true,
+      },
+      {
+        label: "Niantic 說明中心：亮晶晶寶可夢（FAQ 38）",
+        url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/38-lucky-pokemon/",
+        official: true,
+      },
+      {
+        label: "Niantic 說明中心：亮晶晶好朋友（FAQ 1485）",
+        url: "https://niantic.helpshift.com/hc/zh-hant/6-pokemon-go/faq/1485-lucky-friends/",
+        official: true,
+      },
+      {
+        label: "巴哈姆特 Pokémon GO 哈啦板：亮晶晶寶可夢交換大全（2026-07-13）",
+        url: "https://forum.gamer.com.tw/C.php?bsn=29659&snA=47444",
+        official: false,
+      },
+      {
+        label: "PoGO Alley：Lucky Trades 指南（2026-08-10 更新；機率表來歷的警告出自這裡）",
+        url: "https://pogoalley.com/guides/lucky-trades",
+        official: false,
+      },
+      {
+        label: "Pokémon GO Hub：Guaranteed Lucky Trades 機制（2023-12-12）",
+        url: "https://pokemongohub.net/post/news/how-do-guaranteed-lucky-trades-work-in-pokemon-go/",
+        official: false,
+      },
+    ],
+  },
 ];
 
 export const KB_COUNT = KB_ENTRIES.length;

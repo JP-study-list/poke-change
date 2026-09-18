@@ -3093,6 +3093,24 @@ body.no-names .cell .no {
 }
 
 /*
+ * 引用官方原文。第一次用在「必定變亮晶晶」那一則——那一頁的重點是
+ * 官方到底寫了什麼，把原句整段挑出來比塞在內文裡有力得多。
+ *
+ * **左邊那條線刻意用 `--have`，跟來源清單的「官方」標籤同一個顏色。**
+ * `.kb-note` 是金色，講的是「這條沒有官方依據」；兩者在同一頁上下相鄰，
+ * 顏色一致就等於在說「這一段的份量跟那顆標籤一樣」。
+ * 兩個都吃 token，深色不必另外覆寫。
+ */
+.kb-body blockquote {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--have);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--card);
+  font-size: var(--fs-base);
+}
+
+/*
  * 行內代碼。搜尋語法那一則整篇都是 `,` 與 `&`，不給它自己的樣子
  * 就跟旁邊的標點混在一起——上一版的截圖裡真的看不出哪個是符號。
  */
